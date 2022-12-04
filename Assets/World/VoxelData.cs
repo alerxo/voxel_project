@@ -4,6 +4,11 @@ using UnityEngine;
 
 public static class VoxelData
 {
+    //  World settings
+
+    public static readonly int chunkWidth = 5;
+    public static readonly int chunkHeight = 5;
+
     public static readonly Vector3[] voxelVerticies = new Vector3[8]
     {
         //  The 8 corners of a voxel (cube)
@@ -16,6 +21,18 @@ public static class VoxelData
         new Vector3(1.0f, 0.0f, 1.0f),
         new Vector3(1.0f, 1.0f, 1.0f),
         new Vector3(0.0f, 1.0f, 1.0f),
+    };
+
+    public static readonly Vector3[] faceChecks = new Vector3[6]
+    {
+        //  Table of which direction to check for adjacent voxel for each face
+
+        new Vector3(0.0f, 0.0f, -1.0f), // Back face
+        new Vector3(0.0f, 0.0f, 1.0f), // Front face
+        new Vector3(0.0f, 1.0f, 0.0f), // Top face
+        new Vector3(0.0f, -1.0f, 0.0f), // Bottom face
+        new Vector3(-1.0f, 0.0f, 0.0f), // Left face
+        new Vector3(1.0f, 0.0f, 0.0f) // Right face
     };
 
     public static readonly int[,] voxelTriangles = new int[6, 6]
@@ -32,6 +49,8 @@ public static class VoxelData
 
     public static readonly Vector2[] voxelUvs = new Vector2[6]
     {
+        //  Sets the two triangles for uvs at the corners
+
         new Vector2(0.0f, 0.0f),
         new Vector2(0.0f, 1.0f),
         new Vector2(1.0f, 0.0f),
