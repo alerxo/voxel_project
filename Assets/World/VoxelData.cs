@@ -9,6 +9,14 @@ public static class VoxelData
     public static readonly int chunkWidth = 16;
     public static readonly int chunkHeight = 16;
 
+    //  Texture atlas
+
+    public static readonly int TextureAtlasBlockWidth = 4;
+    public static float NormalizedBlockTextureSize
+    {
+        get { return 1f / (float)TextureAtlasBlockWidth; }
+    }
+
     public static readonly Vector3[] voxelVerticies = new Vector3[8]
     {
         //  The 8 corners of a voxel (cube)
@@ -35,27 +43,25 @@ public static class VoxelData
         new Vector3(1.0f, 0.0f, 0.0f) // Right face
     };
 
-    public static readonly int[,] voxelTriangles = new int[6, 6]
+    public static readonly int[,] voxelTriangles = new int[6, 4]
     {
         //  Describes the order in which we take verticies from "voxelVerticies" and build triangles from
 
-        {0, 3, 1, 1, 3, 2}, // Back face
-        {5, 6, 4, 4, 6, 7}, // Front face
-        {3, 7, 2, 2, 7, 6}, // Top face
-        {1, 5, 0, 0, 5, 4}, // Bottom face
-        {4, 7, 0, 0, 7, 3}, // Left face
-        {1, 2, 5, 5, 2, 6} // Right face
+        {0, 3, 1, 2}, // Back face
+        {5, 6, 4, 7}, // Front face
+        {3, 7, 2, 6}, // Top face
+        {1, 5, 0, 4}, // Bottom face
+        {4, 7, 0, 3}, // Left face
+        {1, 2, 5, 6} // Right face
     };
 
-    public static readonly Vector2[] voxelUvs = new Vector2[6]
+    public static readonly Vector2[] voxelUvs = new Vector2[4]
     {
         //  Sets the two triangles for uvs at the corners
 
         new Vector2(0.0f, 0.0f),
         new Vector2(0.0f, 1.0f),
         new Vector2(1.0f, 0.0f),
-        new Vector2(1.0f, 0.0f),
-        new Vector2(0.0f, 1.0f),
         new Vector2(1.0f, 1.0f)
     };
 }
