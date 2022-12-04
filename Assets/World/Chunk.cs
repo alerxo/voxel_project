@@ -35,7 +35,7 @@ public class Chunk : MonoBehaviour
             {
                 for (int z = 0; z < VoxelData.chunkWidth; z++)
                 {
-                    voxelMap[x, y, x] = true;
+                    voxelMap[x, y, z] = true;
                 }
             }
         }
