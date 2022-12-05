@@ -113,6 +113,21 @@ public class World : MonoBehaviour
             
     }
 
+    public bool CheckForVoxel(float _x, float _y, float _z)
+    {
+        int xCheck = Mathf.FloorToInt(_x);
+        int yCheck = Mathf.FloorToInt(_y);
+        int zCheck = Mathf.FloorToInt(_z);
+
+        int xChunk = xCheck / VoxelData.chunkWidth;
+        int zChunk = zCheck / VoxelData.chunkWidth;
+
+        xCheck -= (xChunk * VoxelData.chunkWidth);
+        zCheck -= (zChunk * VoxelData.chunkWidth);
+
+        return blocks[chunks[xChunk, zChunk].voxelMap[xCheck, yCheck, zCheck]].isSolid;
+    }
+
     public byte GetVoxel(Vector3 pos)
     {
         int yPos = Mathf.FloorToInt(pos.y);
