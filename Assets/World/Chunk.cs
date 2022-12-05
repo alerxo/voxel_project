@@ -58,7 +58,7 @@ public class Chunk
 
     private void CreateMeshData()
     {
-        //  Adding a voxel at each spot in the chunk
+        //  Adding a voxel at each spot in the chunk if its a solid
 
         for (int y = 0; y < VoxelData.chunkHeight; y++)
         {
@@ -66,7 +66,8 @@ public class Chunk
             {
                 for (int z = 0; z < VoxelData.chunkWidth; z++)
                 {
-                    AddVoxelToChunk(new Vector3(x, y, z));
+                    if (world.blocks[voxelMap[x, y, z]].isSolid)
+                        AddVoxelToChunk(new Vector3(x, y, z));
                 }
             }
         }

@@ -5,6 +5,9 @@ using UnityEngine;
 
 public class World : MonoBehaviour
 {
+    public int seed;
+    public Biome biome;
+
     public Transform player;
     public Vector3 spawnPosition;
 
@@ -20,19 +23,20 @@ public class World : MonoBehaviour
 
     private void Start()
     {
+        Random.InitState(seed);
+
         spawnPosition = new Vector3((VoxelData.WorldSizeInChunks * VoxelData.chunkWidth) / 2f, VoxelData.chunkHeight + 2f, (VoxelData.WorldSizeInChunks * VoxelData.chunkWidth) / 2f);
 
         GenerateWorld();
 
         playerLastChunk = GetChunkCoordinateFromVector3 (player.position);
-        playerChunk = GetChunkCoordinateFromVector3(player.position);
     }
 
     private void Update()
     {
-        playerChunk = GetChunkCoordinateFromVector3(player.position);
+        playerChunk = GetChunkCoordinateFromVector3 (player.position);
 
-        if((playerChunk.x + playerChunk.z) > (playerLastChunk.x + playerLastChunk.z + 2) || (playerChunk.x + playerChunk.z) < (playerLastChunk.x + playerLastChunk.z - 2))
+        if (!playerChunk.Equals(playerLastChunk))
             CheckRenderDistance();
     }
 
@@ -111,26 +115,46 @@ public class World : MonoBehaviour
 
     public byte GetVoxel(Vector3 pos)
     {
-        //  Basic block assignment
+        int yPos = Mathf.FloorToInt(pos.y);
+
+        //  Constant
 
         if (!IsVoxelInWorld(pos))
         {
+            //  If outside world, return air
             return 0;
         }
 
-        if (pos.y == VoxelData.chunkHeight - 1)
-        {
-            return 1;
-        }
-        else if (pos.y < VoxelData.chunkHeight && pos.y > VoxelData.chunkHeight - 4)
-        {
-            return 3;
-        }
+        //  Terrain
+
+        int terrainheight = Mathf.FloorToInt((biome.maxGroundY - biome.minGroundY) * Noise.Get2DPerlin(new Vector2(pos.x, pos.z), 0, biome.terrainScale)) + biome.minGroundY;
+
+        byte voxelValue = 0;
+
+
+        if (yPos == terrainheight)
+            voxelValue = 1;
+        else if (yPos < terrainheight && yPos > terrainheight - 4)
+            voxelValue = 3;
+        else if (yPos < terrainheight)
+            voxelValue = 2;
         else
+            voxelValue = 0;
+
+        //  Second
+
+        if (voxelValue == 0)
         {
-            return 2;
+            foreach(Lode lode in biome.lodes)
+            {
+                if (yPos > lode.minHeight && yPos < lode.maxHeight)
+                    if (Noise.Get3DPerlin(pos, lode.noiseOffset, lode.scale, lode.threshold))
+                        voxelValue = lode.blockID;
+            }
         }
-    }
+
+        return voxelValue;
+    }   
 
     private void CreateNewChunk(int x, int z)
     {

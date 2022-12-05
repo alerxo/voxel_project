@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a69d62bf460106148a958431c9accd04, type: 3}
+  m_Name: Grass Plains
+  m_EditorClassIdentifier: 
+  biomeName: Grass plains
+  maxGroundY: 50
+  minGroundY: 40
+  terrainScale: 0.1
+  lodes:
+  - nodeName: Floating dirt
+    blockID: 3
+    minHeight: 60
+    maxHeight: 90
+    scale: 0.16
+    threshold: 0.76
+    noiseOffset: 1000
