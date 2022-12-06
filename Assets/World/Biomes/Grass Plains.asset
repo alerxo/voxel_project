@@ -18,7 +18,7 @@ MonoBehaviour:
   terrainScale: 0.1
   lodes:
   - nodeName: Floating dirt
-    blockID: 3
+    blockID: 2
     minHeight: 60
     maxHeight: 90
     scale: 0.16

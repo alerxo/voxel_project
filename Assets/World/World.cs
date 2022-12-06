@@ -194,9 +194,9 @@ public class World : MonoBehaviour
         if (yPos == terrainheight)
             voxelValue = 1;
         else if (yPos < terrainheight && yPos > terrainheight - 4)
-            voxelValue = 3;
-        else if (yPos < terrainheight)
             voxelValue = 2;
+        else if (yPos < terrainheight)
+            voxelValue = 3;
         else
             voxelValue = 0;
 
