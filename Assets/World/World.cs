@@ -18,12 +18,14 @@ public class World : MonoBehaviour
 
     private List<ChunkCoordinate> activeChunks = new List<ChunkCoordinate> ();
 
-    private ChunkCoordinate playerChunk;
+    public ChunkCoordinate playerChunk;
     private ChunkCoordinate playerLastChunk;
 
     private List<ChunkCoordinate> chunkQueue = new List<ChunkCoordinate>();
 
     private bool isCreatingChunks;
+
+    public GameObject debugScreen;
 
     private void Start()
     {
@@ -48,6 +50,11 @@ public class World : MonoBehaviour
 
         if(chunkQueue.Count > 0 && !isCreatingChunks)
             StartCoroutine("CreateChunks");
+
+        if (Input.GetKeyDown(KeyCode.F3))
+        {
+            debugScreen.SetActive(!debugScreen.activeSelf);
+        }
     }
 
     private void GenerateWorld()
