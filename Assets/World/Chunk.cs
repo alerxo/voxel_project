@@ -1,7 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using UnityEngine;
+using static UnityEditor.PlayerSettings;
 
 public class Chunk
 {
@@ -22,10 +24,24 @@ public class Chunk
 
     private World world;
 
-    public Chunk(ChunkCoordinate _coord, World _world)
+    private bool _isActive;
+    public bool isVoxelMapPopulated = false;
+
+    public Chunk(ChunkCoordinate _coord, World _world, bool generateOnLoad)
     {
         coord = _coord;
         world = _world;
+        _isActive = true;
+
+        if (generateOnLoad)
+        {
+            Init();
+        }
+    }
+
+    public void Init()
+    {
+        //  Initalizes the chunk
 
         chunkObject = new GameObject();
         meshFilter = chunkObject.AddComponent<MeshFilter>();
@@ -42,8 +58,6 @@ public class Chunk
         PopulateVoxelMap();
         CreateMeshData();
         CreateMesh();
-
-        
     }
 
     private void PopulateVoxelMap()
@@ -60,6 +74,8 @@ public class Chunk
                 }
             }
         }
+
+        isVoxelMapPopulated = true;
     }
 
     private void CreateMeshData()
@@ -83,9 +99,17 @@ public class Chunk
     {
         //  Can either get the state of chunk or set it
 
-        get { return chunkObject.activeSelf; }
+        get { return _isActive; }
 
-        set { chunkObject.SetActive(value); }
+        set 
+        { 
+            _isActive = value;
+            
+            if(chunkObject != null)
+            {
+                chunkObject.SetActive(value);
+            }
+        }
     }
 
     public Vector3 position
@@ -116,10 +140,24 @@ public class Chunk
         int y = Mathf.FloorToInt(pos.y);
         int z = Mathf.FloorToInt(pos.z);
 
-        if (!IsVoxelInChunk(x, y, z)) 
-            return world.blocks[world.GetVoxel(pos + position)].isSolid;
+        if (!IsVoxelInChunk(x, y, z))
+            return world.CheckForVoxel(pos + position);
 
         return world.blocks[voxelMap[x, y, z]].isSolid;
+    }
+
+    public byte GetVoxelFromGlobalVector3(Vector3 pos)
+    {
+        //  ^^
+
+        int xCheck = Mathf.FloorToInt(pos.x);
+        int yCheck = Mathf.FloorToInt(pos.y);
+        int zCheck = Mathf.FloorToInt(pos.z);
+
+        xCheck -= Mathf.FloorToInt(position.x);
+        zCheck -= Mathf.FloorToInt(position.z);
+
+        return voxelMap[xCheck, yCheck, zCheck];
     }
 
     private void AddVoxelToChunk(Vector3 pos)

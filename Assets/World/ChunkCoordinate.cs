@@ -7,10 +7,25 @@ public class ChunkCoordinate
     public int x;
     public int z;
 
+    public ChunkCoordinate()
+    {
+        x = 0;
+        z = 0;
+    }
+
     public ChunkCoordinate (int _x, int _z)
     {
         x = _x;
         z = _z;
+    }
+
+    public ChunkCoordinate(Vector3 pos)
+    {
+        int xCheck = Mathf.FloorToInt(pos.x);
+        int zCheck = Mathf.FloorToInt(pos.z);
+
+        x = xCheck / VoxelData.chunkWidth;
+        z = zCheck / VoxelData.chunkWidth;
     }
 
     public bool Equals (ChunkCoordinate other)
