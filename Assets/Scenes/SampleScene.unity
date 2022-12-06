@@ -652,27 +652,35 @@ MonoBehaviour:
   player: {fileID: 963194228}
   spawnPosition: {x: 0, y: 0, z: 0}
   material: {fileID: 2100000, guid: 184ca111073942747aaf76ef298afa97, type: 2}
+  transparentMaterial: {fileID: 2100000, guid: 53e29320e16150745a98241fe95f37d5, type: 2}
   blocks:
   - name: Air
     isSolid: 0
+    isTransparent: 1
     textureID: 0
   - name: Grass
     isSolid: 1
+    isTransparent: 0
     textureID: 0
   - name: Dirt
     isSolid: 1
+    isTransparent: 0
     textureID: 1
   - name: Stone
     isSolid: 1
+    isTransparent: 0
     textureID: 2
   - name: Glass
     isSolid: 1
+    isTransparent: 1
     textureID: 3
   - name: Wood
     isSolid: 1
+    isTransparent: 0
     textureID: 4
   - name: Leaf
     isSolid: 1
+    isTransparent: 0
     textureID: 5
   debugScreen: {fileID: 1248770446}
 --- !u!4 &2074286416

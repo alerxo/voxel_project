@@ -12,6 +12,8 @@ public class World : MonoBehaviour
     public Vector3 spawnPosition;
 
     public Material material;
+    public Material transparentMaterial;
+
     public Block[] blocks;
 
     private Chunk[,] chunks = new Chunk[VoxelData.WorldSizeInChunks, VoxelData.WorldSizeInChunks];
@@ -172,6 +174,34 @@ public class World : MonoBehaviour
         return blocks[GetVoxel(pos)].isSolid;
     }
 
+    public bool CheckIfVoxelTransparent(Vector3 pos)
+    {
+        //  First looks if the voxel is in world, if not in world and an air voxel, return true,
+        //  (face generation scrip doesnt recognize adjacent chunks as in world sometimes and we get into first check when we shoudlnt, so we draw face just in case)
+        //  Then check chunk who is in world to check if chunk has been loaded, if it has, use istransparent
+        //  If it hasnt been loaded, use get voxel
+
+        ChunkCoordinate thisChunk = new ChunkCoordinate(pos);
+
+        if (!IsChunkInWorld(thisChunk) || pos.y < 0 || pos.y > VoxelData.chunkHeight)
+        {
+            //  If voxel is air, return true
+            if (GetVoxel(pos) == 0)
+                return true;
+
+
+            else
+                return false;
+        }
+
+        if (chunks[thisChunk.x, thisChunk.z] != null && chunks[thisChunk.x, thisChunk.z].isVoxelMapPopulated)
+        {
+            return blocks[chunks[thisChunk.x, thisChunk.z].GetVoxelFromGlobalVector3(pos)].isTransparent;
+        }
+
+        return blocks[GetVoxel(pos)].isTransparent;
+    }
+
     public byte GetVoxel(Vector3 pos)
     {
         int yPos = Mathf.FloorToInt(pos.y);
@@ -214,8 +244,6 @@ public class World : MonoBehaviour
 
         return voxelValue;
     }   
-
-
 
     private bool IsChunkInWorld(ChunkCoordinate coord)
     {

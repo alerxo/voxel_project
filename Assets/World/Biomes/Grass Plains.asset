@@ -17,8 +17,8 @@ MonoBehaviour:
   minGroundY: 40
   terrainScale: 0.1
   lodes:
-  - nodeName: Floating dirt
-    blockID: 2
+  - nodeName: Floating glass
+    blockID: 4
     minHeight: 60
     maxHeight: 90
     scale: 0.16
