@@ -4,15 +4,11 @@ using UnityEngine;
 
 public class CameraMovement : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+    [SerializeField] private Transform mainCamera;
+    [SerializeField] private Transform player;
 
-    // Update is called once per frame
-    void Update()
+    public void AlignPlayerWithCamera()
     {
-        
+        player.transform.eulerAngles = new Vector3(player.eulerAngles.x, mainCamera.eulerAngles.y, player.eulerAngles.z);
     }
 }

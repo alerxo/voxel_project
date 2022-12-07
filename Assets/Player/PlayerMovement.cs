@@ -4,7 +4,14 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    [SerializeField] private float movementSpeed;
+    private float movementSpeed;
+    [SerializeField] private float walkSpeed;
+    [SerializeField] private float runSpeed;
+    [SerializeField] private float crouchSpeed;
+
+    [SerializeField] private float dashDuration;
+    [SerializeField] private float dashSpeed;
+
     [SerializeField] private float jumpHeight;
     [SerializeField] private float gravitySpeed;
 
@@ -14,6 +21,12 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private LayerMask groundMask;
 
     private Vector3 velocity;
+
+    [SerializeField] private GameObject playerCamera;
+    [SerializeField] private CameraMovement cameraMovement;
+    [SerializeField] private Transform movementDirection;
+
+    private Vector3 movement;
 
     private void Start()
     {
@@ -25,21 +38,69 @@ public class PlayerMovement : MonoBehaviour
         if (CanMove())
         {
             Movement();
+            Dash();
             Jump();
             Gravity();
+
+            characterController.Move(velocity * Time.deltaTime);
         }
     }
 
     private void Movement()
     {
         //  x,z movement
+        //  We use camera y angle but player x angle so we store it in separate Transform (gameobject D:) 
+        //  We multiply movementinput by this direction to get movement depending on camera rotation
 
         float horizontal = Input.GetAxisRaw("Horizontal");
         float vertical = Input.GetAxisRaw("Vertical");
 
-        Vector3 movement = new Vector3(horizontal, 0, vertical);
+        movementDirection.eulerAngles = new Vector3(transform.eulerAngles.x, playerCamera.transform.eulerAngles.y, transform.eulerAngles.z);
+
+        movement = (movementDirection.transform.right * horizontal + vertical * movementDirection.transform.forward).normalized;
+
+        if (vertical > 0)
+            cameraMovement.AlignPlayerWithCamera();
+
+        if (Input.GetKey(KeyCode.LeftShift)) movementSpeed = runSpeed;
+        else if (Input.GetKey(KeyCode.LeftControl)) movementSpeed = crouchSpeed;
+        else movementSpeed = walkSpeed;
 
         characterController.Move(movement * movementSpeed * Time.deltaTime);
+    }
+
+    private void Dash()
+    {
+        if (Input.GetKey(KeyCode.Q) && CanMove())
+        {
+            StartCoroutine(_Dash());
+        }
+    }
+
+    private IEnumerator _Dash()
+    {
+        //  If player is moving, dash in movement direction
+        //  Else, dash where camera is looking
+        //  Yields to rest of script
+
+        float startTime = Time.time;
+
+
+        while (Time.time < startTime + dashDuration)
+        {
+            if (movement != new Vector3(0, 0, 0))
+                characterController.Move(movement * dashSpeed * Time.deltaTime);
+            else
+            {
+                cameraMovement.AlignPlayerWithCamera();
+                characterController.Move(transform.forward * dashSpeed * Time.deltaTime); 
+            }
+                
+
+            yield return null;
+        }
+
+        velocity.x = 0;
     }
 
     private void Jump()
@@ -63,15 +124,13 @@ public class PlayerMovement : MonoBehaviour
         {
             velocity.y += -9.81f * gravitySpeed * Time.deltaTime;
         }
-
-        characterController.Move(velocity * Time.deltaTime);
     }
 
     private bool IsGrounded()
     {
         //  Ground check obj
 
-        if(Physics.CheckSphere(groundCheck.position, 0.1f, groundMask))
+        if(Physics.CheckBox(groundCheck.position, new Vector3(.5f, .1f, .5f), transform.rotation, groundMask))
             return true;
         else
             return false;
