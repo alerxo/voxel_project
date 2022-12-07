@@ -268,7 +268,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 60
+  field of view: 26.991467
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
@@ -647,7 +647,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac3f8c1d06957a443bb0bec91a1618bc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  seed: 2147483647
+  seed: 2354
   biome: {fileID: 11400000, guid: 7966c73213bfb3f4299bac0b77ff9876, type: 2}
   player: {fileID: 963194228}
   spawnPosition: {x: 0, y: 0, z: 0}
