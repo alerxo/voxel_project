@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO.Pipes;
+using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -18,16 +20,19 @@ public class World : MonoBehaviour
 
     private Chunk[,] chunks = new Chunk[VoxelData.WorldSizeInChunks, VoxelData.WorldSizeInChunks];
 
-    private List<ChunkCoordinate> activeChunks = new List<ChunkCoordinate> ();
+    private List<ChunkCoordinate> activeChunks = new List<ChunkCoordinate>();
 
     public ChunkCoordinate playerChunk;
     private ChunkCoordinate playerLastChunk;
 
     private List<ChunkCoordinate> chunkQueue = new List<ChunkCoordinate>();
 
-    private bool isCreatingChunks;
-
     public GameObject debugScreen;
+
+    private Queue<VoxelMod> modifications = new Queue<VoxelMod>();
+    private List<Chunk> chunksToModify = new List<Chunk>();
+
+    private bool applyingModifications = false;
 
     private void Start()
     {
@@ -42,21 +47,22 @@ public class World : MonoBehaviour
 
     private void Update()
     {
-        //  Checks for player movement between chunks
-        //  Starts the chunk creation if needed
-
         playerChunk = GetChunkCoordinateFromVector3 (player.position);
 
         if (!playerChunk.Equals(playerLastChunk))
             CheckRenderDistance();
 
-        if(chunkQueue.Count > 0 && !isCreatingChunks)
-            StartCoroutine("CreateChunks");
+        if (modifications.Count > 0 && !applyingModifications)
+            StartCoroutine(ApplyModifications());
+
+        if(chunkQueue.Count > 0)
+            CreateChunk();
+
+        if (chunksToModify.Count > 0)
+            UpdateChunk();
 
         if (Input.GetKeyDown(KeyCode.F3))
-        {
             debugScreen.SetActive(!debugScreen.activeSelf);
-        }
     }
 
     private void GenerateWorld()
@@ -73,27 +79,101 @@ public class World : MonoBehaviour
             }
         }
 
+        while(modifications.Count > 0)
+        {
+            //  Good practic to lock in future
+
+            VoxelMod vm = modifications.Dequeue();
+
+            ChunkCoordinate cc = GetChunkCoordinateFromVector3(vm.position);
+
+            if (chunks[cc.x, cc.z] == null)
+            {
+                chunks[cc.x, cc.z] = new Chunk(cc, this, true);
+                activeChunks.Add(cc);
+            }
+
+            chunks[cc.x, cc.z].modifications.Enqueue(vm);
+
+            if (!chunksToModify.Contains(chunks[cc.x, cc.z]))
+                chunksToModify.Add(chunks[cc.x, cc.z]);
+
+            for(int i = 0; i < chunksToModify.Count; i++)
+            {
+                chunksToModify[0].UpdateChunk();
+                chunksToModify.RemoveAt(0);
+            }
+        }
+
         player.position = spawnPosition;
     }
 
-    private IEnumerator CreateChunks()
+    private void CreateChunk()
     {
-        //  Starts initialzing the first chunk in chunk queue
-        //  yields to rest of code after one chunk is created
-        //  does another chunk next frame
-        //  loooooop
+        //  Initializes chunk
 
-        isCreatingChunks = true;
+        ChunkCoordinate cc = chunkQueue[0];
+        chunkQueue.RemoveAt(0);
+        activeChunks.Add(cc);
+        chunks[cc.x, cc.z].Init();
+    }
 
-        while(chunkQueue.Count > 0)
+    private void UpdateChunk()
+    {
+        bool updated = false;
+        int index = 0;
+
+        while (!updated && index < chunksToModify.Count - 1)
         {
-            chunks[chunkQueue[0].x, chunkQueue[0].z].Init();
-            chunkQueue.RemoveAt(0);
+            if (chunksToModify[index].isVoxelMapPopulated)
+            {
+                chunksToModify[index].UpdateChunk();
+                chunksToModify.RemoveAt(index);
+                updated = true;
+            }
+            else
+                index++;
+        }
+    }
 
-            yield return null;
+    private IEnumerator ApplyModifications()
+    {
+        //  Taking a modification from queue and doing it
+        //  Yields after x amount as to not bog down system
+
+        applyingModifications = true;
+        int count = 0;
+
+        while (modifications.Count > 0)
+        {
+            VoxelMod vm = modifications.Dequeue();
+
+            ChunkCoordinate cc = GetChunkCoordinateFromVector3(vm.position);
+
+            if (IsChunkInWorld(cc))
+            {
+                if (chunks[cc.x, cc.z] == null)
+                {
+                    chunks[cc.x, cc.z] = new Chunk(cc, this, true);
+                    activeChunks.Add(cc);
+                }
+
+                chunks[cc.x, cc.z].modifications.Enqueue(vm);
+
+                if (!chunksToModify.Contains(chunks[cc.x, cc.z]))
+                    chunksToModify.Add(chunks[cc.x, cc.z]);
+
+                count++;
+                if (count > 200)
+                {
+                    count = 0;
+                    yield return null;
+
+                }
+            }
         }
 
-        isCreatingChunks = false;
+        applyingModifications=false;
     }
 
     private ChunkCoordinate GetChunkCoordinateFromVector3(Vector3 pos)
@@ -104,6 +184,14 @@ public class World : MonoBehaviour
         int z = Mathf.FloorToInt(pos.z / VoxelData.chunkWidth);
 
         return new ChunkCoordinate(x, z);
+    }
+
+    public Chunk GetChunkFromVector3(Vector3 pos)
+    {
+        int x = Mathf.FloorToInt(pos.x / VoxelData.chunkWidth);
+        int z = Mathf.FloorToInt(pos.z / VoxelData.chunkWidth);
+
+        return chunks[x, z];
     }
 
     private void CheckRenderDistance()
@@ -118,6 +206,8 @@ public class World : MonoBehaviour
         playerLastChunk = playerChunk;
 
         List<ChunkCoordinate> previoslyActiveChunks = new List<ChunkCoordinate>(activeChunks);
+
+        activeChunks.Clear();
 
         for (int x = coord.x - VoxelData.RenderDistanceInChunks; x < coord.x + VoxelData.RenderDistanceInChunks; x++)
         {
@@ -230,7 +320,7 @@ public class World : MonoBehaviour
         else
             voxelValue = 0;
 
-        //  Second
+        //  Lode
 
         if (voxelValue == 0)
         {
@@ -240,6 +330,21 @@ public class World : MonoBehaviour
                     if (Noise.Get3DPerlin(pos, lode.noiseOffset, lode.scale, lode.threshold))
                         voxelValue = lode.blockID;
             }
+        }
+
+        //  Tree
+
+        if(yPos == terrainheight + 1)
+        {
+            if (Noise.Get2DPerlin(new Vector2(pos.x, pos.z), 10000, biome.treeZoneScale) > biome.treeZoneThreshHold)
+            {
+                if (Noise.Get2DPerlin(new Vector2(pos.x, pos.z), 20000, biome.treePlacementScale) > biome.treePlacementThreshold)
+                {
+                    voxelValue = 5;
+                    Structure.MakeTree(new Vector3(pos.x, pos.y, pos.z), modifications, biome.minTreeY, biome.maxTreeY);
+                }
+            }
+                
         }
 
         return voxelValue;

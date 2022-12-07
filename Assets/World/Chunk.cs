@@ -24,10 +24,14 @@ public class Chunk
 
     public byte[,,] voxelMap = new byte[VoxelData.chunkWidth, VoxelData.chunkHeight, VoxelData.chunkWidth];
 
+    public Queue<VoxelMod> modifications = new Queue<VoxelMod>();
+
     private World world;
 
     private bool _isActive;
     public bool isVoxelMapPopulated = false;
+
+    
 
     public Chunk(ChunkCoordinate _coord, World _world, bool generateOnLoad)
     {
@@ -63,8 +67,8 @@ public class Chunk
         chunkObject.name = "Chunk " + coord.x + ", " + coord.z;
 
         PopulateVoxelMap();
-        CreateMeshData();
-        CreateMesh();
+        UpdateChunk();
+
     }
 
     private void PopulateVoxelMap()
@@ -85,9 +89,19 @@ public class Chunk
         isVoxelMapPopulated = true;
     }
 
-    private void CreateMeshData()
+    public void UpdateChunk()
     {
         //  Adding a voxel at each spot in the chunk if its a solid
+
+        ClearMeshData();
+
+        while(modifications.Count > 0)
+        {
+            VoxelMod vm = modifications.Dequeue();
+
+            Vector3 pos = vm.position -= position;
+            voxelMap[(int)pos.x, (int)pos.y, (int)pos.z] = vm.id;
+        }
 
         for (int y = 0; y < VoxelData.chunkHeight; y++)
         {
@@ -96,10 +110,21 @@ public class Chunk
                 for (int z = 0; z < VoxelData.chunkWidth; z++)
                 {
                     if (world.blocks[voxelMap[x, y, z]].isSolid)
-                        AddVoxelToChunk(new Vector3(x, y, z));
+                        UpdateMeshData(new Vector3(x, y, z));
                 }
             }
         }
+
+        CreateMesh();
+    }
+
+    private void ClearMeshData()
+    {
+        vertexIndex = 0;
+        verticies.Clear();
+        triangles.Clear();
+        transparentTriangles.Clear();
+        uvs.Clear();
     }
     
     public bool isActive
@@ -136,6 +161,37 @@ public class Chunk
             return true;
     }
 
+    public void EditVoxel(Vector3 pos, byte newID)
+    {
+        int xCheck = Mathf.FloorToInt(pos.x);
+        int yCheck = Mathf.FloorToInt(pos.y);
+        int zCheck = Mathf.FloorToInt(pos.z);
+
+        xCheck -= Mathf.FloorToInt(position.x);
+        zCheck -= Mathf.FloorToInt(position.z);
+
+        voxelMap[xCheck, yCheck, zCheck] = newID;
+
+        UpdateAdjacentVoxels(xCheck, yCheck, zCheck);
+
+        UpdateChunk();
+    }
+
+    private void UpdateAdjacentVoxels(int x, int y, int z)
+    {
+        Vector3 thisVoxel = new Vector3(x, y, z);
+
+        for (int r = 0; r < 6; r++)
+        {
+            Vector3 currentVoxel = thisVoxel + VoxelData.faceChecks[r];
+
+            if(!IsVoxelInChunk((int)currentVoxel.x, (int)currentVoxel.y, (int)currentVoxel.z))
+            {
+                world.GetChunkFromVector3(currentVoxel + position).UpdateChunk();
+            }
+        }
+    }
+
     private bool CheckVoxel(Vector3 pos)
     {
         //  Converts into ints
@@ -167,7 +223,7 @@ public class Chunk
         return voxelMap[xCheck, yCheck, zCheck];
     }
 
-    private void AddVoxelToChunk(Vector3 pos)
+    private void UpdateMeshData(Vector3 pos)
     {
         //  Goes through each face of voxel
         //  Checking if there is something adjacent
