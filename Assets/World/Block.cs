@@ -9,5 +9,7 @@ public class Block
 
     public string name;
     public bool isSolid;
+    public bool isTransparent;
+
     public int textureID;
 }

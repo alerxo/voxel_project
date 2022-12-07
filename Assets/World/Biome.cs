@@ -12,5 +12,18 @@ public class Biome : ScriptableObject
 
     public float terrainScale;
 
+    [Header("Trees")]
+    public float treeZoneScale;
+    public float treeZoneThreshHold;
+
+    public float treePlacementScale;
+    public float treePlacementThreshold;
+
+    public int minTreeY;
+    public int maxTreeY;
+
+    
+    [Header("Lodes")]
+
     public Lode[] lodes;
 }
