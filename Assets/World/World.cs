@@ -23,7 +23,7 @@ public class World : MonoBehaviour
     public ChunkCoordinate playerChunk;
     private ChunkCoordinate playerLastChunk;
 
-    private List<ChunkCoordinate> chunkInitializationQueue = new List<ChunkCoordinate>();
+    private List<ChunkCoordinate> chunksToInitialize = new List<ChunkCoordinate>();
 
     public GameObject debugScreen;
 
@@ -36,24 +36,16 @@ public class World : MonoBehaviour
     private Thread ChunkUpdateThread;
     public object ChunkUpdateThreadLock = new object();
 
-    private bool isPlayerSpawned = false;
-
     private void Start()
     {
         //  Starts a new thread for chunk updating
-        //  Sets spawn positon x,z
-        //  Generates world
 
         Random.InitState(seed);
 
         ChunkUpdateThread = new Thread(new ThreadStart(ThreadedUpdate));
         ChunkUpdateThread.Start();
 
-        spawnPosition = new Vector3((VoxelData.WorldSizeInChunks * VoxelData.chunkWidth) / 2f, VoxelData.chunkHeight, (VoxelData.WorldSizeInChunks * VoxelData.chunkWidth) / 2f);
-
-        player.position = new Vector3(spawnPosition.x + VoxelData.chunkWidth / 2, spawnPosition.y + 2, spawnPosition.z + VoxelData.chunkWidth / 2);
-        playerLastChunk = GetChunkCoordinateFromVector3(player.position);
-
+        SpawnPlayer();
         GenerateWorld();
     }
 
@@ -64,7 +56,7 @@ public class World : MonoBehaviour
         if (!playerChunk.Equals(playerLastChunk))
             CheckRenderDistance();
 
-        if(chunkInitializationQueue.Count > 0)
+        if(chunksToInitialize.Count > 0)
             InitializeChunk();
 
         if(chunksToDraw.Count > 0)
@@ -77,24 +69,22 @@ public class World : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.F3))
             debugScreen.SetActive(!debugScreen.activeSelf);
-
-        if (!isPlayerSpawned)
-        {
-            SpawnPlayer();
-        }
     }
 
     private void SpawnPlayer()
     {
-        //  Cast ray to check if spawnchunk exists yet
+        //  Middle of world is half of width on x,z
+        //  Sets playerlastchunk as spawnchunk
+        //  Loops through every y block on spawn x,z looking for the grass block, (which is on terrainheight)
+        //  When found spawn player
 
-        RaycastHit hit;
+        spawnPosition = new Vector3((VoxelData.WorldSizeInChunks * VoxelData.chunkWidth) / 2f, VoxelData.chunkHeight, (VoxelData.WorldSizeInChunks * VoxelData.chunkWidth) / 2f);
+        playerLastChunk = GetChunkCoordinateFromVector3(spawnPosition);
 
-        if (Physics.Raycast(spawnPosition, -Vector3.up, out hit))
+        for (int i = 0; i < VoxelData.chunkHeight; i++)
         {
-            player.position = new Vector3(hit.point.x, hit.point.y + 2, hit.point.z);
-
-            isPlayerSpawned = true;
+            if(GetVoxelBlockType(new Vector3(spawnPosition.x, i, spawnPosition.z)) == 1)
+                player.position = new Vector3(spawnPosition.x, i + 2, spawnPosition.z);
         }
     }
 
@@ -109,7 +99,7 @@ public class World : MonoBehaviour
                 ChunkCoordinate newChunk = new ChunkCoordinate(x, z);
 
                 chunks[x, z] = new Chunk(newChunk, this);
-                chunkInitializationQueue.Add(newChunk);
+                chunksToInitialize.Add(newChunk);
             }
         }
 
@@ -118,8 +108,8 @@ public class World : MonoBehaviour
 
     private void InitializeChunk()
     {
-        ChunkCoordinate cc = chunkInitializationQueue[0];
-        chunkInitializationQueue.RemoveAt(0);
+        ChunkCoordinate cc = chunksToInitialize[0];
+        chunksToInitialize.RemoveAt(0);
         chunks[cc.x, cc.z].Init();
     }
 
@@ -189,7 +179,7 @@ public class World : MonoBehaviour
                     if (chunks[cc.x, cc.z] == null)
                     {
                         chunks[cc.x, cc.z] = new Chunk(cc, this);
-                        chunkInitializationQueue.Add(cc);
+                        chunksToInitialize.Add(cc);
                     }
 
                     chunks[cc.x, cc.z].modifications.Enqueue(vm);
@@ -240,7 +230,7 @@ public class World : MonoBehaviour
                     if (chunks[x, z] == null)
                     {
                         chunks[x, z] = new Chunk(new ChunkCoordinate(x, z), this);
-                        chunkInitializationQueue.Add(new ChunkCoordinate(x, z));
+                        chunksToInitialize.Add(new ChunkCoordinate(x, z));
                     }
 
                     else if (!chunks[x, z].isActive)
