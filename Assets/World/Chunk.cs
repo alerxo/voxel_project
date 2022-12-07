@@ -41,6 +41,8 @@ public class Chunk
         //  Initalizes the chunk
 
         chunkObject = new GameObject();
+        chunkObject.layer = 8;
+
         meshFilter = chunkObject.AddComponent<MeshFilter>();
         meshRenderer = chunkObject.AddComponent<MeshRenderer>();
 
