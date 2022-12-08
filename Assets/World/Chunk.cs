@@ -38,7 +38,7 @@ public class Chunk
 
     public void Init()
     {
-        //  Initalizes the chunk
+        //  Initalizes the chunk and adds itself to populated list
 
         chunkObject = new GameObject();
         chunkObject.layer = 8;
@@ -61,14 +61,13 @@ public class Chunk
 
         position = chunkObject.transform.position;
 
-        PopulateVoxelMap();
+        world.chunksToPopulate.Add(this);
     }
 
-    private void PopulateVoxelMap()
+    public void PopulateVoxelMap()
     {
-        //  Thread this?
-
-        //  Fills the chunk with voxels
+        //  Fills the chunk with voxel data
+        //  Locks the chunksupdate list and adds itself, as to avoid confuction between threads
 
         for (int y = 0; y < VoxelData.chunkHeight; y++)
         {
@@ -83,16 +82,17 @@ public class Chunk
 
         isVoxelMapPopulated = true;
 
-        lock (world.ChunkUpdateThreadLock)
+        lock (world.Thread_2Lock)
         {
             world.chunksToUpdate.Add(this);
         }
-        
     }
 
     public void UpdateChunk()
     {
+        //  Adds all the modifications to the cunk
         //  Adding a voxel at each spot in the chunk if its a solid
+        //  Adds itself to draw queue
 
         ClearMeshData();
 
@@ -169,6 +169,8 @@ public class Chunk
 
     public void EditVoxel(Vector3 pos, byte newID)
     {
+        //  Chnages the ID of voxel and updates itself, and adjacent voxels
+
         int xCheck = Mathf.FloorToInt(pos.x);
         int yCheck = Mathf.FloorToInt(pos.y);
         int zCheck = Mathf.FloorToInt(pos.z);
@@ -178,7 +180,7 @@ public class Chunk
 
         voxelMap[xCheck, yCheck, zCheck] = newID;
 
-        lock (world.ChunkUpdateThreadLock)
+        lock (world.Thread_2Lock)
         {
             world.chunksToUpdate.Insert(0, this);
             UpdateAdjacentVoxels(xCheck, yCheck, zCheck);
@@ -187,6 +189,8 @@ public class Chunk
 
     private void UpdateAdjacentVoxels(int x, int y, int z)
     {
+        //  Uses face list i voxel data to loop through faces and adds to chunks to update list
+
         Vector3 thisVoxel = new Vector3(x, y, z);
 
         for (int r = 0; r < 6; r++)
@@ -288,8 +292,8 @@ public class Chunk
 
     public void CreateMesh()
     {
-        //  Adding the info to a mesh and recalulating
-        //  and recalculating normals as to make sure all verticies face the right way
+        //  Adding the info to a mesh
+        //  recalculating normals as to make sure all verticies face the right way
 
         Mesh mesh = new Mesh();
         mesh.vertices = verticies.ToArray();
