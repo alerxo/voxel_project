@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
-public class PlayerMovement : MonoBehaviour
+public class PlayerMovement : NetworkBehaviour 
 {
     private float movementSpeed;
     [SerializeField] private float walkSpeed;
@@ -22,8 +23,8 @@ public class PlayerMovement : MonoBehaviour
 
     private Vector3 velocity;
 
-    [SerializeField] private GameObject playerCamera;
-    [SerializeField] private CameraMovement cameraMovement;
+    private GameObject playerCamera;
+    private CameraMovement cameraMovement;
     [SerializeField] private Transform movementDirection;
 
     private Vector3 movement;
@@ -31,10 +32,22 @@ public class PlayerMovement : MonoBehaviour
     private void Start()
     {
         characterController = GetComponent<CharacterController>();
+        playerCamera = GameObject.FindGameObjectWithTag("CameraManager").GetComponentInChildren<Camera>().gameObject;
+        cameraMovement = GameObject.FindGameObjectWithTag("CameraManager").GetComponent<CameraMovement>();
+
+        SetPlayerPositionAtSpawnPosition();
+    }
+
+    public void SetPlayerPositionAtSpawnPosition()
+    {
+        Vector3 spawnPosition = GameObject.FindGameObjectWithTag("SpawnObj").transform.position;
+        transform.position = spawnPosition;
     }
 
     private void Update()
     {
+        if (!IsOwner) return;
+
         if (CanMove())
         {
             Movement();

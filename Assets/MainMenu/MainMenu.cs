@@ -1,18 +1,39 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class MainMenu : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+    [SerializeField] private Button hostButton;
+    [SerializeField] private Button serverButton;
+    [SerializeField] private Button clientButton;
+
+    private void Start()
     {
-        
+        PlayerPrefs.SetInt("GameMode", 0);
+
+        hostButton.onClick.AddListener(() =>
+        {
+            LoadGame(0);
+        });
+
+        serverButton.onClick.AddListener(() =>
+        {
+            LoadGame(1);
+        });
+
+        clientButton.onClick.AddListener(() =>
+        {
+            LoadGame(2);
+        });
     }
 
-    // Update is called once per frame
-    void Update()
+    private void LoadGame(int _gameMode)
     {
-        
+        PlayerPrefs.SetInt("GameMode", _gameMode);
+
+        SceneManager.LoadScene(1);
     }
 }

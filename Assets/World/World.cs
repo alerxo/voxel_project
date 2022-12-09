@@ -2,16 +2,22 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Threading;
+using Unity.Netcode;
 
 public class World : MonoBehaviour
 {
-    public int seed;
+    [SerializeField] private int seed;
     public Biome biome;
 
-    public Transform player;
-    public Vector3 spawnPosition;
+    public GameObject player;
 
-    public GameObject debugScreen;
+    [SerializeField] private GameObject spawn;
+
+    [SerializeField] private GameObject debugScreen;
+
+    private NetworkManager networkManager;
+
+    //  Voxel related
 
     public Material material;
     public Material transparentMaterial;
@@ -55,6 +61,9 @@ public class World : MonoBehaviour
     {
         //  Starts a new threads for chunk updating, renderdistance checks and voxelmap populating
 
+        networkManager = GameObject.FindGameObjectWithTag("NetworkManager").GetComponent<NetworkManager>();
+        player = networkManager.LocalClient.PlayerObject.gameObject;
+
         Random.InitState(seed);
 
         Thread_2 = new Thread(new ThreadStart(ThreadedUpdate_2));
@@ -63,17 +72,17 @@ public class World : MonoBehaviour
         Thread_3 = new Thread(new ThreadStart(ThreadedUpdate_3));
         Thread_3.Start();
 
-        SpawnPlayer();
+        GetSpawnPosition();
         GenerateWorld();
     }
 
     private void Update()
     {
-        playerChunk = GetChunkCoordinateFromVector3 (player.position);
+        playerChunk = GetChunkCoordinateFromVector3 (player.transform.position);
 
         if (!playerChunk.Equals(playerLastChunk))
         {
-            playerPosition = player.position;
+            playerPosition = player.transform.position;
             hasCheckedRenderDistance = false;
         }
 
@@ -98,20 +107,24 @@ public class World : MonoBehaviour
             debugScreen.SetActive(!debugScreen.activeSelf);
     }
 
-    private void SpawnPlayer()
+    private void GetSpawnPosition()
     {
         //  Middle of world is half of width on x,z
         //  Sets playerlastchunk as spawnchunk
         //  Loops through every y block on spawn x,z looking for the grass block, (which is on terrainheight)
         //  When found spawn player
 
-        spawnPosition = new Vector3((VoxelData.WorldSizeInChunks * VoxelData.chunkWidth) / 2f, VoxelData.chunkHeight, (VoxelData.WorldSizeInChunks * VoxelData.chunkWidth) / 2f);
-        playerLastChunk = GetChunkCoordinateFromVector3(spawnPosition);
+        spawn.transform.position = new Vector3((VoxelData.WorldSizeInChunks * VoxelData.chunkWidth) / 2f, VoxelData.chunkHeight, (VoxelData.WorldSizeInChunks * VoxelData.chunkWidth) / 2f);
+        playerLastChunk = GetChunkCoordinateFromVector3(spawn.transform.position);
 
         for (int i = 0; i < VoxelData.chunkHeight; i++)
         {
-            if(GetVoxelBlockType(new Vector3(spawnPosition.x, i, spawnPosition.z)) == 1)
-                player.position = new Vector3(spawnPosition.x, i + 2, spawnPosition.z);
+            if(GetVoxelBlockType(new Vector3(spawn.transform.position.x, i, spawn.transform.position.z)) == 1)
+            {
+                spawn.transform.position = new Vector3(spawn.transform.position.x, i + 2, spawn.transform.position.z);
+
+                networkManager.LocalClient.PlayerObject.GetComponent<PlayerMovement>().SetPlayerPositionAtSpawnPosition();
+            }
         }
     }
 
