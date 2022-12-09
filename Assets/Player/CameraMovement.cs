@@ -4,21 +4,11 @@ using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
-public class CameraMovement : MonoBehaviour
+public class CameraMovement : NetworkBehaviour
 {
     [SerializeField] private Transform playerCamera;
     [SerializeField] private CinemachineFreeLook cinemachineFreeLook;
-    private Transform player;
-
-    public void AssingCamera(Transform target)
-    {
-        //  Waits for player to assign itself
-
-        cinemachineFreeLook.Follow = target.Find("Camera Controls").Find("Camera Follow");
-        cinemachineFreeLook.LookAt = target.Find("Camera Controls").Find("Camera Lookat");
-
-        player = target;
-    }
+    [SerializeField] private Transform player;
 
     public void AlignPlayerWithCamera()
     {

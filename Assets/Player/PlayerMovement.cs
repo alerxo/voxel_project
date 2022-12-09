@@ -23,8 +23,8 @@ public class PlayerMovement : NetworkBehaviour
 
     private Vector3 velocity;
 
-    private GameObject playerCamera;
-    private CameraMovement cameraMovement;
+    [SerializeField] private GameObject playerCamera;
+    [SerializeField] private CameraMovement cameraMovement;
     [SerializeField] private Transform movementDirection;
 
     private Vector3 movement;
@@ -32,8 +32,6 @@ public class PlayerMovement : NetworkBehaviour
     private void Start()
     {
         characterController = GetComponent<CharacterController>();
-        playerCamera = GameObject.FindGameObjectWithTag("CameraManager").GetComponentInChildren<Camera>().gameObject;
-        cameraMovement = GameObject.FindGameObjectWithTag("CameraManager").GetComponent<CameraMovement>();
 
         SetPlayerPositionAtSpawnPosition();
     }
@@ -47,6 +45,8 @@ public class PlayerMovement : NetworkBehaviour
     private void Update()
     {
         if (!IsOwner) return;
+
+        cameraMovement.gameObject.SetActive(true);
 
         if (CanMove())
         {

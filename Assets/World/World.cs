@@ -62,7 +62,7 @@ public class World : MonoBehaviour
         //  Starts a new threads for chunk updating, renderdistance checks and voxelmap populating
 
         networkManager = GameObject.FindGameObjectWithTag("NetworkManager").GetComponent<NetworkManager>();
-        player = networkManager.LocalClient.PlayerObject.gameObject;
+        player = networkManager.LocalClient.PlayerObject.gameObject.GetComponentInChildren<PlayerMovement>().gameObject;
 
         Random.InitState(seed);
 
@@ -123,7 +123,7 @@ public class World : MonoBehaviour
             {
                 spawn.transform.position = new Vector3(spawn.transform.position.x, i + 2, spawn.transform.position.z);
 
-                networkManager.LocalClient.PlayerObject.GetComponent<PlayerMovement>().SetPlayerPositionAtSpawnPosition();
+                player.GetComponent<PlayerMovement>().SetPlayerPositionAtSpawnPosition();
             }
         }
     }
