@@ -1,48 +1,26 @@
 using System.Collections;
 using System.Collections.Generic;
-using Unity.Netcode;
 using UnityEngine;
 
-public class PlayerSpawner : NetworkBehaviour
+public class PlayerSpawner : MonoBehaviour
 {
-    private int _gameMode;
-    [SerializeField] private GameObject worldPrefab;
-    [SerializeField] private NetworkManager networkManager;
-    
+    [SerializeField] private GameObject player;
+    private bool playerSpawned = false;
+
+    private World world;
 
     private void Start()
     {
-        _gameMode = PlayerPrefs.GetInt("GameMode");
-
-        if (_gameMode == 0)
-        {
-            NetworkManager.Singleton.StartHost();
-            StartGame();
-        }
-            
-        else if (_gameMode == 1)
-        {
-            NetworkManager.Singleton.StartServer();
-            StartGame();
-        }
-            
-        else if (_gameMode == 2)
-        {
-            NetworkManager.Singleton.StartClient();
-            StartGame();
-        }
-            
-
-        else
-            Debug.Log("Error with playerspawner");
+        world = GameObject.FindGameObjectWithTag("WorldObj").GetComponent<World>();
     }
 
-    private void StartGame()
+    private void Update()
     {
-        if(_gameMode == 0)
+        if(world.spawnLoaded && !playerSpawned)
         {
-            GameObject tempWorld = Instantiate(worldPrefab);
-            tempWorld.GetComponent<NetworkObject>().Spawn();
+            player.SetActive(true);
+            playerSpawned = true;
+            this.enabled = false;
         }
     }
 }

@@ -4,34 +4,28 @@ using UnityEngine;
 using System.Threading;
 using Unity.Netcode;
 
-public class World : MonoBehaviour
+public class World : NetworkBehaviour
 {
     [SerializeField] private int seed;
     public Biome biome;
 
-    public GameObject player;
-
     [SerializeField] private GameObject spawn;
-
-    [SerializeField] private GameObject debugScreen;
+    public bool spawnLoaded = false;
 
     private NetworkManager networkManager;
 
     //  Voxel related
+
+    private List<ChunkCoordinate> activeChunks = new List<ChunkCoordinate>();
 
     public Material material;
     public Material transparentMaterial;
 
     public Block[] blocks;
 
-    private Chunk[,] chunks = new Chunk[VoxelData.WorldSizeInChunks, VoxelData.WorldSizeInChunks];
+    public Chunk[,] chunks = new Chunk[VoxelData.WorldSizeInChunks, VoxelData.WorldSizeInChunks];
 
-    private List<ChunkCoordinate> activeChunks = new List<ChunkCoordinate>();
-
-    public ChunkCoordinate playerChunk;
-    private ChunkCoordinate playerLastChunk;
-
-    private List<ChunkCoordinate> chunksToInitialize = new List<ChunkCoordinate>();
+    public List<ChunkCoordinate> chunksToInitialize = new List<ChunkCoordinate>();
 
     //  Threading related
 
@@ -45,16 +39,6 @@ public class World : MonoBehaviour
     private Thread Thread_2;
     public object Thread_2Lock = new object();
 
-    private Thread Thread_3;
-    public object Thrad_3Lock = new object();
-
-    private bool hasCheckedRenderDistance = true;
-
-    private Vector3 playerPosition;
-
-    private Queue<Chunk> chunksToActivate = new Queue<Chunk>();
-    private Queue<Chunk> chunksToDeactivate = new Queue<Chunk>();
-
     //
 
     private void Start()
@@ -62,36 +46,18 @@ public class World : MonoBehaviour
         //  Starts a new threads for chunk updating, renderdistance checks and voxelmap populating
 
         networkManager = GameObject.FindGameObjectWithTag("NetworkManager").GetComponent<NetworkManager>();
-        player = networkManager.LocalClient.PlayerObject.gameObject.GetComponentInChildren<PlayerMovement>().gameObject;
 
         Random.InitState(seed);
 
         Thread_2 = new Thread(new ThreadStart(ThreadedUpdate_2));
         Thread_2.Start();
 
-        Thread_3 = new Thread(new ThreadStart(ThreadedUpdate_3));
-        Thread_3.Start();
-
-        GetSpawnPosition();
         GenerateWorld();
+        GetSpawnPosition();
     }
 
     private void Update()
-    {
-        playerChunk = GetChunkCoordinateFromVector3 (player.transform.position);
-
-        if (!playerChunk.Equals(playerLastChunk))
-        {
-            playerPosition = player.transform.position;
-            hasCheckedRenderDistance = false;
-        }
-
-        if (chunksToActivate.Count > 0)
-            ActivateChunks();
-
-        if (chunksToDeactivate.Count > 0)
-            DeactivateChunks();
-            
+    {    
         if(chunksToInitialize.Count > 0)
             InitializeChunk();
 
@@ -102,9 +68,6 @@ public class World : MonoBehaviour
                 chunksToDraw.Dequeue().CreateMesh();
             }
         }
-
-        if (Input.GetKeyDown(KeyCode.F3))
-            debugScreen.SetActive(!debugScreen.activeSelf);
     }
 
     private void GetSpawnPosition()
@@ -115,15 +78,12 @@ public class World : MonoBehaviour
         //  When found spawn player
 
         spawn.transform.position = new Vector3((VoxelData.WorldSizeInChunks * VoxelData.chunkWidth) / 2f, VoxelData.chunkHeight, (VoxelData.WorldSizeInChunks * VoxelData.chunkWidth) / 2f);
-        playerLastChunk = GetChunkCoordinateFromVector3(spawn.transform.position);
 
         for (int i = 0; i < VoxelData.chunkHeight; i++)
         {
             if(GetVoxelBlockType(new Vector3(spawn.transform.position.x, i, spawn.transform.position.z)) == 1)
             {
                 spawn.transform.position = new Vector3(spawn.transform.position.x, i + 2, spawn.transform.position.z);
-
-                player.GetComponent<PlayerMovement>().SetPlayerPositionAtSpawnPosition();
             }
         }
     }
@@ -159,6 +119,9 @@ public class World : MonoBehaviour
 
         while (true)
         {
+            if (chunksToPopulate.Count > 0)
+                PopulateChunks();
+
             if (!applyingModifications)
                 ApplyModifications();
 
@@ -167,80 +130,11 @@ public class World : MonoBehaviour
         }
     }
 
-    private void ThreadedUpdate_3()
-    {
-        //  Infinte while loop on seperate thread, very scary :(
-
-        while (true)
-        {
-            if (!hasCheckedRenderDistance)
-                CheckRenderDistance();
-
-            if (chunksToPopulate.Count > 0)
-                PopulateChunks();
-        }
-    }
-
     private void OnDisable()
     {
         //  Aborts infinite loop when we shut down program just in case
 
         Thread_2.Abort();
-        Thread_3.Abort();
-    }
-
-    private void CheckRenderDistance()
-    {
-        //  Checks if there are any chunks in render distance that should exist but dont
-        //  If so, generate
-        //  Else if it exists but not active, tell main thread to activate
-        //  Then check if any old chunks are outside of render distance
-        //  If so, tell main thread to deactivate
-
-        ChunkCoordinate coord = GetChunkCoordinateFromVector3(playerPosition);
-        playerLastChunk = playerChunk;
-
-        List<ChunkCoordinate> previoslyActiveChunks = new List<ChunkCoordinate>(activeChunks);
-
-        activeChunks.Clear();
-
-        for (int x = coord.x - VoxelData.RenderDistanceInChunks; x < coord.x + VoxelData.RenderDistanceInChunks; x++)
-        {
-            for (int z = coord.z - VoxelData.RenderDistanceInChunks; z < coord.z + VoxelData.RenderDistanceInChunks; z++)
-            {
-                if (IsChunkInWorld(new ChunkCoordinate(x, z)))
-                {
-                    if (chunks[x, z] == null)
-                    {
-                        chunks[x, z] = new Chunk(new ChunkCoordinate(x, z), this);
-                        chunksToInitialize.Add(new ChunkCoordinate(x, z));
-                    }
-
-                    else if (!chunks[x, z].isActive)
-                    {
-                        chunksToActivate.Enqueue(chunks[x, z]);
-                    }
-
-                    activeChunks.Add(new ChunkCoordinate(x, z));
-                }
-
-                for (int i = 0; i < previoslyActiveChunks.Count; i++)
-                {
-                    if (previoslyActiveChunks[i].Equals(new ChunkCoordinate(x, z)))
-                        previoslyActiveChunks.RemoveAt(i);
-                }
-            }
-        }
-
-        foreach (ChunkCoordinate c in previoslyActiveChunks)
-        {
-            activeChunks.Remove(new ChunkCoordinate(c.x, c.z));
-
-
-            chunksToDeactivate.Enqueue(chunks[c.x, c.z]);
-        }
-
-        hasCheckedRenderDistance = true;
     }
 
     private void PopulateChunks()
@@ -322,19 +216,7 @@ public class World : MonoBehaviour
         }
     }
 
-    private void ActivateChunks()
-    {
-        while (chunksToActivate.Count > 0)
-            chunksToActivate.Dequeue().isActive = true;
-    }
-
-    private void DeactivateChunks()
-    {
-        while (chunksToDeactivate.Count > 0)
-            chunksToDeactivate.Dequeue().isActive = false;
-    }
-
-    private ChunkCoordinate GetChunkCoordinateFromVector3(Vector3 pos)
+    public ChunkCoordinate GetChunkCoordinateFromVector3(Vector3 pos)
     {
         int x = Mathf.FloorToInt(pos.x / VoxelData.chunkWidth);
         int z = Mathf.FloorToInt(pos.z / VoxelData.chunkWidth);
@@ -439,7 +321,7 @@ public class World : MonoBehaviour
         return voxelValue;
     }   
 
-    private bool IsChunkInWorld(ChunkCoordinate coord)
+    public bool IsChunkInWorld(ChunkCoordinate coord)
     {
         //  Checks if chunk is inside world
 

@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class DebugScreen : MonoBehaviour
 {
-    private World world;
+    private RenderDistance RenderDistance;
     private TextMeshProUGUI text;
 
     private float frameRate;
@@ -17,7 +17,7 @@ public class DebugScreen : MonoBehaviour
 
     private void Start()
     {
-        world = GameObject.Find("World").GetComponent<World>();
+        RenderDistance = GetComponent<RenderDistance>();
         text = GetComponent<TextMeshProUGUI >();
 
         halfWorldSizeInVoxel = VoxelData.WorldSizeInVoxel / 2;
@@ -57,11 +57,11 @@ public class DebugScreen : MonoBehaviour
     {
         //  World center isnt unity editor center, so we must take value minus half of world  
 
-        return "xyz: " + (Mathf.FloorToInt(world.player.transform.position.x) - halfWorldSizeInVoxel) + ", " + (Mathf.FloorToInt(world.player.transform.position.y)) + ", " + (Mathf.FloorToInt(world.player.transform.position.z) - halfWorldSizeInVoxel);
+        return "xyz: " + (Mathf.FloorToInt(RenderDistance.transform.position.x) - halfWorldSizeInVoxel) + ", " + (Mathf.FloorToInt(RenderDistance.transform.position.y)) + ", " + (Mathf.FloorToInt(RenderDistance.transform.position.z) - halfWorldSizeInVoxel);
     }
     private string ChunkCoordinate()
     {
         //  -||-
-        return "chunk: " + (world.playerChunk.x - halfWorldSizeInChunk) + ", " + (world.playerChunk.z - halfWorldSizeInChunk);
+        return "chunk: " + (RenderDistance.playerChunk.x - halfWorldSizeInChunk) + ", " + (RenderDistance.playerChunk.z - halfWorldSizeInChunk);
     }
 }

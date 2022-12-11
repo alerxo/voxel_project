@@ -34,6 +34,8 @@ public class Chunk
     {
         coord = _coord;
         world = _world;
+
+        isActive = false;
     }
 
     public void Init()
@@ -41,6 +43,10 @@ public class Chunk
         //  Initalizes the chunk and adds itself to populated list
 
         chunkObject = new GameObject();
+        isActive = false;
+
+        Debug.Log(coord.x.ToString() + coord.z.ToString() + "is init");
+
         chunkObject.layer = 8;
 
         meshFilter = chunkObject.AddComponent<MeshFilter>();

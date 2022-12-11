@@ -34,6 +34,8 @@ public class PlayerMovement : NetworkBehaviour
         characterController = GetComponent<CharacterController>();
 
         SetPlayerPositionAtSpawnPosition();
+
+        cameraMovement.gameObject.SetActive(true);
     }
 
     public void SetPlayerPositionAtSpawnPosition()
@@ -44,10 +46,6 @@ public class PlayerMovement : NetworkBehaviour
 
     private void Update()
     {
-        if (!IsOwner) return;
-
-        cameraMovement.gameObject.SetActive(true);
-
         if (CanMove())
         {
             Movement();
