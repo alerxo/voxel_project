@@ -4,7 +4,8 @@ using UnityEngine;
 
 public class PlayerSpawner : MonoBehaviour
 {
-    [SerializeField] private GameObject player;
+    [SerializeField] private RenderDistance playerRenderDistance;
+    [SerializeField] private PlayerMovement playerMovement;
 
     private int chunksSpawned;
 
@@ -32,7 +33,10 @@ public class PlayerSpawner : MonoBehaviour
     {
         //  Waits for spawn to load and spawns player and deactivates itself
 
-        player.SetActive(true);
+        playerMovement.SetPlayerPositionAtSpawnPosition();
+
+        playerRenderDistance.enabled = true;
+
         this.enabled = false;
     }
 }

@@ -33,9 +33,7 @@ public class PlayerMovement : NetworkBehaviour
     {
         characterController = GetComponent<CharacterController>();
 
-        SetPlayerPositionAtSpawnPosition();
-
-        cameraMovement.gameObject.SetActive(true);
+        if(IsOwner) cameraMovement.gameObject.SetActive(true);
     }
 
     public void SetPlayerPositionAtSpawnPosition()
@@ -151,7 +149,7 @@ public class PlayerMovement : NetworkBehaviour
     {
         //  If terrain exists under player, ie, chunk loaded
 
-        if (Physics.Raycast(transform.position, -Vector3.up))
+        if (Physics.Raycast(transform.position, -Vector3.up) && IsOwner)
             return true;
 
         else

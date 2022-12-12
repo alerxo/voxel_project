@@ -1,9 +1,11 @@
+using Mono.Cecil;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
+using Unity.Netcode;
 using UnityEngine;
 
-public class RenderDistance : MonoBehaviour
+public class RenderDistance : NetworkBehaviour
 {
     public ChunkCoordinate playerChunk;
     private ChunkCoordinate playerLastChunk;
@@ -25,6 +27,8 @@ public class RenderDistance : MonoBehaviour
 
     private void Start()
     {
+        if (!IsOwner) return;
+
         worldObj = GameObject.FindGameObjectWithTag("WorldObj");
         world = worldObj.GetComponent<World>();
 
@@ -40,6 +44,8 @@ public class RenderDistance : MonoBehaviour
 
     private void Update()
     {
+        if (!IsOwner) return;
+
         playerChunk = world.GetChunkCoordinateFromVector3(transform.position);
 
         if (!playerChunk.Equals(playerLastChunk))
