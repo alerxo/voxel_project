@@ -10,7 +10,6 @@ public class World : NetworkBehaviour
     public Biome biome;
 
     [SerializeField] private GameObject spawn;
-    public bool spawnLoaded = false;
 
     private NetworkManager networkManager;
 
@@ -104,11 +103,13 @@ public class World : NetworkBehaviour
 
     private void InitializeChunk()
     {
-        //  Initializes first chunk in list and removes
+        //  Initializes first chunk in list and removes, calls eventmanager
 
         ChunkCoordinate cc = chunksToInitialize[0];
         chunksToInitialize.RemoveAt(0);
         chunks[cc.x, cc.z].Init();
+
+        EventManager.OnNewChunk();
     }
 
     private void ThreadedUpdate_2()

@@ -5,22 +5,34 @@ using UnityEngine;
 public class PlayerSpawner : MonoBehaviour
 {
     [SerializeField] private GameObject player;
-    private bool playerSpawned = false;
 
-    private World world;
+    private int chunksSpawned;
 
-    private void Start()
+    private void OnEnable()
     {
-        world = GameObject.FindGameObjectWithTag("WorldObj").GetComponent<World>();
+        EventManager.NewChunk += EventManager_NewChunk;
     }
 
-    private void Update()
+    private void OnDisable()
     {
-        if(world.spawnLoaded && !playerSpawned)
+        EventManager.NewChunk -= EventManager_NewChunk;
+    }
+
+    private void EventManager_NewChunk()
+    {
+        chunksSpawned += 1;
+
+        if(chunksSpawned > (VoxelData.RenderDistanceInChunks * 2) *  (VoxelData.RenderDistanceInChunks * 2))
         {
-            player.SetActive(true);
-            playerSpawned = true;
-            this.enabled = false;
+            SpawnPlayer();
         }
+    }
+
+    private void SpawnPlayer()
+    {
+        //  Waits for spawn to load and spawns player and deactivates itself
+
+        player.SetActive(true);
+        this.enabled = false;
     }
 }
