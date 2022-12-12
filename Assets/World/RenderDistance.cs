@@ -15,10 +15,9 @@ public class RenderDistance : MonoBehaviour
 
     private List<ChunkCoordinate> activeChunks = new List<ChunkCoordinate>();
 
-    private Thread Thread_3;
-    public object Thrad_3Lock = new object();
+    private Thread CheckRenderDistance_Thread;
 
-    private bool hasCheckedRenderDistance = false;
+    private bool hasCheckedRenderDistance = true;
     private Vector3 playerPosition;
 
     private Queue<Chunk> chunksToActivate = new Queue<Chunk>();
@@ -29,15 +28,14 @@ public class RenderDistance : MonoBehaviour
         worldObj = GameObject.FindGameObjectWithTag("WorldObj");
         world = worldObj.GetComponent<World>();
 
-        // Thread_3 = new Thread(new ThreadStart(ThreadedUpdate_3));
-        // Thread_3.Start();
+        CheckRenderDistance_Thread = new Thread(new ThreadStart(ThreadedUpdate_3));
+        CheckRenderDistance_Thread.Start();
 
         playerChunk = world.GetChunkCoordinateFromVector3(transform.position);
 
         playerPosition = transform.position;
         hasCheckedRenderDistance = false;
 
-        CheckRenderDistance();
     }
 
     private void Update()
@@ -48,8 +46,6 @@ public class RenderDistance : MonoBehaviour
         {
             playerPosition = transform.position;
             hasCheckedRenderDistance = false;
-
-            CheckRenderDistance();
         }
 
         if (chunksToActivate.Count > 0)
@@ -66,11 +62,16 @@ public class RenderDistance : MonoBehaviour
     private void ThreadedUpdate_3()
     {
         //  Infinte while loop on seperate thread, very scary :(
+        //  Sleeps loop for a second each time cus we dont need to spam it
 
         while (true)
         {
             if (!hasCheckedRenderDistance)
+            {
                 CheckRenderDistance();
+            }
+
+            Thread.Sleep(1000);
         }
     }
 
@@ -78,7 +79,7 @@ public class RenderDistance : MonoBehaviour
     {
         //  Aborts infinite loop when we shut down program just in case
 
-        Thread_3.Abort();
+        CheckRenderDistance_Thread.Abort();
     }
 
     private void CheckRenderDistance()
@@ -92,8 +93,6 @@ public class RenderDistance : MonoBehaviour
         ChunkCoordinate coord = world.GetChunkCoordinateFromVector3(playerPosition);
         playerLastChunk = playerChunk;
 
-        Debug.Log(playerChunk.x.ToString() + playerChunk.z.ToString());
-
         List<ChunkCoordinate> previoslyActiveChunks = new List<ChunkCoordinate>(activeChunks);
 
         activeChunks.Clear();
@@ -104,19 +103,14 @@ public class RenderDistance : MonoBehaviour
             {
                 if (world.IsChunkInWorld(new ChunkCoordinate(x, z)))
                 {
-                    Debug.Log(x.ToString() + z.ToString() + "testing");
-
                     if (world.chunks[x, z] == null)
                     {
-                        //  Debug.Log(x.ToString() + z.ToString() + "dont exist");
-
                         world.chunks[x, z] = new Chunk(new ChunkCoordinate(x, z), world);
                         world.chunksToInitialize.Add(new ChunkCoordinate(x, z));
                     }
 
                     else if (!world.chunks[x, z].isActive)
                     {
-                        //  Debug.Log(x.ToString() + z.ToString() + "activating");
                         chunksToActivate.Enqueue(world.chunks[x, z]);
                     }
 
@@ -136,8 +130,6 @@ public class RenderDistance : MonoBehaviour
             activeChunks.Remove(new ChunkCoordinate(c.x, c.z));
 
             chunksToDeactivate.Enqueue(world.chunks[c.x, c.z]);
-
-            Debug.Log(c.x.ToString() + c.z.ToString() + "removing");
         }
 
         hasCheckedRenderDistance = true;

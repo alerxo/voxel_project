@@ -36,10 +36,8 @@ public class World : NetworkBehaviour
 
     private bool applyingModifications = false;
 
-    private Thread Thread_2;
-    public object Thread_2Lock = new object();
-
-    //
+    private Thread ThreadedUpdate;
+    public object ThreadedUpdate_Lock = new object();
 
     private void Start()
     {
@@ -49,8 +47,8 @@ public class World : NetworkBehaviour
 
         Random.InitState(seed);
 
-        Thread_2 = new Thread(new ThreadStart(ThreadedUpdate_2));
-        Thread_2.Start();
+        ThreadedUpdate = new Thread(new ThreadStart(ThreadedUpdate_2));
+        ThreadedUpdate.Start();
 
         GenerateWorld();
         GetSpawnPosition();
@@ -116,6 +114,7 @@ public class World : NetworkBehaviour
     private void ThreadedUpdate_2()
     {
         //  Infinte while loop on seperate thread, very scary :(
+        //  Sleeps 10 ms after every loop cus we dont need to kill cpu
 
         while (true)
         {
@@ -127,6 +126,8 @@ public class World : NetworkBehaviour
 
             if (chunksToUpdate.Count > 0)
                 UpdateChunks();
+
+            Thread.Sleep(10);
         }
     }
 
@@ -134,7 +135,7 @@ public class World : NetworkBehaviour
     {
         //  Aborts infinite loop when we shut down program just in case
 
-        Thread_2.Abort();
+        ThreadedUpdate.Abort();
     }
 
     private void PopulateChunks()
@@ -144,7 +145,7 @@ public class World : NetworkBehaviour
         bool updated = false;
         int index = 0;
 
-        lock (Thread_2Lock)
+        lock (ThreadedUpdate_Lock)
         {
             while (!updated && index < chunksToPopulate.Count - 1)
             {
@@ -199,7 +200,7 @@ public class World : NetworkBehaviour
         bool updated = false;
         int index = 0;
 
-        lock (Thread_2Lock)
+        lock (ThreadedUpdate_Lock)
         {
             while (!updated && index < chunksToUpdate.Count - 1)
             {

@@ -9,6 +9,7 @@ TagManager:
   - CameraFollow
   - CameraLookat
   - SpawnObj
+  - WorldObj
   layers:
   - Default
   - TransparentFX

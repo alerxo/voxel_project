@@ -45,8 +45,6 @@ public class Chunk
         chunkObject = new GameObject();
         isActive = false;
 
-        Debug.Log(coord.x.ToString() + coord.z.ToString() + "is init");
-
         chunkObject.layer = 8;
 
         meshFilter = chunkObject.AddComponent<MeshFilter>();
@@ -88,7 +86,7 @@ public class Chunk
 
         isVoxelMapPopulated = true;
 
-        lock (world.Thread_2Lock)
+        lock (world.ThreadedUpdate_Lock)
         {
             world.chunksToUpdate.Add(this);
         }
@@ -186,7 +184,7 @@ public class Chunk
 
         voxelMap[xCheck, yCheck, zCheck] = newID;
 
-        lock (world.Thread_2Lock)
+        lock (world.ThreadedUpdate_Lock)
         {
             world.chunksToUpdate.Insert(0, this);
             UpdateAdjacentVoxels(xCheck, yCheck, zCheck);
