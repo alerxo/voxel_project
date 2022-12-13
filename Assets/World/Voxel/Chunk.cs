@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Chunk
 {
-    private GameObject chunkObject;
+    public GameObject chunkObject { get; private set; }
     private MeshRenderer meshRenderer;
     private MeshFilter meshFilter;
 

@@ -93,12 +93,16 @@ public class World : NetworkBehaviour
         {
             for (int z = (VoxelData.WorldSizeInChunks / 2) - VoxelData.RenderDistanceInChunks; z < (VoxelData.WorldSizeInChunks / 2) + VoxelData.RenderDistanceInChunks; z++)
             {
-                ChunkCoordinate newChunk = new ChunkCoordinate(x, z);
-
-                chunks[x, z] = new Chunk(newChunk, this);
-                chunksToInitialize.Add(newChunk);
+                NewChunk(x, z);
             }
         }
+    }
+
+    public void NewChunk(int x, int z)
+    {
+        ChunkCoordinate newChunk = new ChunkCoordinate(x, z);
+        chunks[x, z] = new Chunk(newChunk, this);
+        chunksToInitialize.Add(newChunk);
     }
 
     private void InitializeChunk()

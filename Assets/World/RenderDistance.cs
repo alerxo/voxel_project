@@ -13,6 +13,8 @@ public class RenderDistance : NetworkBehaviour
     private GameObject worldObj;
     private World world;
 
+    [SerializeField] private RpcHandler rpcHandler;
+
     [SerializeField] private GameObject debugScreen;
 
     private List<ChunkCoordinate> activeChunks = new List<ChunkCoordinate>();
@@ -24,6 +26,8 @@ public class RenderDistance : NetworkBehaviour
 
     private Queue<Chunk> chunksToActivate = new Queue<Chunk>();
     private Queue<Chunk> chunksToDeactivate = new Queue<Chunk>();
+
+    private Queue<ChunkCoordinate> chunksToServerRpc = new Queue<ChunkCoordinate>();
 
     private void Start()
     {
@@ -44,8 +48,17 @@ public class RenderDistance : NetworkBehaviour
 
     private void Update()
     {
-        if (!IsOwner) return;
+        if (!IsOwner)
+        {
+            /*
+            Debug.Log(gameObject.name);
+            Debug.Log(world.GetChunkFromVector3(transform.position).chunkObject.transform.gameObject.name);
 
+            gameObject.SetActive(world.GetChunkFromVector3(transform.position).chunkObject.transform.gameObject.activeSelf);
+            */
+            return;
+        } 
+           
         playerChunk = world.GetChunkCoordinateFromVector3(transform.position);
 
         if (!playerChunk.Equals(playerLastChunk))
@@ -54,12 +67,18 @@ public class RenderDistance : NetworkBehaviour
             hasCheckedRenderDistance = false;
         }
 
+        if(chunksToServerRpc.Count > 0)
+        {
+            ChunkCoordinate cc = chunksToServerRpc.Dequeue();
+
+            rpcHandler.NewChunkServerRpc(cc.x, cc.z);
+        }
+
         if (chunksToActivate.Count > 0)
             ActivateChunks();
 
         if (chunksToDeactivate.Count > 0)
             DeactivateChunks();
-
 
         if (Input.GetKeyDown(KeyCode.F3))
             debugScreen.SetActive(!debugScreen.activeSelf);
@@ -111,8 +130,7 @@ public class RenderDistance : NetworkBehaviour
                 {
                     if (world.chunks[x, z] == null)
                     {
-                        world.chunks[x, z] = new Chunk(new ChunkCoordinate(x, z), world);
-                        world.chunksToInitialize.Add(new ChunkCoordinate(x, z));
+                        chunksToServerRpc.Enqueue(new ChunkCoordinate(x, z));
                     }
 
                     else if (!world.chunks[x, z].isActive)
@@ -144,11 +162,7 @@ public class RenderDistance : NetworkBehaviour
     private void ActivateChunks()
     {
         while (chunksToActivate.Count > 0)
-        {
-            // Debug.Log(chunksToActivate.Peek().ToString());
             chunksToActivate.Dequeue().isActive = true;
-        }
-            
     }
 
     private void DeactivateChunks()
