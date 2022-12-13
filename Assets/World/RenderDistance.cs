@@ -31,10 +31,10 @@ public class RenderDistance : NetworkBehaviour
 
     private void Start()
     {
-        if (!IsOwner) return;
-
         worldObj = GameObject.FindGameObjectWithTag("WorldObj");
         world = worldObj.GetComponent<World>();
+
+        if (!IsOwner) return;
 
         CheckRenderDistance_Thread = new Thread(new ThreadStart(ThreadedUpdate_3));
         CheckRenderDistance_Thread.Start();
@@ -50,12 +50,14 @@ public class RenderDistance : NetworkBehaviour
     {
         if (!IsOwner)
         {
-            /*
-            Debug.Log(gameObject.name);
-            Debug.Log(world.GetChunkFromVector3(transform.position).chunkObject.transform.gameObject.name);
+            Debug.Log(world);
 
-            gameObject.SetActive(world.GetChunkFromVector3(transform.position).chunkObject.transform.gameObject.activeSelf);
-            */
+            Debug.Log(gameObject.name);
+            ChunkCoordinate cc = world.GetChunkCoordinateFromVector3(transform.position);
+            Debug.Log(cc.x + cc.z);
+
+            gameObject.SetActive(world.GetChunkFromVector3(transform.position).chunkObject.activeSelf);
+            
             return;
         } 
            
