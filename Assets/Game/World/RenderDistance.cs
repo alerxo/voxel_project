@@ -48,19 +48,8 @@ public class RenderDistance : NetworkBehaviour
 
     private void Update()
     {
-        if (!IsOwner)
-        {
-            Debug.Log(world);
+        if (!IsOwner) return;
 
-            Debug.Log(gameObject.name);
-            ChunkCoordinate cc = world.GetChunkCoordinateFromVector3(transform.position);
-            Debug.Log(cc.x + cc.z);
-
-            gameObject.SetActive(world.GetChunkFromVector3(transform.position).chunkObject.activeSelf);
-            
-            return;
-        } 
-           
         playerChunk = world.GetChunkCoordinateFromVector3(transform.position);
 
         if (!playerChunk.Equals(playerLastChunk))

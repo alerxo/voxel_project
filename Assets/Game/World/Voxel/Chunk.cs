@@ -30,6 +30,10 @@ public class Chunk
     private bool _isActive;
     private bool isVoxelMapPopulated = false;
 
+    // child objects
+
+    private List<GameObject> childObjects = new List<GameObject>();
+
     public Chunk(ChunkCoordinate _coord, World _world)
     {
         coord = _coord;
