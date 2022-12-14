@@ -16,6 +16,9 @@ public class RpcHandler : NetworkBehaviour
     [ServerRpc]
     public void NewChunkServerRpc(int x, int z)
     {
+        //  Tells server to load chunk
+
+        Debug.Log(x.ToString() + z.ToString());
         world.NewChunk(x, z);
     }
 }

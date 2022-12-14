@@ -6,24 +6,20 @@ public class PlayerSpawner : MonoBehaviour
 {
     [SerializeField] private RenderDistance playerRenderDistance;
     [SerializeField] private PlayerMovement playerMovement;
+    [SerializeField] private EntityChunkParent entityChunkParent;
 
-    private int chunksSpawned;
+    private World world;
 
-    private void OnEnable()
+    private void Start()
     {
-        EventManager.NewChunk += EventManager_NewChunk;
+        world = GameObject.FindGameObjectWithTag("WorldObj").GetComponent<World>();
     }
 
-    private void OnDisable()
+    private void Update()
     {
-        EventManager.NewChunk -= EventManager_NewChunk;
-    }
+        //  Waits untill entire spawnchunk has been loaded
 
-    private void EventManager_NewChunk()
-    {
-        chunksSpawned += 1;
-
-        if(chunksSpawned > (VoxelData.RenderDistanceInChunks * 2) *  (VoxelData.RenderDistanceInChunks * 2))
+        if (world.spawnedChunks >= (VoxelData.RenderDistanceInChunks * 2) * (VoxelData.RenderDistanceInChunks * 2))
         {
             SpawnPlayer();
         }
@@ -31,11 +27,13 @@ public class PlayerSpawner : MonoBehaviour
 
     private void SpawnPlayer()
     {
-        //  Waits for spawn to load and spawns player and deactivates itself
+        //  Sets players postion at spawn and enables certain scripts that shouldnt be on while player hasnt spawned
+        //  Deactivates itself
 
         playerMovement.SetPlayerPositionAtSpawnPosition();
 
         playerRenderDistance.enabled = true;
+        entityChunkParent.enabled = true;
 
         this.enabled = false;
     }

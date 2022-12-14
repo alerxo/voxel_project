@@ -32,35 +32,37 @@ public class Chunk
 
     // child objects
 
-    private List<GameObject> childObjects = new List<GameObject>();
+    public List<GameObject> childObjects = new List<GameObject>();
 
     public Chunk(ChunkCoordinate _coord, World _world)
     {
         coord = _coord;
         world = _world;
 
-        isActive = false;
+        IsActive = false;
     }
 
     public void Init()
     {
-        //  Initalizes the chunk and adds itself to populated list
+        //  Initalizes the chunk
 
+        //  Adds an inactove gameobject and sets it to ground layer
         chunkObject = new GameObject();
-        isActive = false;
-
+        IsActive = false;
         chunkObject.layer = 8;
+
+        //  components
 
         meshFilter = chunkObject.AddComponent<MeshFilter>();
         meshRenderer = chunkObject.AddComponent<MeshRenderer>();
-
         meshCollider = chunkObject.AddComponent<MeshCollider>();
-
 
         materials[0] = world.material;
         materials[1] = world.transparentMaterial;
 
         meshRenderer.materials = materials;
+
+        //  Parents to world obj and changes name
 
         chunkObject.transform.SetParent(world.transform);
         chunkObject.transform.position = new Vector3(coord.x * VoxelData.chunkWidth, 0f, coord.z * VoxelData.chunkWidth);
@@ -68,6 +70,8 @@ public class Chunk
         chunkObject.name = "Chunk " + coord.x + ", " + coord.z;
 
         position = chunkObject.transform.position;
+
+        //  Tells world to populate this chunk, not doing it here cus we do it on another thread
 
         world.chunksToPopulate.Add(this);
     }
@@ -98,9 +102,9 @@ public class Chunk
 
     public void UpdateChunk()
     {
-        //  Adds all the modifications to the cunk
-        //  Adding a voxel at each spot in the chunk if its a solid
-        //  Adds itself to draw queue
+        //  Adds all the modifications to the chunk, ie changing block id
+        //  Adding voxel mesh data at each spot in the chunk if its a solid
+        //  Adds itself to draw queue, threading -||-
 
         ClearMeshData();
 
@@ -137,9 +141,10 @@ public class Chunk
         uvs.Clear();
     }
     
-    public bool isActive
+    public bool IsActive
     {
-        //  Can either get the state of chunk or set it
+        //  If changing the activate state, will update child objects, ie entities in chunk,
+        //  related to render distance we want to render entities in chunk with chunk
 
         get { return _isActive; }
 
@@ -150,11 +155,16 @@ public class Chunk
             if(chunkObject != null)
             {
                 chunkObject.SetActive(value);
+
+                foreach(GameObject child in childObjects)
+                {
+                    child.SetActive(value);
+                }
             }
         }
     }
 
-    public bool isEditable
+    public bool IsEditable
     {
         get
         {
@@ -177,7 +187,9 @@ public class Chunk
 
     public void EditVoxel(Vector3 pos, byte newID)
     {
-        //  Chnages the ID of voxel and updates itself, and adjacent voxels
+        //  Changes the ID of voxel and updates itself, and adjacent voxels
+
+        //  Not used rn but can be if block placing should be a thing
 
         int xCheck = Mathf.FloorToInt(pos.x);
         int yCheck = Mathf.FloorToInt(pos.y);
@@ -232,7 +244,7 @@ public class Chunk
 
     public byte GetVoxelFromGlobalVector3(Vector3 pos)
     {
-        //  ^^
+        //  -||-
 
         int xCheck = Mathf.FloorToInt(pos.x);
         int yCheck = Mathf.FloorToInt(pos.y);

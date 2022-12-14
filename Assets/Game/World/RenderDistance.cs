@@ -31,8 +31,12 @@ public class RenderDistance : NetworkBehaviour
 
     private void Start()
     {
+        //  Needed by owner and non owner
+
         worldObj = GameObject.FindGameObjectWithTag("WorldObj");
         world = worldObj.GetComponent<World>();
+
+        //  Needed only by owner
 
         if (!IsOwner) return;
 
@@ -54,14 +58,15 @@ public class RenderDistance : NetworkBehaviour
 
         if (!playerChunk.Equals(playerLastChunk))
         {
+            //  If in new chunk, via check render distance checkrenderdistancethread, uses bool to active
             playerPosition = transform.position;
             hasCheckedRenderDistance = false;
         }
 
         if(chunksToServerRpc.Count > 0)
         {
+            //  Sends chunks that should be activate to the server via rpcmanager
             ChunkCoordinate cc = chunksToServerRpc.Dequeue();
-
             rpcHandler.NewChunkServerRpc(cc.x, cc.z);
         }
 
@@ -70,7 +75,8 @@ public class RenderDistance : NetworkBehaviour
 
         if (chunksToDeactivate.Count > 0)
             DeactivateChunks();
-
+        
+        //  Should not be here
         if (Input.GetKeyDown(KeyCode.F3))
             debugScreen.SetActive(!debugScreen.activeSelf);
     }
@@ -95,16 +101,18 @@ public class RenderDistance : NetworkBehaviour
     {
         //  Aborts infinite loop when we shut down program just in case
 
-        CheckRenderDistance_Thread.Abort();
+        if (IsOwner) CheckRenderDistance_Thread.Abort();
+
     }
 
     private void CheckRenderDistance()
     {
-        //  Checks if there are any chunks in render distance that should exist but dont
-        //  If so, generate
-        //  Else if it exists but not active, tell main thread to activate
-        //  Then check if any old chunks are outside of render distance
-        //  If so, tell main thread to deactivate
+        //  Makes a copy of active chunks to compare in loop, if we find it, ie in render distance, we remove it,
+        //  after loop we deactivate (in main thread later, cus thread cant) any remaining chunks in the copy, cus these arent in render distance
+
+        //  If we find a chunk that doesnt exist, we add it to list of chunks to be server rpcd to creation
+        //  If not activate, activate (in main thread -||-)
+        //  Add all chunks in renderdistance to active chunks
 
         ChunkCoordinate coord = world.GetChunkCoordinateFromVector3(playerPosition);
         playerLastChunk = playerChunk;
@@ -124,7 +132,7 @@ public class RenderDistance : NetworkBehaviour
                         chunksToServerRpc.Enqueue(new ChunkCoordinate(x, z));
                     }
 
-                    else if (!world.chunks[x, z].isActive)
+                    else if (!world.chunks[x, z].IsActive)
                     {
                         chunksToActivate.Enqueue(world.chunks[x, z]);
                     }
@@ -144,6 +152,8 @@ public class RenderDistance : NetworkBehaviour
         {
             activeChunks.Remove(new ChunkCoordinate(c.x, c.z));
 
+            Debug.Log(world.chunks[c.x, c.z]);
+
             chunksToDeactivate.Enqueue(world.chunks[c.x, c.z]);
         }
 
@@ -153,12 +163,19 @@ public class RenderDistance : NetworkBehaviour
     private void ActivateChunks()
     {
         while (chunksToActivate.Count > 0)
-            chunksToActivate.Dequeue().isActive = true;
+            chunksToActivate.Dequeue().IsActive = true;
     }
 
     private void DeactivateChunks()
     {
         while (chunksToDeactivate.Count > 0)
-            chunksToDeactivate.Dequeue().isActive = false;
+        {
+            //  null check, if its null this time, its deactivate next batch, so we just skip for now
+
+            Chunk c = chunksToDeactivate.Dequeue();
+
+            if (c != null) c.IsActive = false;
+        }
+            
     }
 }

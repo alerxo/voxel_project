@@ -10,6 +10,7 @@ public class World : NetworkBehaviour
     public Biome biome;
 
     [SerializeField] private GameObject spawn;
+    public int spawnedChunks { get; private set; }
 
     private NetworkManager networkManager;
 
@@ -60,7 +61,7 @@ public class World : NetworkBehaviour
 
         if(chunksToDraw.Count > 0)
         {
-            if (chunksToDraw.Peek().isEditable)
+            if (chunksToDraw.Peek().IsEditable)
             {
                 chunksToDraw.Dequeue().CreateMesh();
             }
@@ -70,9 +71,8 @@ public class World : NetworkBehaviour
     private void GetSpawnPosition()
     {
         //  Middle of world is half of width on x,z
-        //  Sets playerlastchunk as spawnchunk
         //  Loops through every y block on spawn x,z looking for the grass block, (which is on terrainheight)
-        //  When found spawn player
+        //  Sets spawn at terrainheight
 
         spawn.transform.position = new Vector3((VoxelData.WorldSizeInChunks * VoxelData.chunkWidth) / 2f, VoxelData.chunkHeight, (VoxelData.WorldSizeInChunks * VoxelData.chunkWidth) / 2f);
 
@@ -87,7 +87,9 @@ public class World : NetworkBehaviour
 
     private void GenerateWorld()
     {
-        //  Generates the world according to world size in chunks
+        //  starting from middle of world, ie half of the width in x and z
+        //  Remove render distance value form starting loop and add it to ending loop,
+        //  so we get square with width 2 renderdistances, ie renderdistance ín all directions
 
         for (int x = (VoxelData.WorldSizeInChunks / 2) - VoxelData.RenderDistanceInChunks; x < (VoxelData.WorldSizeInChunks / 2) + VoxelData.RenderDistanceInChunks; x++)
         {
@@ -100,6 +102,8 @@ public class World : NetworkBehaviour
 
     public void NewChunk(int x, int z)
     {
+        //  Adds new chunk to chunk array and then initializes it
+
         ChunkCoordinate newChunk = new ChunkCoordinate(x, z);
         chunks[x, z] = new Chunk(newChunk, this);
         chunksToInitialize.Add(newChunk);
@@ -107,13 +111,14 @@ public class World : NetworkBehaviour
 
     private void InitializeChunk()
     {
-        //  Initializes first chunk in list and removes, calls eventmanager
+        //  Initializes first chunk in list and removes,
+        //  adds to spawned chunks so other scripts can caluclate when to do something
 
         ChunkCoordinate cc = chunksToInitialize[0];
         chunksToInitialize.RemoveAt(0);
         chunks[cc.x, cc.z].Init();
 
-        EventManager.OnNewChunk();
+        spawnedChunks++;
     }
 
     private void ThreadedUpdate_2()
@@ -146,6 +151,7 @@ public class World : NetworkBehaviour
     private void PopulateChunks()
     {
         //  Starts a new round of chunk populating when it can
+        //  Looks for the first chunk thats not populated, ie not editable
 
         bool updated = false;
         int index = 0;
@@ -154,7 +160,7 @@ public class World : NetworkBehaviour
         {
             while (!updated && index < chunksToPopulate.Count - 1)
             {
-                if (chunksToPopulate[index].isEditable == false)
+                if (chunksToPopulate[index].IsEditable == false)
                 {
                     chunksToPopulate[index].PopulateVoxelMap();
                     chunksToPopulate.RemoveAt(index);
@@ -168,7 +174,8 @@ public class World : NetworkBehaviour
 
     private void ApplyModifications()
     {
-        //  Taking a modification from queue and doing it
+        //  modifications is a queue of queues, ie, queue of structure (has multiple voxels, hence a queue by itself)
+        //  takes the first structure from modifications and loops through it updating all chunks it is in
 
         applyingModifications = true;
 
@@ -201,6 +208,7 @@ public class World : NetworkBehaviour
     private void UpdateChunks()
     {
         //  Starts a new round of chunk updating when it can
+        //  Looks for the first chunk thats populated, ie editable
 
         bool updated = false;
         int index = 0;
@@ -209,7 +217,7 @@ public class World : NetworkBehaviour
         {
             while (!updated && index < chunksToUpdate.Count - 1)
             {
-                if (chunksToUpdate[index].isEditable)
+                if (chunksToUpdate[index].IsEditable)
                 {
                     chunksToUpdate[index].UpdateChunk();
                     activeChunks.Add(chunksToUpdate[index].coord);
@@ -258,7 +266,7 @@ public class World : NetworkBehaviour
                 return false;
         }
 
-        if (chunks[thisChunk.x, thisChunk.z] != null && chunks[thisChunk.x, thisChunk.z].isEditable)
+        if (chunks[thisChunk.x, thisChunk.z] != null && chunks[thisChunk.x, thisChunk.z].IsEditable)
         {
             return blocks[chunks[thisChunk.x, thisChunk.z].GetVoxelFromGlobalVector3(pos)].isTransparent;
         }
