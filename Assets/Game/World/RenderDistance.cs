@@ -10,10 +10,7 @@ public class RenderDistance : NetworkBehaviour
     public ChunkCoordinate playerChunk;
     private ChunkCoordinate playerLastChunk;
 
-    private GameObject worldObj;
     private World world;
-
-    [SerializeField] private RpcHandler rpcHandler;
 
     [SerializeField] private GameObject debugScreen;
 
@@ -27,18 +24,11 @@ public class RenderDistance : NetworkBehaviour
     private Queue<Chunk> chunksToActivate = new Queue<Chunk>();
     private Queue<Chunk> chunksToDeactivate = new Queue<Chunk>();
 
-    private Queue<ChunkCoordinate> chunksToServerRpc = new Queue<ChunkCoordinate>();
+    private Queue<ChunkCoordinate> chunksToCreate = new Queue<ChunkCoordinate>();
 
     private void Start()
     {
-        //  Needed by owner and non owner
-
-        worldObj = GameObject.FindGameObjectWithTag("WorldObj");
-        world = worldObj.GetComponent<World>();
-
-        //  Needed only by owner
-
-        if (!IsOwner) return;
+        world = GameObject.FindGameObjectWithTag("WorldObj").GetComponent<World>();
 
         CheckRenderDistance_Thread = new Thread(new ThreadStart(ThreadedUpdate_3));
         CheckRenderDistance_Thread.Start();
@@ -52,8 +42,6 @@ public class RenderDistance : NetworkBehaviour
 
     private void Update()
     {
-        if (!IsOwner) return;
-
         playerChunk = world.GetChunkCoordinateFromVector3(transform.position);
 
         if (!playerChunk.Equals(playerLastChunk))
@@ -63,11 +51,11 @@ public class RenderDistance : NetworkBehaviour
             hasCheckedRenderDistance = false;
         }
 
-        if(chunksToServerRpc.Count > 0)
+        if(chunksToCreate.Count > 0)
         {
             //  Sends chunks that should be activate to the server via rpcmanager
-            ChunkCoordinate cc = chunksToServerRpc.Dequeue();
-            rpcHandler.NewChunkServerRpc(cc.x, cc.z);
+            ChunkCoordinate cc = chunksToCreate.Dequeue();
+            world.NewChunk(cc.x, cc.z);
         }
 
         if (chunksToActivate.Count > 0)
@@ -127,14 +115,14 @@ public class RenderDistance : NetworkBehaviour
             {
                 if (world.IsChunkInWorld(new ChunkCoordinate(x, z)))
                 {
-                    if (world.chunks[x, z] == null)
+                    if (world.chunksInWorld[x, z] == null)
                     {
-                        chunksToServerRpc.Enqueue(new ChunkCoordinate(x, z));
+                        chunksToCreate.Enqueue(new ChunkCoordinate(x, z));
                     }
 
-                    else if (!world.chunks[x, z].IsActive)
+                    else if (!world.chunksInWorld[x, z].IsActive)
                     {
-                        chunksToActivate.Enqueue(world.chunks[x, z]);
+                        chunksToActivate.Enqueue(world.chunksInWorld[x, z]);
                     }
 
                     activeChunks.Add(new ChunkCoordinate(x, z));
@@ -152,9 +140,7 @@ public class RenderDistance : NetworkBehaviour
         {
             activeChunks.Remove(new ChunkCoordinate(c.x, c.z));
 
-            Debug.Log(world.chunks[c.x, c.z]);
-
-            chunksToDeactivate.Enqueue(world.chunks[c.x, c.z]);
+            chunksToDeactivate.Enqueue(world.chunksInWorld[c.x, c.z]);
         }
 
         hasCheckedRenderDistance = true;

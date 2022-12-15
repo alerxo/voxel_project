@@ -5,10 +5,12 @@ using UnityEngine;
 
 public class EntityChunkParent : NetworkBehaviour
 {
+    [SerializeField] private GameObject entity;
+
     private World world;
 
-    private ChunkCoordinate playerChunk;
-    private ChunkCoordinate playerLastChunk;
+    private ChunkCoordinate playerChunkCoordinate;
+    private ChunkCoordinate playerLastChunkCoordinate;
 
     private Chunk parentChunk;
     private Chunk lastParentChunk;
@@ -20,54 +22,68 @@ public class EntityChunkParent : NetworkBehaviour
 
     private void Update()
     {
-        //  If we are not in a loaded chunk, dont run 
+        //  When entity moves into new chunk, we call server rpc, to call a client rpc
+        //  This client rpc updates the parentchunk for this entity on all clients
 
-        if (world.GetChunkFromVector3(transform.position) == null) return;
+        if (!IsOwner) return;
 
-        playerChunk = world.GetChunkCoordinateFromVector3(transform.position);
+        playerChunkCoordinate = world.GetChunkCoordinateFromVector3(entity.transform.position);
 
-        if (!playerChunk.Equals(playerLastChunk))
+        if (!playerChunkCoordinate.Equals(playerLastChunkCoordinate))
         {
-            //  When we are in new chunk change parent chunk
+            playerLastChunkCoordinate = playerChunkCoordinate;
+            NewParentServerRpc(playerChunkCoordinate.x, playerChunkCoordinate.z);
+        }
+    }
 
-            playerLastChunk = playerChunk;
-            lastParentChunk = parentChunk;
-            parentChunk = world.GetChunkFromVector3(transform.position);
+    [ServerRpc]
+    private void NewParentServerRpc(int x, int z)
+    {
+        NewParentClientRpc(x, z);
+    }
 
-            if (lastParentChunk == null)
-            {
-                AddParent(parentChunk);
-            }
+    [ClientRpc]
+    private void NewParentClientRpc(int x, int z)
+    {
+        if (IsOwner) return;
 
-            else
-            {
-                ChangeParent(lastParentChunk, parentChunk);
-            }
+        Chunk tempChunk = world.chunksInWorld[x, z];
+
+        if (tempChunk == null)
+        {
+            //  If entity not in a existing chunk, remove parent and set inactive
+
+            RemoveParent(parentChunk);
+            entity.SetActive(false);
+            return;
         }
 
-        parentChunk = world.GetChunkFromVector3(transform.position);
-
-        if (!IsOwner && (gameObject.activeSelf != parentChunk.IsActive))
+        else
         {
-            //  For the non owners, update entity acitve state from parent state
+            //  If entity in an existing chunk change the parent and update
 
-            gameObject.SetActive(parentChunk.IsActive);
+            lastParentChunk = parentChunk;
+            parentChunk = tempChunk;
+
+            RemoveParent(lastParentChunk);
+            AddParent(parentChunk);
+
+            if (entity.activeSelf != parentChunk.IsActive)
+            {
+                //  Updates the state of entity based on parent
+
+                entity.SetActive(parentChunk.IsActive);
+            }
         }
     }
 
     private void AddParent(Chunk chunk)
     {
-        chunk.childObjects.Add(gameObject);
+        chunk?.childObjects.Add(entity);
     }
 
     private void RemoveParent(Chunk chunk)
     {
-        chunk.childObjects.Remove(gameObject);
-    }
-
-    private void ChangeParent(Chunk oldChunk, Chunk newChunk)
-    {
-        RemoveParent(oldChunk);
-        AddParent(newChunk);
+        chunk?.childObjects.Remove(entity);
     }
 }

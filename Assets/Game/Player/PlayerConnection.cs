@@ -6,7 +6,6 @@ using UnityEngine;
 public class PlayerConnection : NetworkBehaviour
 {
     private int _gameMode;
-    [SerializeField] private GameObject worldPrefab;
     [SerializeField] private NetworkManager networkManager;
     
 
@@ -39,10 +38,6 @@ public class PlayerConnection : NetworkBehaviour
 
     private void StartGame()
     {
-        if(_gameMode == 0 || _gameMode == 1)
-        {
-            GameObject tempWorld = Instantiate(worldPrefab);
-            tempWorld.GetComponent<NetworkObject>().Spawn();
-        }
+        
     }
 }

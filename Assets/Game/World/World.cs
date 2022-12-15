@@ -10,9 +10,7 @@ public class World : NetworkBehaviour
     public Biome biome;
 
     [SerializeField] private GameObject spawn;
-    public int spawnedChunks { get; private set; }
-
-    private NetworkManager networkManager;
+    public int spawnedChunksCount { get; private set; }
 
     //  Voxel related
 
@@ -20,10 +18,9 @@ public class World : NetworkBehaviour
 
     public Material material;
     public Material transparentMaterial;
-
     public Block[] blocks;
 
-    public Chunk[,] chunks = new Chunk[VoxelData.WorldSizeInChunks, VoxelData.WorldSizeInChunks];
+    public Chunk[,] chunksInWorld = new Chunk[VoxelData.WorldSizeInChunks, VoxelData.WorldSizeInChunks];
 
     public List<ChunkCoordinate> chunksToInitialize = new List<ChunkCoordinate>();
 
@@ -42,8 +39,6 @@ public class World : NetworkBehaviour
     private void Start()
     {
         //  Starts a new threads for chunk updating, renderdistance checks and voxelmap populating
-
-        networkManager = GameObject.FindGameObjectWithTag("NetworkManager").GetComponent<NetworkManager>();
 
         Random.InitState(seed);
 
@@ -98,15 +93,18 @@ public class World : NetworkBehaviour
                 NewChunk(x, z);
             }
         }
-    }
+    }   
 
     public void NewChunk(int x, int z)
     {
         //  Adds new chunk to chunk array and then initializes it
 
-        ChunkCoordinate newChunk = new ChunkCoordinate(x, z);
-        chunks[x, z] = new Chunk(newChunk, this);
-        chunksToInitialize.Add(newChunk);
+        if (chunksInWorld[x, z] == null)
+        {
+            ChunkCoordinate newChunk = new ChunkCoordinate(x, z);
+            chunksInWorld[x, z] = new Chunk(newChunk, this);
+            chunksToInitialize.Add(newChunk);
+        }
     }
 
     private void InitializeChunk()
@@ -116,9 +114,9 @@ public class World : NetworkBehaviour
 
         ChunkCoordinate cc = chunksToInitialize[0];
         chunksToInitialize.RemoveAt(0);
-        chunks[cc.x, cc.z].Init();
+        chunksInWorld[cc.x, cc.z].Initialize();
 
-        spawnedChunks++;
+        spawnedChunksCount++;
     }
 
     private void ThreadedUpdate_2()
@@ -191,13 +189,13 @@ public class World : NetworkBehaviour
 
                 if (IsChunkInWorld(cc))
                 {
-                    if (chunks[cc.x, cc.z] == null)
+                    if (chunksInWorld[cc.x, cc.z] == null)
                     {
-                        chunks[cc.x, cc.z] = new Chunk(cc, this);
+                        chunksInWorld[cc.x, cc.z] = new Chunk(cc, this);
                         chunksToInitialize.Add(cc);
                     }
 
-                    chunks[cc.x, cc.z].modifications.Enqueue(vm);
+                    chunksInWorld[cc.x, cc.z].modifications.Enqueue(vm);
                 }
             }
         }
@@ -243,7 +241,7 @@ public class World : NetworkBehaviour
         int x = Mathf.FloorToInt(pos.x / VoxelData.chunkWidth);
         int z = Mathf.FloorToInt(pos.z / VoxelData.chunkWidth);
 
-        return chunks[x, z];
+        return chunksInWorld[x, z];
     }
 
     public bool CheckIfVoxelTransparent(Vector3 pos)
@@ -266,9 +264,9 @@ public class World : NetworkBehaviour
                 return false;
         }
 
-        if (chunks[thisChunk.x, thisChunk.z] != null && chunks[thisChunk.x, thisChunk.z].IsEditable)
+        if (chunksInWorld[thisChunk.x, thisChunk.z] != null && chunksInWorld[thisChunk.x, thisChunk.z].IsEditable)
         {
-            return blocks[chunks[thisChunk.x, thisChunk.z].GetVoxelFromGlobalVector3(pos)].isTransparent;
+            return blocks[chunksInWorld[thisChunk.x, thisChunk.z].GetVoxelFromGlobalVector3(pos)].isTransparent;
         }
 
         return blocks[GetVoxelBlockType(pos)].isTransparent;

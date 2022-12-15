@@ -1,12 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
-public class PlayerSpawner : MonoBehaviour
+public class PlayerSpawner : NetworkBehaviour
 {
     [SerializeField] private RenderDistance playerRenderDistance;
     [SerializeField] private PlayerMovement playerMovement;
-    [SerializeField] private EntityChunkParent entityChunkParent;
 
     private World world;
 
@@ -19,7 +19,7 @@ public class PlayerSpawner : MonoBehaviour
     {
         //  Waits untill entire spawnchunk has been loaded
 
-        if (world.spawnedChunks >= (VoxelData.RenderDistanceInChunks * 2) * (VoxelData.RenderDistanceInChunks * 2))
+        if (world.spawnedChunksCount >= (VoxelData.RenderDistanceInChunks * 2) * (VoxelData.RenderDistanceInChunks * 2))
         {
             SpawnPlayer();
         }
@@ -32,9 +32,8 @@ public class PlayerSpawner : MonoBehaviour
 
         playerMovement.SetPlayerPositionAtSpawnPosition();
 
-        playerRenderDistance.enabled = true;
-        entityChunkParent.enabled = true;
+        if (IsOwner) playerRenderDistance.enabled = true;
 
-        this.enabled = false;
+        enabled = false;
     }
 }

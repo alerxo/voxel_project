@@ -42,10 +42,8 @@ public class Chunk
         IsActive = false;
     }
 
-    public void Init()
+    public void Initialize()
     {
-        //  Initalizes the chunk
-
         //  Adds an inactove gameobject and sets it to ground layer
         chunkObject = new GameObject();
         IsActive = false;
