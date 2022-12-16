@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
-public class PlayerMovement : MonoBehaviour
+public class PlayerMovement : NetworkBehaviour 
 {
     private float movementSpeed;
     [SerializeField] private float walkSpeed;
@@ -31,6 +32,14 @@ public class PlayerMovement : MonoBehaviour
     private void Start()
     {
         characterController = GetComponent<CharacterController>();
+
+        if(IsOwner) cameraMovement.gameObject.SetActive(true);
+    }
+
+    public void SetPlayerPositionAtSpawnPosition()
+    {
+        Vector3 spawnPosition = GameObject.FindGameObjectWithTag("SpawnObj").transform.position;
+        transform.position = spawnPosition;
     }
 
     private void Update()
@@ -140,7 +149,7 @@ public class PlayerMovement : MonoBehaviour
     {
         //  If terrain exists under player, ie, chunk loaded
 
-        if (Physics.Raycast(transform.position, -Vector3.up))
+        if (Physics.Raycast(transform.position, -Vector3.up) && IsOwner)
             return true;
 
         else

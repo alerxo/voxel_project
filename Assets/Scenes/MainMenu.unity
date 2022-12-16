@@ -155,6 +155,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 79e5a05e46714c44eadf6a790ea59b02, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  hostButton: {fileID: 1988555780}
+  serverButton: {fileID: 1195192305}
+  clientButton: {fileID: 1107982960}
 --- !u!114 &292074647
 MonoBehaviour:
   m_ObjectHideFlags: 0
