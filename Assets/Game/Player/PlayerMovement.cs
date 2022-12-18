@@ -2,9 +2,27 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Interactions;
 
 public class PlayerMovement : NetworkBehaviour 
 {
+    private CharacterController characterController;
+    [SerializeField] private Transform groundCheck;
+    [SerializeField] private LayerMask groundMask;
+
+    private Vector3 velocity;
+
+    [SerializeField] private GameObject playerCamera;
+    [SerializeField] private CameraMovement cameraMovement;
+    [SerializeField] private Transform movementDirection;
+
+    private Vector3 movement;
+
+    //  Input
+    private ThirdPersonActionAsset thirdPersonActionAsset;
+
+    //  Movement
     private float movementSpeed;
     [SerializeField] private float walkSpeed;
     [SerializeField] private float runSpeed;
@@ -16,24 +34,29 @@ public class PlayerMovement : NetworkBehaviour
     [SerializeField] private float jumpHeight;
     [SerializeField] private float gravitySpeed;
 
-    private CharacterController characterController;
-    [SerializeField] private Transform groundCheck;
-
-    [SerializeField] private LayerMask groundMask;
-
-    private Vector3 velocity;
-
-    [SerializeField] private GameObject playerCamera;
-    [SerializeField] private CameraMovement cameraMovement;
-    [SerializeField] private Transform movementDirection;
-
-    private Vector3 movement;
-
-    private void Start()
+    public override void OnNetworkSpawn()
     {
         characterController = GetComponent<CharacterController>();
 
-        if(IsOwner) cameraMovement.gameObject.SetActive(true);
+        if (!IsOwner) return;
+
+        cameraMovement.gameObject.SetActive(true);
+        thirdPersonActionAsset = new ThirdPersonActionAsset();
+
+        thirdPersonActionAsset.Player.Jump.started += Jump_started;
+        thirdPersonActionAsset.Player.Roll.started += Roll_started;
+
+        thirdPersonActionAsset.Player.Enable();
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (!IsOwner) return;
+
+        thirdPersonActionAsset.Player.Jump.started -= Jump_started;
+        thirdPersonActionAsset.Player.Roll.started -= Roll_started;
+
+        thirdPersonActionAsset.Player.Disable();
     }
 
     public void SetPlayerPositionAtSpawnPosition()
@@ -47,11 +70,7 @@ public class PlayerMovement : NetworkBehaviour
         if (CanMove())
         {
             Movement();
-            Dash();
-            Jump();
             Gravity();
-
-            characterController.Move(velocity * Time.deltaTime);
         }
     }
 
@@ -61,26 +80,26 @@ public class PlayerMovement : NetworkBehaviour
         //  We use camera y angle but player x angle so we store it in separate Transform (gameobject D:) 
         //  We multiply movementinput by this direction to get movement depending on camera rotation
 
-        float horizontal = Input.GetAxisRaw("Horizontal");
-        float vertical = Input.GetAxisRaw("Vertical");
+        Vector2 inputDirection = thirdPersonActionAsset.Player.Movement.ReadValue<Vector2>();
 
         movementDirection.eulerAngles = new Vector3(transform.eulerAngles.x, playerCamera.transform.eulerAngles.y, transform.eulerAngles.z);
 
-        movement = (movementDirection.transform.right * horizontal + vertical * movementDirection.transform.forward).normalized;
+        movement = (movementDirection.transform.right * inputDirection.x + inputDirection.y * movementDirection.transform.forward).normalized;
 
-        if (vertical > 0)
+        if (inputDirection.y > 0)
             cameraMovement.AlignPlayerWithCamera();
 
-        if (Input.GetKey(KeyCode.LeftShift)) movementSpeed = runSpeed;
-        else if (Input.GetKey(KeyCode.LeftControl)) movementSpeed = crouchSpeed;
+        if (thirdPersonActionAsset.Player.Run.IsPressed()) movementSpeed = runSpeed;
+        else if (thirdPersonActionAsset.Player.Crouch.IsPressed()) movementSpeed = crouchSpeed;
         else movementSpeed = walkSpeed;
 
-        characterController.Move(movement * movementSpeed * Time.deltaTime);
+        characterController.Move(movementSpeed * Time.deltaTime * movement);
     }
 
-    private void Dash()
+
+    private void Roll_started(InputAction.CallbackContext obj)
     {
-        if (Input.GetKey(KeyCode.Q) && CanMove())
+        if (CanMove() && IsGrounded())
         {
             StartCoroutine(_Dash());
         }
@@ -112,11 +131,11 @@ public class PlayerMovement : NetworkBehaviour
         velocity.x = 0;
     }
 
-    private void Jump()
+    private void Jump_started(InputAction.CallbackContext obj)
     {
         //  y movment
 
-        if (Input.GetButtonDown("Jump") && CanJump())
+        if (IsGrounded())
             velocity.y = jumpHeight;
     }
 
@@ -133,6 +152,8 @@ public class PlayerMovement : NetworkBehaviour
         {
             velocity.y += -9.81f * gravitySpeed * Time.deltaTime;
         }
+
+        characterController.Move(velocity * Time.deltaTime);
     }
 
     private bool IsGrounded()
@@ -152,14 +173,6 @@ public class PlayerMovement : NetworkBehaviour
         if (Physics.Raycast(transform.position, -Vector3.up) && IsOwner)
             return true;
 
-        else
-            return false;
-    }
-
-    private bool CanJump()
-    {
-        if (IsGrounded())
-            return true;
         else
             return false;
     }
