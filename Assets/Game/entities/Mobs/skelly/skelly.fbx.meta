@@ -1,9 +1,14 @@
 fileFormatVersion: 2
-guid: 5352ade8d5e3a544d9abcfd34086c4cb
+guid: ddbbcc0cc3bf3814781588e570203bf2
 ModelImporter:
   serializedVersion: 21300
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Skelly_Material
+    second: {fileID: 2100000, guid: a0c74fc56a53a8842aadb28394aeab43, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
