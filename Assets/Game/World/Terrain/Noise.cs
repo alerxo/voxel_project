@@ -4,11 +4,22 @@ using UnityEngine;
 
 public static class Noise
 {
-    public static float Get2DPerlin(Vector2 position, float offset, float scale)
+    public static float Get2DPerlin(World world, Vector2 pos, float offset, float scale)
     {
         //  Returns perlin
 
-        return Mathf.PerlinNoise((position.x + 0.1f) / VoxelData.chunkWidth * scale + offset, (position.y + 0.1f) / VoxelData.chunkWidth * scale + offset);
+        return Mathf.PerlinNoise((pos.x + 0.1f) / VoxelData.chunkWidth * scale + offset + world.randomSeed, (pos.y + 0.1f) / VoxelData.chunkWidth * scale + offset + world.randomSeed);
+    }
+
+    public static float GetFallOffMap(Vector2 pos)
+    {
+        float halfWorldSizeInVoxel = VoxelData.WorldSizeInVoxel / 2;
+
+        float x = Mathf.Abs(Mathf.FloorToInt(pos.x) - halfWorldSizeInVoxel);
+        float y = Mathf.Abs(Mathf.FloorToInt(pos.y) - halfWorldSizeInVoxel);
+
+        if (x > y) return 1 - (x / halfWorldSizeInVoxel);
+        else return 1 - (y / halfWorldSizeInVoxel);
     }
 
     public static bool Get3DPerlin(Vector3 position, float offset, float scale, float threshold)

@@ -757,8 +757,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac3f8c1d06957a443bb0bec91a1618bc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  seed: 1234124
-  biome: {fileID: 11400000, guid: 7966c73213bfb3f4299bac0b77ff9876, type: 2}
+  seed: 4
+  climates:
+  - {fileID: 11400000, guid: 8265a8344388b4e408dbc888b839e1b2, type: 2}
+  - {fileID: 11400000, guid: 2049a1ba29ed8904f81e8769062d8fbd, type: 2}
+  - {fileID: 11400000, guid: 7753d4b4d5423664b9bf9206d817cdd2, type: 2}
   spawn: {fileID: 6015017800736192328}
   material: {fileID: 2100000, guid: 184ca111073942747aaf76ef298afa97, type: 2}
   transparentMaterial: {fileID: 2100000, guid: 53e29320e16150745a98241fe95f37d5, type: 2}
@@ -791,6 +794,18 @@ MonoBehaviour:
     isSolid: 1
     isTransparent: 0
     textureID: 5
+  - name: Sand
+    isSolid: 1
+    isTransparent: 0
+    textureID: 6
+  - name: Snow
+    isSolid: 1
+    isTransparent: 0
+    textureID: 7
+  - name: Water
+    isSolid: 1
+    isTransparent: 0
+    textureID: 8
 --- !u!1 &6015017800736192328
 GameObject:
   m_ObjectHideFlags: 0

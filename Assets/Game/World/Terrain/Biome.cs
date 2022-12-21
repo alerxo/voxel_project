@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName ="Biome", menuName = "BiomeMenu/Biome")]
+[CreateAssetMenu(fileName = "Biome", menuName = "TerrainMenu/Biome")]
 public class Biome : ScriptableObject
 {
     public string biomeName;
@@ -10,19 +10,12 @@ public class Biome : ScriptableObject
     public int maxGroundY;
     public int minGroundY;
 
-    public float terrainScale;
+    public float terrainNoiseScale;
 
-    [Header("Trees")]
-    public float treeZoneScale;
-    public float treeZoneThreshHold;
+    [Header("Blocks")]
+    public byte surfaceBlockId;
+    public byte subSurfaceBlockId;
 
-    public float treePlacementScale;
-    public float treePlacementThreshold;
-
-    public int minTreeY;
-    public int maxTreeY;
-
-    
     [Header("Lodes")]
 
     public Lode[] lodes;
