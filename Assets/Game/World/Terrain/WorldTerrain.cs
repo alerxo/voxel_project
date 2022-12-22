@@ -26,7 +26,7 @@ public static class WorldTerrain
 
         //  Terrain, gets the terrainheigt through layered perlin noise
 
-        terrainheight = Mathf.FloorToInt((biome.maxTerrainHeight - biome.minTerrainHeight) * Noise.Get2DPerlin(world, new Vector2(pos.x, pos.z), 0, biome.noiseScale, biome.octaves, biome.persistence, biome.lacunarity)) + biome.minTerrainHeight;
+        terrainheight = Mathf.FloorToInt(biome.height * Noise.Get2DPerlin(world, new Vector2(pos.x, pos.z), 0, biome.noiseScale, biome.octaves, biome.persistence, biome.lacunarity)) + biome.startHeight;
 
         //  Falloff, terrain thats 0.5 worldsize from spawn, starts to get multiplied by a value aproaching 0,
         //  meaning the terrain falls off to be surrounded by water
@@ -63,13 +63,11 @@ public static class WorldTerrain
 
     private static Climate GetClimate(World world, Vector3 pos)
     {
-        //  Value given by perlin noise runs through thresholds
-
-        float noise = Noise.Get2DPerlin(world, new Vector2(pos.x, pos.z), 0, world.noiseScale, world.octaves, world.persistence, world.lacunarity);
+        //  Value depending on z pos in world
 
         for (int i = 0; i < world.climates.Length; i++)
         {
-            if (noise >= world.thresholds[i]) return world.climates[i];
+            if (pos.z / VoxelData.WorldSizeInVoxel >= world.thresholds[i]) return world.climates[i];
         }
 
         return world.climates.Last();

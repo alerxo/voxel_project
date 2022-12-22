@@ -25,15 +25,4 @@ public class Climate : ScriptableObject
     public float persistence;
     [Tooltip("Controls increase in frequence of octaves, small features on the curve")]
     public float lacunarity;
-
-    private void OnValidate()
-    {
-        //  Lacunarity should always be larger than 1
-
-        if (lacunarity < 1) lacunarity = 1;
-
-        //  We cant have negative octaves
-
-        if (octaves < 0) octaves = 0;
-    }
 }

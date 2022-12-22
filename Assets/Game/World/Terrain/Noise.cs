@@ -14,7 +14,7 @@ public static class Noise
 
         float amplituide = 1;
         float frequency = 1;
-        float noiseHeight = 1;
+        float noiseHeight = 0;
 
         float offset = _offset + world.randomSeed;
 
@@ -23,9 +23,9 @@ public static class Noise
             float sampleX = pos.x / scale * frequency;
             float sampleY = pos.y / scale * frequency;
 
-            float perlinValue = Mathf.PerlinNoise(sampleX + offset, sampleY + offset) * 2 - 1;
+            float perlinValue = Mathf.PerlinNoise(sampleX + offset, sampleY + offset);
             
-            noiseHeight += perlinValue;
+            noiseHeight += perlinValue * amplituide;
             amplituide *= persistence;
             frequency *= lacunarity;
         }

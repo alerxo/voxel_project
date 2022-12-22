@@ -61,17 +61,6 @@ public class World : MonoBehaviour
     private Thread ThreadedUpdate;
     public object ThreadedUpdate_Lock = new object();
 
-    private void OnValidate()
-    {
-        //  Lacunarity should always be larger than 1
-
-        if (lacunarity < 1) lacunarity = 1;
-
-        //  We cant have negative octaves
-
-        if (octaves < 0) octaves = 0;
-    }
-
     private void Start()
     {
         //  Starts a new threads for chunk updating, renderdistance checks and voxelmap populating

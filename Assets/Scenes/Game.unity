@@ -757,10 +757,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac3f8c1d06957a443bb0bec91a1618bc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  seed: 4
+  seed: 1
   climates:
-  - {fileID: 11400000, guid: 8265a8344388b4e408dbc888b839e1b2, type: 2}
   - {fileID: 11400000, guid: 2049a1ba29ed8904f81e8769062d8fbd, type: 2}
+  - {fileID: 11400000, guid: 8265a8344388b4e408dbc888b839e1b2, type: 2}
   - {fileID: 11400000, guid: 7753d4b4d5423664b9bf9206d817cdd2, type: 2}
   thresholds:
   - 0.66
@@ -768,7 +768,7 @@ MonoBehaviour:
   - 0
   noiseScale: 50
   octaves: 1
-  persistence: 0.5
+  persistence: 1
   lacunarity: 1
   spawn: {fileID: 6015017800736192328}
   material: {fileID: 2100000, guid: 184ca111073942747aaf76ef298afa97, type: 2}

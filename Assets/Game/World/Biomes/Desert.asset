@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: Desert
   m_EditorClassIdentifier: 
   biomeName: Desert
-  maxTerrainHeight: 66
-  minTerrainHeight: 64
+  height: 3
+  startHeight: 64
   noiseScale: 50
-  octaves: 1
+  octaves: 4
   persistence: 0.5
-  lacunarity: 1
+  lacunarity: 2
   surfaceBlockId: 7
   subSurfaceBlockId: 7
   lodes: []

@@ -7,10 +7,10 @@ public class Biome : ScriptableObject
 {
     public string biomeName;
 
-    [Tooltip("Max -and min terrainheight should always be between 1 and chunkheight, also max shouldnt be lower than min")]
-    public int maxTerrainHeight;
-    [Tooltip("Max -and min terrainheight should always be between 1 and chunkheight, also max shouldnt be lower than min")]
-    public int minTerrainHeight;
+    [Tooltip("Additional height")]
+    public int height;
+    [Tooltip("Lowest possible hieght")]
+    public int startHeight;
 
     [Space]
 
@@ -37,25 +37,4 @@ public class Biome : ScriptableObject
     [Header("Lodes")]
 
     public Lode[] lodes;
-
-    private void OnValidate()
-    {
-        //  max and min terrainheight should always be between 1 and chunkheight, also max shouldnt be lower than min
-
-        if(maxTerrainHeight < minTerrainHeight) maxTerrainHeight = minTerrainHeight;
-
-        if (maxTerrainHeight >= VoxelData.chunkHeight) maxTerrainHeight = VoxelData.chunkHeight;
-        if (maxTerrainHeight < 1) maxTerrainHeight = 1;
-
-        if (minTerrainHeight >= VoxelData.chunkHeight) minTerrainHeight = VoxelData.chunkHeight;
-        if (minTerrainHeight < 1) minTerrainHeight = 1;
-
-        //  Lacunarity should always be larger than 1
-
-        if (lacunarity < 1) lacunarity = 1;
-
-        //  We cant have negative octaves
-
-        if (octaves < 0) octaves = 0;
-    }
 }

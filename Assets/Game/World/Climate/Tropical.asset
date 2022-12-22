@@ -23,5 +23,5 @@ MonoBehaviour:
   - 0
   noiseScale: 50
   octaves: 1
-  persistence: 0.5
+  persistence: 1
   lacunarity: 1

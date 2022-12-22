@@ -7,7 +7,7 @@ public static class VoxelData
     //  World settings
 
     public static readonly int chunkWidth = 32;
-    public static readonly int chunkHeight = 128;
+    public static readonly int chunkHeight = 256;
 
     public static readonly int WorldSizeInChunks = 16;
 

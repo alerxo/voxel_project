@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: Ocean
   m_EditorClassIdentifier: 
   biomeName: Ocean
-  maxTerrainHeight: 64
-  minTerrainHeight: 1
+  height: 64
+  startHeight: 1
   noiseScale: 50
-  octaves: 1
+  octaves: 4
   persistence: 0.5
-  lacunarity: 1
+  lacunarity: 2
   surfaceBlockId: 7
   subSurfaceBlockId: 3
   lodes: []
