@@ -13,9 +13,12 @@ MonoBehaviour:
   m_Name: Frozen Mountains
   m_EditorClassIdentifier: 
   biomeName: Frozen Mountains
-  maxGroundY: 100
-  minGroundY: 80
-  terrainNoiseScale: 1
+  maxTerrainHeight: 90
+  minTerrainHeight: 74
+  noiseScale: 50
+  octaves: 1
+  persistence: 0.5
+  lacunarity: 1
   surfaceBlockId: 8
   subSurfaceBlockId: 3
   lodes: []

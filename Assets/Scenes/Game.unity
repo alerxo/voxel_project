@@ -762,6 +762,10 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 8265a8344388b4e408dbc888b839e1b2, type: 2}
   - {fileID: 11400000, guid: 2049a1ba29ed8904f81e8769062d8fbd, type: 2}
   - {fileID: 11400000, guid: 7753d4b4d5423664b9bf9206d817cdd2, type: 2}
+  noiseScale: 50
+  octaves: 1
+  persistence: 0.5
+  lacunarity: 1
   spawn: {fileID: 6015017800736192328}
   material: {fileID: 2100000, guid: 184ca111073942747aaf76ef298afa97, type: 2}
   transparentMaterial: {fileID: 2100000, guid: 53e29320e16150745a98241fe95f37d5, type: 2}

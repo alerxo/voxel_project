@@ -1,22 +1,21 @@
 using System.Collections;
 using System.Collections.Generic;
-using Unity.Mathematics;
 using UnityEngine;
 
 public static class WorldTerrain
 {
     public static byte GetVoxelBlockType(World world, Vector3 pos)
     {
-        //  World generation basically
-        //  Has few parameters per block of code, uses noise to see if it passes parameters, and assigns block thereafter
+        //  Goes through different blocks of code to determine terrainheight and blocktypes
+
+        //  Gets the biome this position is in
 
         Biome biome = GetBiome(world, pos);
 
         int terrainheight;
-
         int yPos = Mathf.FloorToInt(pos.y);
 
-        //  Constant
+        //  Constant, these are always true
 
         if (!IsVoxelInWorld(pos))
         {
@@ -24,7 +23,19 @@ public static class WorldTerrain
             return 0;
         }
 
-        terrainheight = Mathf.FloorToInt((biome.maxGroundY - biome.minGroundY) * Noise.Get2DPerlin(world, new Vector2(pos.x, pos.z), 0, biome.terrainNoiseScale)) + biome.minGroundY;
+        //  Terrain, gets the terrainheigt through layered perlin noise
+
+        terrainheight = Mathf.FloorToInt((biome.maxTerrainHeight - biome.minTerrainHeight) * Noise.Get2DPerlin(world, new Vector2(pos.x, pos.z), 0, biome.noiseScale, biome.octaves, biome.persistence, biome.lacunarity)) + biome.minTerrainHeight;
+
+        //  Falloff, terrain thats 0.5 worldsize from spawn, starts to get multiplies by a value aproaching 0,
+        //  meaning the terrain falls off to be surrounded by water
+
+        if(Noise.GetFallOffMap(new Vector2(pos.x, pos.z)) < 0.5f)
+        {
+            terrainheight = Mathf.FloorToInt(2 * terrainheight * Noise.GetFallOffMap(new Vector2(pos.x, pos.z)));
+        }
+
+        //  Block, determines the blocktype
 
         if (yPos == terrainheight) return biome.surfaceBlockId;
         else if (yPos < terrainheight && yPos > terrainheight - 4) return biome.subSurfaceBlockId;
@@ -35,9 +46,11 @@ public static class WorldTerrain
 
     private static Biome GetBiome(World world, Vector3 pos)
     {
+        //  Value given by perlin noise runs through thresholds
+
         Climate climate = GetClimate(world, pos);
 
-        float noise = Noise.Get2DPerlin(world, new Vector2(pos.x, pos.z), 0, 1f);
+        float noise = Noise.Get2DPerlin(world, new Vector2(pos.x, pos.z), 0, climate.noiseScale, climate.octaves, climate.persistence, climate.lacunarity);
 
         if (noise > 0.66f)
             return climate.biomes[0];
@@ -49,7 +62,9 @@ public static class WorldTerrain
 
     private static Climate GetClimate(World world, Vector3 pos)
     {
-        float noise = Noise.Get2DPerlin(world, new Vector2(pos.x, pos.z), 0, 0.1f);
+        //  Value given by perlin noise runs through thresholds
+
+        float noise = Noise.Get2DPerlin(world, new Vector2(pos.x, pos.z), 0, world.noiseScale, world.octaves, world.persistence, world.lacunarity);
 
         if (noise > 0.66f) return world.climates[1];
 

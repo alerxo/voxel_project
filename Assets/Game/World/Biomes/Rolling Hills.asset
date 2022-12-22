@@ -13,9 +13,12 @@ MonoBehaviour:
   m_Name: Rolling Hills
   m_EditorClassIdentifier: 
   biomeName: Rolling Hills
-  maxGroundY: 80
-  minGroundY: 64
-  terrainNoiseScale: 0.5
+  maxTerrainHeight: 74
+  minTerrainHeight: 64
+  noiseScale: 50
+  octaves: 1
+  persistence: 0.5
+  lacunarity: 1
   surfaceBlockId: 1
   subSurfaceBlockId: 2
   lodes: []

@@ -17,3 +17,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 4f3dcad22395b7746b68a44d61311a22, type: 2}
   - {fileID: 11400000, guid: cc86e4c69ca8f7b43b1f53e1509309dd, type: 2}
   - {fileID: 11400000, guid: d3b2f434d6b87734895d562844efd168, type: 2}
+  noiseScale: 50
+  octaves: 1
+  persistence: 0.5
+  lacunarity: 1

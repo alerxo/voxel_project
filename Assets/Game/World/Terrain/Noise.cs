@@ -4,15 +4,39 @@ using UnityEngine;
 
 public static class Noise
 {
-    public static float Get2DPerlin(World world, Vector2 pos, float offset, float scale)
+    public static float Get2DPerlin(World world, Vector2 pos, float _offset, float scale, int octaves, float persistence, float lacunarity)
     {
-        //  Returns perlin
+        //  Sample perlin noise, gets layered through octaves,
+        //  persistance changes amplitude through each octave
+        //  lacunarity changes frequency through each octave
 
-        return Mathf.PerlinNoise((pos.x + 0.1f) / VoxelData.chunkWidth * scale + offset + world.randomSeed, (pos.y + 0.1f) / VoxelData.chunkWidth * scale + offset + world.randomSeed);
+        //  creates a curve where amplitude is x and frequency is y
+
+        float amplituide = 1;
+        float frequency = 1;
+        float noiseHeight = 1;
+
+        float offset = _offset + world.randomSeed;
+
+        for (int i = 0; i < octaves; i++)
+        {
+            float sampleX = pos.x / scale * frequency;
+            float sampleY = pos.y / scale * frequency;
+
+            float perlinValue = Mathf.PerlinNoise(sampleX + offset, sampleY + offset) * 2 - 1;
+            
+            noiseHeight += perlinValue;
+            amplituide *= persistence;
+            frequency *= lacunarity;
+        }
+
+        return noiseHeight;
     }
 
     public static float GetFallOffMap(Vector2 pos)
     {
+        //  Value aproaching 0 from spawn
+
         float halfWorldSizeInVoxel = VoxelData.WorldSizeInVoxel / 2;
 
         float x = Mathf.Abs(Mathf.FloorToInt(pos.x) - halfWorldSizeInVoxel);
