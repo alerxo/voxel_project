@@ -8,6 +8,7 @@ public class Climate : ScriptableObject
     public string biomeName;
 
     public Biome[] biomes;
+    public float[] thresholds;
 
     [Space]
 

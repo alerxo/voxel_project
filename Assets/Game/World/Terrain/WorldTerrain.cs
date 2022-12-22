@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public static class WorldTerrain
@@ -27,7 +28,7 @@ public static class WorldTerrain
 
         terrainheight = Mathf.FloorToInt((biome.maxTerrainHeight - biome.minTerrainHeight) * Noise.Get2DPerlin(world, new Vector2(pos.x, pos.z), 0, biome.noiseScale, biome.octaves, biome.persistence, biome.lacunarity)) + biome.minTerrainHeight;
 
-        //  Falloff, terrain thats 0.5 worldsize from spawn, starts to get multiplies by a value aproaching 0,
+        //  Falloff, terrain thats 0.5 worldsize from spawn, starts to get multiplied by a value aproaching 0,
         //  meaning the terrain falls off to be surrounded by water
 
         if(Noise.GetFallOffMap(new Vector2(pos.x, pos.z)) < 0.5f)
@@ -52,12 +53,12 @@ public static class WorldTerrain
 
         float noise = Noise.Get2DPerlin(world, new Vector2(pos.x, pos.z), 0, climate.noiseScale, climate.octaves, climate.persistence, climate.lacunarity);
 
-        if (noise > 0.66f)
-            return climate.biomes[0];
-        else if (noise > 0.33f)
-            return climate.biomes[1];
-        else
-            return climate.biomes[2];
+        for (int i = 0; i < climate.biomes.Length; i++)
+        {
+            if (noise >= climate.thresholds[i]) return climate.biomes[i];
+        }
+
+        return climate.biomes.Last();
     }
 
     private static Climate GetClimate(World world, Vector3 pos)
@@ -66,11 +67,12 @@ public static class WorldTerrain
 
         float noise = Noise.Get2DPerlin(world, new Vector2(pos.x, pos.z), 0, world.noiseScale, world.octaves, world.persistence, world.lacunarity);
 
-        if (noise > 0.66f) return world.climates[1];
+        for (int i = 0; i < world.climates.Length; i++)
+        {
+            if (noise >= world.thresholds[i]) return world.climates[i];
+        }
 
-        else if (noise > 0.33f) return world.climates[0];
-
-        else return world.climates[2];
+        return world.climates.Last();
     }
 
     private static bool IsVoxelInWorld(Vector3 pos)

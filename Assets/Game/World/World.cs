@@ -12,6 +12,7 @@ public class World : MonoBehaviour
     public int randomSeed { get; private set; }
 
     public Climate[] climates;
+    public float[] thresholds;
 
     [Space]
 
