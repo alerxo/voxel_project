@@ -127,7 +127,6 @@ public class Chunk
         }
 
         world.chunksToDraw.Enqueue(this);
-
     }
 
     private void ClearMeshData()
@@ -251,6 +250,9 @@ public class Chunk
         xCheck -= Mathf.FloorToInt(position.x);
         zCheck -= Mathf.FloorToInt(position.z);
 
+        if (xCheck < 0) xCheck = 0;
+        if (zCheck < 0) zCheck = 0;
+            
         return voxelMap[xCheck, yCheck, zCheck];
     }
 

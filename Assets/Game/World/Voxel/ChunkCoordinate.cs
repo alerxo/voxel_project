@@ -26,6 +26,11 @@ public class ChunkCoordinate
 
         x = xCheck / VoxelData.chunkWidth;
         z = zCheck / VoxelData.chunkWidth;
+
+        //  the maths dont work good with negatives
+
+        if (pos.x < 0) x = -1;
+        if (pos.z < 0) z = -1;
     }
 
     public bool Equals (ChunkCoordinate other)

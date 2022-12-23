@@ -28,12 +28,12 @@ public static class WorldTerrain
 
         terrainheight = Mathf.FloorToInt(biome.height * Noise.Get2DPerlin(world, new Vector2(pos.x, pos.z), 0, biome.noiseScale, biome.octaves, biome.persistence, biome.lacunarity)) + biome.startHeight;
 
-        //  Falloff, terrain thats 0.5 worldsize from spawn, starts to get multiplied by a value aproaching 0,
+        //  Falloff, terrain thats "falloff" worldsize from spawn, starts to get multiplied by a value aproaching 0,
         //  meaning the terrain falls off to be surrounded by water
 
-        if(Noise.GetFallOffMap(new Vector2(pos.x, pos.z)) < 0.5f)
+        if(Noise.GetFallOffMap(new Vector2(pos.x, pos.z)) < world.falloff)
         {
-            terrainheight = Mathf.FloorToInt(2 * terrainheight * Noise.GetFallOffMap(new Vector2(pos.x, pos.z)));
+            terrainheight = Mathf.FloorToInt((1 / world.falloff) * terrainheight * Noise.GetFallOffMap(new Vector2(pos.x, pos.z)));
         }
 
         //  Block, determines the blocktype

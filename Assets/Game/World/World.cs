@@ -13,6 +13,7 @@ public class World : MonoBehaviour
 
     public Climate[] climates;
     public float[] thresholds;
+    public float falloff;
 
     [Space]
 
@@ -289,8 +290,6 @@ public class World : MonoBehaviour
             //  If voxel is air, return true
             if (WorldTerrain.GetVoxelBlockType(this, pos) == 0)
                 return true;
-
-
             else
                 return false;
         }
@@ -307,7 +306,7 @@ public class World : MonoBehaviour
     {
         //  Checks if chunk is inside world
 
-        if (coord.x > 0 && coord.x < VoxelData.WorldSizeInChunks - 1 && coord.z > 0 && coord.z < VoxelData.WorldSizeInChunks)
+        if (coord.x >= 0 && coord.x < VoxelData.WorldSizeInChunks && coord.z >= 0 && coord.z < VoxelData.WorldSizeInChunks)
             return true;
         else
             return false;
