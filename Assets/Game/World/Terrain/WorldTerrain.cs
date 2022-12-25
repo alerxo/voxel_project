@@ -38,20 +38,51 @@ public static class WorldTerrain
         int xPos = GetPositionInChunk(cc, pos).Item1;
         int zPos = GetPositionInChunk(cc, pos).Item2;
 
-        for(int i = 0; i < 9; i++)
+        if(biomes.Distinct().ToArray().Length > 1)
         {
-            float weight = GetBiomeWeight(Tuple.Create(xPos, zPos), Tuple.Create(BiomePositions[i, 0], BiomePositions[i, 1]));
+            int division = 0;
 
-            #region mathf
+            for (int i = 0; i < 9; i++)
+            {
+                if (biomes[i] != biome)
+                {
+                    float weight = GetBiomeWeight(Tuple.Create(xPos, zPos), Tuple.Create(BiomePositions[i, 0], BiomePositions[i, 1]));
 
-            height += Mathf.Lerp(biome.height, biomes[i].height, weight) / 9;
-            startHeight += Mathf.Lerp(biome.startHeight, biomes[i].startHeight, weight) / 9;
-            noiseScale += Mathf.Lerp(biome.noiseScale, biomes[i].noiseScale, weight) / 9;
-            octaves += Mathf.Lerp(biome.octaves, biomes[i].octaves, weight) / 9;
-            persistence += Mathf.Lerp(biome.persistence, biomes[i].persistence, weight) / 9;
-            lacunarity += Mathf.Lerp(biome.lacunarity, biomes[i].lacunarity, weight) / 9;
+                    #region math
+
+                    height += Mathf.Lerp(biome.height, biomes[i].height, weight);
+                    startHeight += Mathf.Lerp(biome.startHeight, biomes[i].startHeight, weight);
+                    noiseScale += Mathf.Lerp(biome.noiseScale, biomes[i].noiseScale, weight);
+                    octaves += Mathf.Lerp(biome.octaves, biomes[i].octaves, weight);
+                    persistence += Mathf.Lerp(biome.persistence, biomes[i].persistence, weight);
+                    lacunarity += Mathf.Lerp(biome.lacunarity, biomes[i].lacunarity, weight);
+
+                    #endregion
+
+                    division++;
+                }
+            }
+
+            #region math
+
+            height /= division;
+            startHeight /= division;
+            noiseScale /= division;
+            octaves /= division;
+            persistence /= division;
+            lacunarity /= division;
 
             #endregion
+        }
+
+        else
+        {
+            height = biome.height;
+            startHeight = biome.startHeight;
+            noiseScale = biome.noiseScale;
+            octaves = biome.octaves;
+            persistence = biome.persistence;
+            lacunarity = biome.lacunarity;
         }
 
         int terrainheight;
@@ -161,15 +192,15 @@ public static class WorldTerrain
     {
         Biome[] biomes = new Biome[9]
         {
-            world.biomeMap[cc.x + 2, cc.z + 2], //  top right
-            world.biomeMap[cc.x + 2, cc.z + 1], //  top
-            world.biomeMap[cc.x + 2, cc.z], //  top left
-            world.biomeMap[cc.x + 1, cc.z + 2], //  right
-            world.biomeMap[cc.x + 1, cc.z + 1], // middle
-            world.biomeMap[cc.x + 1, cc.z], // left
-            world.biomeMap[cc.x, cc.z + 2], //  bottom right
-            world.biomeMap[cc.x, cc.z + 1], //  bottom
-            world.biomeMap[cc.x, cc.z] //   bottom left
+            world.biomeMap[cc.x + 1, cc.z + 1], //  top right
+            world.biomeMap[cc.x, cc.z + 1], //  top
+            world.biomeMap[cc.x - 1, cc.z + 1], //  top left
+            world.biomeMap[cc.x + 1, cc.z], //  right
+            world.biomeMap[cc.x, cc.z], // middle
+            world.biomeMap[cc.x - 1, cc.z], // left
+            world.biomeMap[cc.x + 1, cc.z - 1], //  bottom right
+            world.biomeMap[cc.x, cc.z - 1], //  bottom
+            world.biomeMap[cc.x - 1, cc.z - 1] //   bottom left
         };
 
         return biomes;
