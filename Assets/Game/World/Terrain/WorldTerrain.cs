@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,13 +10,6 @@ public static class WorldTerrain
     {
         //  Goes through different blocks of code to determine terrainheight and blocktypes
 
-        //  Gets the biome this position is in
-
-        Biome biome = GetBiome(world, pos);
-
-        int terrainheight;
-        int yPos = Mathf.FloorToInt(pos.y);
-
         //  Constant, these are always true
 
         if (!IsVoxelInWorld(pos))
@@ -24,9 +18,48 @@ public static class WorldTerrain
             return 0;
         }
 
+        //  Biome, gets the biome this position is in and gets the adjacent biomes
+
+        ChunkCoordinate cc = world.GetChunkCoordinateFromVector3(pos);
+        Biome biome = world.biomeMap[cc.x, cc.z];
+        Biome[] biomes = GetAdjacentBiomes(world, cc);
+
+        #region math
+
+        float height = 0;
+        float startHeight = 0;
+        float noiseScale = 0;
+        float octaves = 0;
+        float persistence = 0;
+        float lacunarity = 0;
+
+        #endregion
+
+        int xPos = GetPositionInChunk(cc, pos).Item1;
+        int zPos = GetPositionInChunk(cc, pos).Item2;
+
+        for(int i = 0; i < 9; i++)
+        {
+            float weight = GetBiomeWeight(Tuple.Create(xPos, zPos), Tuple.Create(BiomePositions[i, 0], BiomePositions[i, 1]));
+
+            #region mathf
+
+            height += Mathf.Lerp(biome.height, biomes[i].height, weight) / 9;
+            startHeight += Mathf.Lerp(biome.startHeight, biomes[i].startHeight, weight) / 9;
+            noiseScale += Mathf.Lerp(biome.noiseScale, biomes[i].noiseScale, weight) / 9;
+            octaves += Mathf.Lerp(biome.octaves, biomes[i].octaves, weight) / 9;
+            persistence += Mathf.Lerp(biome.persistence, biomes[i].persistence, weight) / 9;
+            lacunarity += Mathf.Lerp(biome.lacunarity, biomes[i].lacunarity, weight) / 9;
+
+            #endregion
+        }
+
+        int terrainheight;
+        int yPos = Mathf.FloorToInt(pos.y);
+
         //  Terrain, gets the terrainheigt through layered perlin noise
 
-        terrainheight = Mathf.FloorToInt(biome.height * Noise.Get2DPerlin(world, new Vector2(pos.x, pos.z), 0, biome.noiseScale, biome.octaves, biome.persistence, biome.lacunarity)) + biome.startHeight;
+        terrainheight = Mathf.FloorToInt(Mathf.FloorToInt(height) * Noise.Get2DPerlin(world, new Vector2(pos.x, pos.z), 0, noiseScale, Mathf.FloorToInt(octaves), persistence, lacunarity)) + Mathf.FloorToInt(startHeight);
 
         //  Falloff, terrain thats "falloff" worldsize from spawn, starts to get multiplied by a value aproaching 0,
         //  meaning the terrain falls off to be surrounded by water
@@ -45,7 +78,7 @@ public static class WorldTerrain
         else return 0;
     }
 
-    private static Biome GetBiome(World world, Vector3 pos)
+    public static Biome GetBiome(World world, Vector3 pos)
     {
         //  Value given by perlin noise runs through thresholds
 
@@ -72,6 +105,90 @@ public static class WorldTerrain
 
         return world.climates.Last();
     }
+
+    //  Blend
+
+    private static float GetBiomeWeight(Tuple<int, int> VoxelPos, Tuple<int, int> biomePos)
+    {
+        if (biomePos.Item1 != 0 && biomePos.Item2 != 0)
+        {
+            float xWeight = (float)(VoxelData.chunkWidth - Mathf.Abs(biomePos.Item1 - VoxelPos.Item1)) / VoxelData.chunkWidth;
+            float zWeight = (float)(VoxelData.chunkWidth - Mathf.Abs(biomePos.Item2 - VoxelPos.Item2)) / VoxelData.chunkWidth;
+
+            /*
+            Debug.Log("xWeight " + xWeight);
+            Debug.Log((VoxelData.chunkWidth - Mathf.Abs(biomePos.Item1 - VoxelPos.Item1)));
+            Debug.Log((Mathf.Abs(biomePos.Item1 - VoxelPos.Item1)));
+            Debug.Log((biomePos.Item1));
+            Debug.Log((VoxelPos.Item1));
+
+            Debug.Log("zWeight " + zWeight);
+            Debug.Log((VoxelData.chunkWidth - Mathf.Abs(biomePos.Item2 - VoxelPos.Item2)));
+
+            Debug.Log("xz");
+            */
+
+            return (xWeight + zWeight) / 2;
+        }
+
+        else if (biomePos.Item1 != 0)
+        {
+            float xWeight = (float)(VoxelData.chunkWidth - Mathf.Abs(biomePos.Item1 - VoxelPos.Item1)) / VoxelData.chunkWidth;
+            return xWeight;
+        }
+
+        else if (biomePos.Item2 != 0)
+        {
+            float zWeight = (float)(VoxelData.chunkWidth - Mathf.Abs(biomePos.Item2 - VoxelPos.Item2)) / VoxelData.chunkWidth;
+            return zWeight;
+        }
+
+        else
+        {
+            return 1f;
+        }     
+    }
+
+    private static Tuple<int, int> GetPositionInChunk(ChunkCoordinate cc, Vector3 pos)
+    {
+        int x = Mathf.FloorToInt(pos.x) - (cc.x * VoxelData.chunkWidth);
+        int z = Mathf.FloorToInt(pos.z) - (cc.z * VoxelData.chunkWidth);
+
+        return Tuple.Create(x, z);
+    }
+
+    private static Biome[] GetAdjacentBiomes(World world, ChunkCoordinate cc)
+    {
+        Biome[] biomes = new Biome[9]
+        {
+            world.biomeMap[cc.x + 2, cc.z + 2], //  top right
+            world.biomeMap[cc.x + 2, cc.z + 1], //  top
+            world.biomeMap[cc.x + 2, cc.z], //  top left
+            world.biomeMap[cc.x + 1, cc.z + 2], //  right
+            world.biomeMap[cc.x + 1, cc.z + 1], // middle
+            world.biomeMap[cc.x + 1, cc.z], // left
+            world.biomeMap[cc.x, cc.z + 2], //  bottom right
+            world.biomeMap[cc.x, cc.z + 1], //  bottom
+            world.biomeMap[cc.x, cc.z] //   bottom left
+        };
+
+        return biomes;
+    }
+
+    private static readonly int[,] BiomePositions = new int[9, 2]
+    {
+        {VoxelData.chunkWidth, VoxelData.chunkWidth},
+        {0, VoxelData.chunkWidth},
+        {1, VoxelData.chunkWidth},
+        {VoxelData.chunkWidth, 0},
+        {0, 0},
+        {1, 0},
+        {VoxelData.chunkWidth, 1},
+        {0, 1},
+        {1, 1}
+    };
+
+    //
 
     private static bool IsVoxelInWorld(Vector3 pos)
     {

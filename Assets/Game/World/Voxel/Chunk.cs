@@ -34,6 +34,10 @@ public class Chunk
 
     public List<GameObject> childObjects = new List<GameObject>();
 
+    //  terrain
+
+    public Biome biome { get; private set; }
+
     public Chunk(ChunkCoordinate _coord, World _world)
     {
         coord = _coord;
@@ -48,6 +52,8 @@ public class Chunk
         chunkObject = new GameObject();
         IsActive = false;
         chunkObject.layer = 8;
+
+        biome = world.biomeMap[coord.x, coord.z];
 
         //  components
 

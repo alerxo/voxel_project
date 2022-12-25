@@ -19,7 +19,7 @@ MonoBehaviour:
   thresholds:
   - 0.5
   - 0
-  noiseScale: 50
+  noiseScale: 10
   octaves: 1
   persistence: 1
   lacunarity: 1

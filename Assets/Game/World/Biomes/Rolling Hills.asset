@@ -14,11 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   biomeName: Rolling Hills
   height: 10
-  startHeight: 64
+  startHeight: 74
   noiseScale: 50
   octaves: 4
   persistence: 0.5
   lacunarity: 2
-  surfaceBlockId: 1
-  subSurfaceBlockId: 2
+  surfaceBlockId: 2
+  subSurfaceBlockId: 3
   lodes: []

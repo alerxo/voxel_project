@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Frozen Mountains
   m_EditorClassIdentifier: 
   biomeName: Frozen Mountains
-  height: 20
+  height: 40
   startHeight: 64
   noiseScale: 50
   octaves: 4

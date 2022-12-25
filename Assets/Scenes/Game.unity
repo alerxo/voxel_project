@@ -759,12 +759,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   seed: 1
   climates:
-  - {fileID: 11400000, guid: 2049a1ba29ed8904f81e8769062d8fbd, type: 2}
   - {fileID: 11400000, guid: 8265a8344388b4e408dbc888b839e1b2, type: 2}
-  - {fileID: 11400000, guid: 7753d4b4d5423664b9bf9206d817cdd2, type: 2}
   thresholds:
-  - 0.66
-  - 0.33
   - 0
   falloff: 0.2
   noiseScale: 50

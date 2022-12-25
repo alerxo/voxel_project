@@ -33,6 +33,8 @@ public class World : MonoBehaviour
 
     [Space]
 
+    public Biome[,] biomeMap = new Biome[VoxelData.WorldSizeInChunks + 2, VoxelData.WorldSizeInChunks + 2];
+
     //  Spawn
 
     [SerializeField] private GameObject spawn;
@@ -72,6 +74,7 @@ public class World : MonoBehaviour
         ThreadedUpdate = new Thread(new ThreadStart(ThreadedUpdate_2));
         ThreadedUpdate.Start();
 
+        GenerateBiomeMap();
         GenerateWorld();
         GetSpawnPosition();
     }
@@ -86,6 +89,17 @@ public class World : MonoBehaviour
             if (chunksToDraw.Peek().IsEditable)
             {
                 chunksToDraw.Dequeue().CreateMesh();
+            }
+        }
+    }
+
+    private void GenerateBiomeMap()
+    {
+        for(int x = 0; x < VoxelData.WorldSizeInChunks + 2; x++)
+        {
+            for(int z = 0; z < VoxelData.WorldSizeInChunks + 2; z++)
+            {
+                biomeMap[x, z] = WorldTerrain.GetBiome(this, new Vector3(x * VoxelData.chunkWidth, 0, z * VoxelData.chunkWidth));
             }
         }
     }

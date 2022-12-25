@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Sand Dunes
   m_EditorClassIdentifier: 
   biomeName: Sand Dunes
-  height: 10
+  height: 20
   startHeight: 64
   noiseScale: 50
   octaves: 4
