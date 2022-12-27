@@ -12,14 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6bd939c91c0fd99489bd9d4c24170db6, type: 3}
   m_Name: Arctic
   m_EditorClassIdentifier: 
-  biomeName: Arctic
+  climateName: Arctic
   biomes:
   - {fileID: 11400000, guid: d3b2f434d6b87734895d562844efd168, type: 2}
   - {fileID: 11400000, guid: cc86e4c69ca8f7b43b1f53e1509309dd, type: 2}
-  thresholds:
-  - 0.5
-  - 0
-  noiseScale: 10
-  octaves: 1
-  persistence: 1
-  lacunarity: 1

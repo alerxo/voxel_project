@@ -7,6 +7,10 @@ public class Biome : ScriptableObject
 {
     public string biomeName;
 
+    public int amount;
+    public float weight;
+    public float minBiomeSizeInChunks;
+
     [Tooltip("Additional height")]
     public int height;
     [Tooltip("Lowest possible hieght")]
@@ -27,6 +31,9 @@ public class Biome : ScriptableObject
     public float persistence;
     [Tooltip("Controls increase in frequence of octaves, small features on the curve")]
     public float lacunarity;
+    [Tooltip("Noise can not get higher than this")]
+    public float noiseCutoff;
+
 
     [Space]
 

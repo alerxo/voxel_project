@@ -4,7 +4,7 @@ using UnityEngine;
 
 public static class Noise
 {
-    public static float Get2DPerlin(World world, Vector2 pos, float _offset, float scale, int octaves, float persistence, float lacunarity)
+    public static float Get2DPerlin(World world, Vector2 pos, float _offset, float scale, int octaves, float persistence, float lacunarity, float noiseCutoff)
     {
         //  Sample perlin noise, gets layered through octaves,
         //  persistance changes amplitude through each octave
@@ -29,6 +29,8 @@ public static class Noise
             amplituide *= persistence;
             frequency *= lacunarity;
         }
+
+        if(noiseHeight > noiseCutoff) noiseHeight = 1;
 
         return noiseHeight;
     }

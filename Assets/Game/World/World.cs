@@ -12,28 +12,13 @@ public class World : MonoBehaviour
     public int randomSeed { get; private set; }
 
     public Climate[] climates;
-    public float[] thresholds;
     public float falloff;
 
     [Space]
 
-    [Header("Noise values\nfreqency = x, less means smaller detail\namplitude = y, more means steeper curves")]
-
-    [Space]
-
-    [Tooltip("Distance between samplepoints, bigger lumps")]
-    public float noiseScale;
-    [Tooltip("Each octave adds another layer of noise")]
-    public int octaves;
-    [Tooltip("Controls decrease in amplitude of octaves, how much the small features made from lacunarity influence the curve")]
-    [Range(0f, 1f)]
-    public float persistence;
-    [Tooltip("Controls increase in frequence of octaves, small features on the curve")]
-    public float lacunarity;
-
-    [Space]
-
     public Biome[,] biomeMap = new Biome[VoxelData.WorldSizeInChunks + 2, VoxelData.WorldSizeInChunks + 2];
+
+    public Biome oceanReference;
 
     //  Spawn
 
@@ -71,10 +56,11 @@ public class World : MonoBehaviour
         Random.InitState(seed);
         randomSeed = Random.Range(0, 1000000);
 
+        biomeMap = BiomeMap.GetBiomeMap(this);
+
         ThreadedUpdate = new Thread(new ThreadStart(ThreadedUpdate_2));
         ThreadedUpdate.Start();
 
-        GenerateBiomeMap();
         GenerateWorld();
         GetSpawnPosition();
     }
@@ -89,17 +75,6 @@ public class World : MonoBehaviour
             if (chunksToDraw.Peek().IsEditable)
             {
                 chunksToDraw.Dequeue().CreateMesh();
-            }
-        }
-    }
-
-    private void GenerateBiomeMap()
-    {
-        for(int x = 0; x < VoxelData.WorldSizeInChunks + 2; x++)
-        {
-            for(int z = 0; z < VoxelData.WorldSizeInChunks + 2; z++)
-            {
-                biomeMap[x, z] = WorldTerrain.GetBiome(this, new Vector3(x * VoxelData.chunkWidth, 0, z * VoxelData.chunkWidth));
             }
         }
     }

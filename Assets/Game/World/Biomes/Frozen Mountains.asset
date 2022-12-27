@@ -13,12 +13,16 @@ MonoBehaviour:
   m_Name: Frozen Mountains
   m_EditorClassIdentifier: 
   biomeName: Frozen Mountains
+  amount: 1
+  weight: 0.5
+  minBiomeSizeInChunks: 2
   height: 40
   startHeight: 64
   noiseScale: 50
   octaves: 4
   persistence: 0.5
   lacunarity: 2
+  noiseCutoff: 1
   surfaceBlockId: 8
   subSurfaceBlockId: 3
   lodes: []

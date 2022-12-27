@@ -8,7 +8,7 @@ public static class Structure
     {
         Queue<VoxelMod> modQueue = new Queue<VoxelMod>();
 
-        int height = (int)(maxTrunkHeight * Noise.Get2DPerlin(null, new Vector2(position.x, position.z), 4000f, 3f, 1, 1, 1)); ;
+        int height = (int)(maxTrunkHeight * Noise.Get2DPerlin(null, new Vector2(position.x, position.z), 4000f, 3f, 1, 1, 1, 1)); ;
 
         if(height < minTrunkHeight)
         {

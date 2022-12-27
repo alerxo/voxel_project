@@ -13,12 +13,16 @@ MonoBehaviour:
   m_Name: Ocean
   m_EditorClassIdentifier: 
   biomeName: Ocean
-  height: 64
-  startHeight: 1
+  amount: 1
+  weight: 1
+  minBiomeSizeInChunks: 2
+  height: 5
+  startHeight: 50
   noiseScale: 50
   octaves: 4
   persistence: 0.5
   lacunarity: 2
+  noiseCutoff: 1
   surfaceBlockId: 7
   subSurfaceBlockId: 3
   lodes: []
