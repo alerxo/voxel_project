@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   biomeName: Rolling Hills
   amount: 1
-  weight: 0.5
+  weight: 1
   minBiomeSizeInChunks: 2
   height: 10
   startHeight: 84

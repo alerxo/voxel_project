@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   biomeName: Frozen Mountains
   amount: 1
-  weight: 0.5
+  weight: 1
   minBiomeSizeInChunks: 2
   height: 25
   startHeight: 84

@@ -16,3 +16,4 @@ MonoBehaviour:
   biomes:
   - {fileID: 11400000, guid: 3f5a7c49c03e6054bbfca25d149ee5af, type: 2}
   - {fileID: 11400000, guid: 03725eddccc2a644097f6ec498e5528b, type: 2}
+  minClimateSizeInChunks: 8
