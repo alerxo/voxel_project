@@ -16,7 +16,7 @@ MonoBehaviour:
   amount: 1
   weight: 0.5
   minBiomeSizeInChunks: 2
-  height: 0
+  height: 25
   startHeight: 84
   noiseScale: 50
   octaves: 4
