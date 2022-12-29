@@ -5,9 +5,11 @@ using UnityEngine;
 
 public static class WorldTerrain
 {
-    public static byte GetVoxelBlockType(World world, Vector3 pos)
+    public static byte GetVoxelBlockType(World world, Vector3 pos, int _terrainHeight)
     {
         //  Goes through different parameters to determine blocktype
+
+        ChunkCoordinate cc = world.GetChunkCoordinateFromVector3(pos);
 
         #region Constants
         //  If outside of world, block is air
@@ -26,79 +28,93 @@ public static class WorldTerrain
         //  Gets the positin inside the chunk, as to be able to blend each block in chunk
         //  Checks if biome should blend, then blends noise values accordinly, else set noise values to chunkBiome
 
-        ChunkCoordinate cc = world.GetChunkCoordinateFromVector3(pos);
         Biome chunkBiome = world.biomeMap[cc.x + 1, cc.z + 1];
-        Biome[] adjacentBiomes = GetAdjacentBiomes(world, cc);
-
-        #region math
-
-        //  Creates the biome noise values
-
-        float height = 0;
-        float startHeight = 0;
-        float noiseScale = 0;
-        float octaves = 0;
-        float persistence = 0;
-        float lacunarity = 0;
-        float noiseCutoff = 0;
 
         #endregion
 
-        int xPos = GetPositionInChunk(cc, pos).Item1;
-        int zPos = GetPositionInChunk(cc, pos).Item2;
+        #region Terrain
 
-        if(IsBlend(adjacentBiomes, chunkBiome))
+        int terrainHeight;
+
+        int yPos = Mathf.FloorToInt(pos.y);
+
+        if (_terrainHeight < 0)
         {
-            float[] blendNoiseValues = GetBlendNoiseValues(adjacentBiomes, xPos, zPos);
-            float[] averageNoiseAtCenter = GetAverageNoiseAtCenter(adjacentBiomes);
-
-            float weight = GetBiomeWeight(adjacentBiomes, xPos, zPos);
+            Biome[] adjacentBiomes = GetAdjacentBiomes(world, cc);
 
             #region math
 
-            height = Mathf.Lerp(averageNoiseAtCenter[0], blendNoiseValues[0], weight);
-            startHeight = Mathf.Lerp(averageNoiseAtCenter[1], blendNoiseValues[1], weight);
-            noiseScale = Mathf.Lerp(averageNoiseAtCenter[2], blendNoiseValues[2], weight);
-            octaves = Mathf.Lerp(averageNoiseAtCenter[3], blendNoiseValues[3], weight);
-            persistence = Mathf.Lerp(averageNoiseAtCenter[4], blendNoiseValues[4], weight);
-            lacunarity = Mathf.Lerp(averageNoiseAtCenter[5], blendNoiseValues[5], weight);
-            noiseCutoff = Mathf.Lerp(averageNoiseAtCenter[6], blendNoiseValues[6], weight);
+            //  Creates the biome noise values
+
+            float height = 0;
+            float startHeight = 0;
+            float noiseScale = 0;
+            float octaves = 0;
+            float persistence = 0;
+            float lacunarity = 0;
+            float noiseCutoff = 0;
+
+            #endregion
+
+            int xPos = GetPositionInChunk(cc, pos).Item1;
+            int zPos = GetPositionInChunk(cc, pos).Item2;
+
+            if (IsBlend(adjacentBiomes, chunkBiome))
+            {
+                float[] blendNoiseValues = GetBlendNoiseValues(adjacentBiomes, world.GetChunkFromVector3(pos), xPos, zPos);
+                float[] averageNoiseAtCenter = GetAverageNoiseAtCenter(adjacentBiomes, world.GetChunkFromVector3(pos));
+
+                float weight = GetBiomeWeight(adjacentBiomes, xPos, zPos);
+
+                #region math
+
+                height = Mathf.Lerp(averageNoiseAtCenter[0], blendNoiseValues[0], weight);
+                startHeight = Mathf.Lerp(averageNoiseAtCenter[1], blendNoiseValues[1], weight);
+                noiseScale = Mathf.Lerp(averageNoiseAtCenter[2], blendNoiseValues[2], weight);
+                octaves = Mathf.Lerp(averageNoiseAtCenter[3], blendNoiseValues[3], weight);
+                persistence = Mathf.Lerp(averageNoiseAtCenter[4], blendNoiseValues[4], weight);
+                lacunarity = Mathf.Lerp(averageNoiseAtCenter[5], blendNoiseValues[5], weight);
+                noiseCutoff = Mathf.Lerp(averageNoiseAtCenter[6], blendNoiseValues[6], weight);
+
+                #endregion
+            }
+
+            else
+            {
+                height = chunkBiome.height;
+                startHeight = chunkBiome.startHeight;
+                noiseScale = chunkBiome.noiseScale;
+                octaves = chunkBiome.octaves;
+                persistence = chunkBiome.persistence;
+                lacunarity = chunkBiome.lacunarity;
+                noiseCutoff = chunkBiome.noiseCutoff;
+            }
+
+            //  Gets the terrainheigt through layered perlin noise, with noise values depending on above
+
+            terrainHeight = Mathf.FloorToInt(Mathf.FloorToInt(height) * Noise.Get2DPerlin(world, new Vector2(pos.x, pos.z), 0, noiseScale, Mathf.FloorToInt(octaves), persistence, lacunarity, noiseCutoff)) + Mathf.FloorToInt(startHeight);
+
+            #region Falloff
+
+            //  Terrain thats "falloff" worldsize from spawn, starts to get multiplied by a value aproaching 0,
+            //  Meaning terrain thats approaching world border aproaches a height of 0
+            //  This makes it so edges of world always are water, ie world surrounded by water
+
+            if (Noise.GetFallOffMap(new Vector2(pos.x, pos.z)) < world.falloff)
+            {
+                terrainHeight = Mathf.FloorToInt((1 / world.falloff) * terrainHeight * Noise.GetFallOffMap(new Vector2(pos.x, pos.z)));
+            }
+
+            //  Chaching the height
+
+            world.chunksInWorld[cc.x, cc.z].tempTerrainHeight = terrainHeight;
 
             #endregion
         }
 
         else
         {
-            height = chunkBiome.height;
-            startHeight = chunkBiome.startHeight;
-            noiseScale = chunkBiome.noiseScale;
-            octaves = chunkBiome.octaves;
-            persistence = chunkBiome.persistence;
-            lacunarity = chunkBiome.lacunarity;
-            noiseCutoff = chunkBiome.noiseCutoff;
-        }
-
-        #endregion
-
-        #region Terrain
-
-        //  Gets the terrainheigt through layered perlin noise, with noise values depending on above
-
-        int terrainheight;
-        int yPos = Mathf.FloorToInt(pos.y);
-        terrainheight = Mathf.FloorToInt(Mathf.FloorToInt(height) * Noise.Get2DPerlin(world, new Vector2(pos.x, pos.z), 0, noiseScale, Mathf.FloorToInt(octaves), persistence, lacunarity, noiseCutoff)) + Mathf.FloorToInt(startHeight);
-
-        #endregion
-
-        #region Falloff
-
-        //  Terrain thats "falloff" worldsize from spawn, starts to get multiplied by a value aproaching 0,
-        //  Meaning terrain thats approaching world border aproaches a height of 0
-        //  This makes it so edges of world always are water, ie world surrounded by water
-
-        if (Noise.GetFallOffMap(new Vector2(pos.x, pos.z)) < world.falloff)
-        {
-            terrainheight = Mathf.FloorToInt((1 / world.falloff) * terrainheight * Noise.GetFallOffMap(new Vector2(pos.x, pos.z)));
+            terrainHeight = _terrainHeight;
         }
 
         #endregion
@@ -106,9 +122,9 @@ public static class WorldTerrain
         #region BlockType
         //  Determines the blocktype according to parameters
 
-        if (yPos == terrainheight) return chunkBiome.surfaceBlockId;
-        else if (yPos < terrainheight && yPos > terrainheight - 4) return chunkBiome.subSurfaceBlockId;
-        else if (yPos < terrainheight) return 3;
+        if (yPos == terrainHeight) return chunkBiome.surfaceBlockId;
+        else if (yPos < terrainHeight && yPos > terrainHeight - 4) return chunkBiome.subSurfaceBlockId;
+        else if (yPos < terrainHeight) return 3;
         else if (yPos < 64) return 9;
         else return 0;
 
@@ -222,54 +238,73 @@ public static class WorldTerrain
 
     #region Noise
 
-    private static float[] GetBlendNoiseValues(Biome[] adjacentBiomes, int voxelX, int voxelZ)
+    private static float[] GetBlendNoiseValues(Biome[] adjacentBiomes, Chunk chunk,int voxelX, int voxelZ)
     {
         if(voxelX <= 8 && voxelZ <= 8) //   bottom right corner
         {
-            return GetAverageNoiseAtCorner(new Biome[]
+            if(chunk.bottomRightCornerNoise == null)
             {
-                adjacentBiomes[8],
-                adjacentBiomes[7],
-                adjacentBiomes[5],
-                adjacentBiomes[4]
-                
-            });
+                chunk.bottomRightCornerNoise = GetAverageNoiseAtCorner(new Biome[]
+                {
+                    adjacentBiomes[8],
+                    adjacentBiomes[7],
+                    adjacentBiomes[5],
+                    adjacentBiomes[4]
+                });
+            }
+
+            return chunk.bottomRightCornerNoise;
         }
 
         else if(voxelX <= 8 && voxelZ > 8) //    top right corner
         {
-            return GetAverageNoiseAtCorner(new Biome[]
+            if(chunk.topRightCornerNoise == null)
             {
-                adjacentBiomes[5],
-                adjacentBiomes[4],
-                adjacentBiomes[2],
-                adjacentBiomes[1]
+                chunk.topRightCornerNoise = GetAverageNoiseAtCorner(new Biome[]
+                {
+                    adjacentBiomes[5],
+                    adjacentBiomes[4],
+                    adjacentBiomes[2],
+                    adjacentBiomes[1]
 
-            });
+                });
+            }
+
+            return chunk.topRightCornerNoise;
         }
 
         else if(voxelX > 8 && voxelZ <= 8) //    bottom left corner
         {
-            return GetAverageNoiseAtCorner(new Biome[]
+            if(chunk.bottomLeftCornerNoise == null)
             {
-                adjacentBiomes[7],
-                adjacentBiomes[6],
-                adjacentBiomes[4],
-                adjacentBiomes[3]
+                chunk.bottomLeftCornerNoise =  GetAverageNoiseAtCorner(new Biome[]
+                {
+                    adjacentBiomes[7],
+                    adjacentBiomes[6],
+                    adjacentBiomes[4],
+                    adjacentBiomes[3]
 
-            });
+                });
+            }
+
+            return chunk.bottomLeftCornerNoise;
         }
 
         else //     top left corner
         {
-            return GetAverageNoiseAtCorner(new Biome[]
+            if(chunk.topLeftCornerNoise == null)
             {
-                adjacentBiomes[4],
-                adjacentBiomes[3],
-                adjacentBiomes[1],
-                adjacentBiomes[0]
+                chunk.topLeftCornerNoise = GetAverageNoiseAtCorner(new Biome[]
+                {
+                    adjacentBiomes[4],
+                    adjacentBiomes[3],
+                    adjacentBiomes[1],
+                    adjacentBiomes[0]
 
-            });
+                });
+            }
+
+            return chunk.topLeftCornerNoise;
         }
     }
 
@@ -319,45 +354,50 @@ public static class WorldTerrain
         return blendNoiseValues.ToArray();
     }
 
-    private static float[] GetAverageNoiseAtCenter(Biome[] biomes)
+    private static float[] GetAverageNoiseAtCenter(Biome[] biomes, Chunk chunk)
     {
-        List<float> blendNoiseValues = new List<float>
+        if(chunk.centerNoise == null)
         {
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0
-        };
-
-        for (int x = 0; x < 2; x++)
-        {
-            for (int z = 0; z < 2; z++)
+            List<float> blendNoiseValues = new List<float>
             {
-                float[] averageNoiseAtCorner = GetBlendNoiseValues(biomes, x * 16, z * 16);
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+            };
 
-                blendNoiseValues[0] += averageNoiseAtCorner[0];
-                blendNoiseValues[1] += averageNoiseAtCorner[1];
-                blendNoiseValues[2] += averageNoiseAtCorner[2];
-                blendNoiseValues[3] += averageNoiseAtCorner[3];
-                blendNoiseValues[4] += averageNoiseAtCorner[4];
-                blendNoiseValues[5] += averageNoiseAtCorner[5];
-                blendNoiseValues[6] += averageNoiseAtCorner[6];
+            for (int x = 0; x < 2; x++)
+            {
+                for (int z = 0; z < 2; z++)
+                {
+                    float[] averageNoiseAtCorner = GetBlendNoiseValues(biomes, chunk, x * 16, z * 16);
+
+                    blendNoiseValues[0] += averageNoiseAtCorner[0];
+                    blendNoiseValues[1] += averageNoiseAtCorner[1];
+                    blendNoiseValues[2] += averageNoiseAtCorner[2];
+                    blendNoiseValues[3] += averageNoiseAtCorner[3];
+                    blendNoiseValues[4] += averageNoiseAtCorner[4];
+                    blendNoiseValues[5] += averageNoiseAtCorner[5];
+                    blendNoiseValues[6] += averageNoiseAtCorner[6];
+                }
+
             }
 
+            blendNoiseValues[0] /= 4;
+            blendNoiseValues[1] /= 4;
+            blendNoiseValues[2] /= 4;
+            blendNoiseValues[3] /= 4;
+            blendNoiseValues[4] /= 4;
+            blendNoiseValues[5] /= 4;
+            blendNoiseValues[6] /= 4;
+
+            chunk.centerNoise = blendNoiseValues.ToArray();
         }
 
-        blendNoiseValues[0] /= 4;
-        blendNoiseValues[1] /= 4;
-        blendNoiseValues[2] /= 4;
-        blendNoiseValues[3] /= 4;
-        blendNoiseValues[4] /= 4;
-        blendNoiseValues[5] /= 4;
-        blendNoiseValues[6] /= 4;
-
-        return blendNoiseValues.ToArray();
+        return chunk.centerNoise;
     }
 
     #endregion

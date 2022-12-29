@@ -34,7 +34,17 @@ public class Chunk
 
     public List<GameObject> childObjects = new List<GameObject>();
 
-    //  terrain
+    //  terrain cache
+
+    public int tempTerrainHeight;
+
+    public float[] bottomRightCornerNoise;
+    public float[] topRightCornerNoise;
+    public float[] bottomLeftCornerNoise;
+    public float[] topLeftCornerNoise;
+
+    public float[] centerNoise;
+
 
     public Biome biome { get; private set; }
 
@@ -85,14 +95,18 @@ public class Chunk
         //  Fills the chunk with voxel data
         //  Locks the chunksupdate list and adds itself, as to avoid confuction between threads
 
-        for (int y = 0; y < VoxelData.chunkHeight; y++)
+        for (int x = 0; x < VoxelData.chunkWidth; x++)
         {
-            for (int x = 0; x < VoxelData.chunkWidth; x++)
+            for (int z = 0; z < VoxelData.chunkWidth; z++)
             {
-                for (int z = 0; z < VoxelData.chunkWidth; z++)
+                tempTerrainHeight = -1;
+
+                for (int y = 0; y < VoxelData.chunkHeight; y++)
                 {
-                    voxelMap[x, y, z] = WorldTerrain.GetVoxelBlockType(world, new Vector3(x, y, z) + position);
+                    voxelMap[x, y, z] = WorldTerrain.GetVoxelBlockType(world, new Vector3(x, y, z) + position, tempTerrainHeight);
                 }
+
+                tempTerrainHeight = -1;
             }
         }
 
@@ -120,15 +134,19 @@ public class Chunk
             voxelMap[(int)pos.x, (int)pos.y, (int)pos.z] = vm.id;
         }
 
-        for (int y = 0; y < VoxelData.chunkHeight; y++)
+        for (int x = 0; x < VoxelData.chunkWidth; x++)
         {
-            for (int x = 0; x < VoxelData.chunkWidth; x++)
+            for (int z = 0; z < VoxelData.chunkWidth; z++)
             {
-                for (int z = 0; z < VoxelData.chunkWidth; z++)
+                tempTerrainHeight= -1;
+
+                for (int y = 0; y < VoxelData.chunkHeight; y++)
                 {
                     if (world.blocks[voxelMap[x, y, z]].isSolid)
-                        UpdateMeshData(new Vector3(x, y, z));
+                        UpdateMeshData(new Vector3(x, y, z), tempTerrainHeight);
                 }
+
+                tempTerrainHeight= -1;
             }
         }
 
@@ -228,7 +246,7 @@ public class Chunk
         }
     }
 
-    private bool CheckVoxel(Vector3 pos)
+    private bool CheckVoxel(Vector3 pos, int _tempTerrainHeight)
     {
         //  Converts into ints
         //  Checks if voxel pos is inside of chunk
@@ -240,7 +258,7 @@ public class Chunk
         int z = Mathf.FloorToInt(pos.z);
 
         if (!IsVoxelInChunk(x, y, z))
-            return world.CheckIfVoxelTransparent(pos + position);
+            return world.CheckIfVoxelTransparent(pos + position, _tempTerrainHeight);
 
         return world.blocks[voxelMap[x, y, z]].isTransparent;
     }
@@ -262,7 +280,7 @@ public class Chunk
         return voxelMap[xCheck, yCheck, zCheck];
     }
 
-    private void UpdateMeshData(Vector3 pos)
+    private void UpdateMeshData(Vector3 pos, int _tempTerrainHeight)
     {
         //  Goes through each face of voxel
         //  Checking if there is something adjacent
@@ -273,7 +291,7 @@ public class Chunk
 
         for (int r = 0; r < 6; r++) // Each row (face)
         {
-            if(CheckVoxel(pos + VoxelData.faceChecks[r])) 
+            if(CheckVoxel(pos + VoxelData.faceChecks[r], _tempTerrainHeight)) 
             {
                 //  Adding the verticies
 

@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Threading;
-using Unity.Netcode;
 
 public class World : MonoBehaviour
 {
@@ -89,7 +88,7 @@ public class World : MonoBehaviour
 
         for (int i = 0; i < VoxelData.chunkHeight; i++)
         {
-            if(WorldTerrain.GetVoxelBlockType(this, new Vector3(spawn.transform.position.x, i, spawn.transform.position.z)) == 1)
+            if(WorldTerrain.GetVoxelBlockType(this, new Vector3(spawn.transform.position.x, i, spawn.transform.position.z), -1) == 1)
             {
                 spawn.transform.position = new Vector3(spawn.transform.position.x, i + 2, spawn.transform.position.z);
             }
@@ -265,7 +264,7 @@ public class World : MonoBehaviour
         return chunksInWorld[x, z];
     }
 
-    public bool CheckIfVoxelTransparent(Vector3 pos)
+    public bool CheckIfVoxelTransparent(Vector3 pos, int _tempTerrainHeight)
     {
         //  First looks if the voxel is in world, if not in world and an air voxel, return true,
         //  (face generation scrip doesnt recognize adjacent chunks as in world sometimes and we get into first check when we shoudlnt, so we draw face just in case)
@@ -277,7 +276,7 @@ public class World : MonoBehaviour
         if (!IsChunkInWorld(thisChunk) || pos.y < 0 || pos.y >= VoxelData.chunkHeight)
         {
             //  If voxel is air, return true
-            if (WorldTerrain.GetVoxelBlockType(this, pos) == 0)
+            if (WorldTerrain.GetVoxelBlockType(this, pos, _tempTerrainHeight) == 0)
                 return true;
             else
                 return false;
@@ -288,7 +287,7 @@ public class World : MonoBehaviour
             return blocks[chunksInWorld[thisChunk.x, thisChunk.z].GetVoxelFromGlobalVector3(pos)].isTransparent;
         }
 
-        return blocks[WorldTerrain.GetVoxelBlockType(this, pos)].isTransparent;
+        return blocks[WorldTerrain.GetVoxelBlockType(this, pos, _tempTerrainHeight)].isTransparent;
     }
 
     public bool IsChunkInWorld(ChunkCoordinate coord)
