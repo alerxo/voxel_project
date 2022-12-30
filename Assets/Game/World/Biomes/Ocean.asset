@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Ocean
   m_EditorClassIdentifier: 
   biomeName: Ocean
-  amount: 1
+  amount: 5
   weight: 1
-  minBiomeSizeInChunks: 2
+  minBiomeSizeInChunks: 1
   height: 10
   startHeight: 50
   noiseScale: 50

@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Tundra
   m_EditorClassIdentifier: 
   biomeName: Tundra
-  amount: 1
-  weight: 2
-  minBiomeSizeInChunks: 2
+  amount: 5
+  weight: 1
+  minBiomeSizeInChunks: 1
   height: 5
   startHeight: 64
   noiseScale: 50

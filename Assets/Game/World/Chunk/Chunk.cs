@@ -60,7 +60,7 @@ public class Chunk
     {
         //  Adds an inactove gameobject and sets it to ground layer
         chunkObject = new GameObject();
-        IsActive = false;
+        IsActive = world.initializeChunkActive;
         chunkObject.layer = 8;
 
         biome = world.biomeMap[coord.x, coord.z];

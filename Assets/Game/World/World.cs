@@ -5,6 +5,12 @@ using System.Threading;
 
 public class World : MonoBehaviour
 {
+    //  Test values
+
+    public bool initializeChunkActive;
+
+    [Space]
+
     //  Terrain and climate
 
     [SerializeField] private int seed;

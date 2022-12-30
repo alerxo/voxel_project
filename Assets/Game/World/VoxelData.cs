@@ -7,10 +7,10 @@ public static class VoxelData
     //  World settings
 
     public static readonly int chunkWidth = 16;
-    public static readonly int chunkHeight = 128;
+    public static readonly int chunkHeight = 256;
 
-    public static readonly int WorldSizeInChunks = 64;
-    public static readonly int OceanSizeInChunks = 2;
+    public static readonly int WorldSizeInChunks = 8;
+    public static readonly int OceanSizeInChunks = 1;
 
     public static int WorldSizeInVoxel
     {
@@ -24,7 +24,7 @@ public static class VoxelData
 
     // Player settings
 
-    public static readonly int RenderDistanceInChunks = 32;
+    public static readonly int RenderDistanceInChunks = 4;
 
     //  Texture atlas
 
