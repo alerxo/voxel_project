@@ -5,38 +5,42 @@ using UnityEngine;
 
 public static class BiomeMap
 {
-    //  Divides the world into biomes accoring to all climates and biomes in those climate, and also amount of said biomes
+    //  Divides the world into biomes with voroni noise,
+    //  Biomes are placed at points, within their climates, 
     //  Edges of map is water, so world is surrounded by ocean
     //  Creates a biome map where each chunk is assigned a biome
 
     public static Biome[,] GetBiomeMap(World world)
     {
-        //  Creates a biome map with size of worldsize and also creates a layer around this
-        //  Creates a list of biomeOrigins, which contains a vector 3 and a biome,
-        //  Position of origins are chose at random, with some parameters
-        //  Each chunk will check which origin is closest, can be adjusted by weight (so we can adjust size of biomes)
-        //  So biomes will be created around these origins
+        //  Creates a biome map with size of worldsize and also creates a layer around this, so edges of map always have surrounding biomes
 
         Climate[,] climateMap = new Climate[VoxelData.WorldSizeInChunks + 2, VoxelData.WorldSizeInChunks + 2];
         Biome[,] biomeMap = new Biome[VoxelData.WorldSizeInChunks + 2, VoxelData.WorldSizeInChunks + 2];
 
-        List<Tuple<Vector3, Climate>> climates = GetClimatePositions(world.climates);
+        #region Climatemap
 
-        Debug.Log("Amount of climates: " + climates.Count);
+        //  Each chunk will be assigen a climate, depedning on temperature and humidity
 
         for (int x = 0; x < VoxelData.WorldSizeInChunks + 2; x++) //    Assigning each chunk a climate
         {
             for (int z = 0; z < VoxelData.WorldSizeInChunks + 2; z++)
             {
-                climateMap[x, z] = GetClimate(world, climates, x, z);
+
+                climateMap[x, z] = GetClimate(world.climates, x, z);
             }
         }
 
-        Debug.Log("Climates mapped");
+        #endregion
+
+        #region Biomemap
+
+        //  Creates a list of biomeOrigins, which contains a vector3 and a biome,
+        //  Position of origins are chose at random, within their climates
 
         List<Tuple<Vector3, Biome>> biomes = GetBiomePositions(climateMap, world.climates);
 
-        Debug.Log("Amount of biomes: " + biomes.Count);    
+        //  Each chunk will check which origin is closest, can be adjusted by weight (so we can adjust size of biomes)
+        //  So biomes will be created around these origins
 
         for (int x = 0; x < VoxelData.WorldSizeInChunks + 2; x++) //    Assigning each chunk a biome
         {
@@ -46,63 +50,61 @@ public static class BiomeMap
             }
         }
 
-        Debug.Log("Biomes mapped");
+        #endregion
 
         return biomeMap;
     }
 
-
-
-    private static List<Tuple<Vector3, Climate>> GetClimatePositions(Climate[] _climates)
+    private static float GetTemperature(Vector2 pos)
     {
-        List<Tuple<Vector3, Climate>> climates = new List<Tuple<Vector3, Climate>>();
+        //  Gets the distance from equator
+        //  Then assign temperature depending on distance
 
-        List<Vector3> positions = new List<Vector3>();
+        float distanceToEquator = Vector2.Distance(pos, new Vector3(VoxelData.WorldSizeInVoxel / 2f, pos.y)) + 1f;
+        float temperature = 100f - (distanceToEquator / (VoxelData.WorldSizeInVoxel / 200f));
 
-        for (int i = 0; i < _climates.Length; i++)
-        {
-            int x = UnityEngine.Random.Range(0, VoxelData.WorldSizeInVoxel);
-            int z = UnityEngine.Random.Range(0, VoxelData.WorldSizeInVoxel);
-
-            positions.Add(new Vector3(x, 0, z));
-        }
-
-        for (int i = 0; i < _climates.Length; i++)
-        {
-            climates.Add(Tuple.Create(positions[i], _climates[i]));
-        }
-
-        return climates;
+        return temperature;
     }
 
-    private static Climate GetClimate(World world, List<Tuple<Vector3, Climate>> climates, int x, int z)
+    private static float GetHumidity(Vector2 pos)
     {
-        //  First checks if chunk is inside of the ocean
-        //  Then starts checking each biome origin for which is closest
-        //  Stores the closest distance, and compares with new distance
-        //  Distances are multiplied by a weight so certain biomes have less reach (are smaller)
+        //  Not implemented
 
-        Vector3 chunkPos = new Vector3(x * VoxelData.chunkWidth, 0, z * VoxelData.chunkWidth);
+        return 0;
+    }
 
-        Vector3 currentClimatePos = climates[0].Item1;
-        Climate currentClimate = climates[0].Item2;
+    private static Climate GetClimate(Climate[] climates, int x, int z)
+    {
+        //  Gets the temperature and humidity in chunk
+        //  Loops through each climate and checks which is a best match for the chunk conditions
 
-        foreach (Tuple<Vector3, Climate> climate in climates)
+        Vector2 chunkPos = new Vector3(x * VoxelData.chunkWidth, z * VoxelData.chunkWidth);
+
+        float temperature = GetTemperature(chunkPos);
+        float humidity = GetHumidity(chunkPos);
+
+        Climate currentClimate = null;
+        float currentTemperatureDistance = Mathf.Infinity;
+
+        foreach (Climate climate in climates)
         {
-            if (Vector3.Distance(chunkPos, climate.Item1) < Vector3.Distance(chunkPos, currentClimatePos))
+            if(Mathf.Abs(temperature - climate.temperature) < currentTemperatureDistance)
             {
-                currentClimatePos = climate.Item1;
-                currentClimate = climate.Item2;
+                currentClimate = climate;
+                currentTemperatureDistance = Mathf.Abs(temperature - climate.temperature);
             }
         }
 
         return currentClimate;
     }
 
-
-
     private static List<Tuple<Vector3, Biome>> GetBiomePositions(Climate[,] climateMap, Climate[] climates)
     {
+        //  For each climate
+        //  For each biome in climate
+        //  For each amount of biome
+        //  Place a biome origin if biome origin is inside right climate
+
         List<Tuple<Vector3, Biome>> biomes = new List<Tuple<Vector3, Biome>>();
 
         for(int c = 0; c < climates.Length; c++)

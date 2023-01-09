@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: Arctic
   m_EditorClassIdentifier: 
   climateName: Arctic
+  temperature: 0
+  humidity: 50
   biomes:
   - {fileID: 11400000, guid: cc86e4c69ca8f7b43b1f53e1509309dd, type: 2}
   - {fileID: 11400000, guid: d3b2f434d6b87734895d562844efd168, type: 2}

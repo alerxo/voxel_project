@@ -7,7 +7,8 @@ public class Climate : ScriptableObject
 {
     public string climateName;
 
-    public Biome[] biomes;
+    public float temperature;
+    public float humidity;
 
-    public int minClimateSizeInChunks;
+    public Biome[] biomes;
 }

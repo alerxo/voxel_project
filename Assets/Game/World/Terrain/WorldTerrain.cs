@@ -12,6 +12,7 @@ public static class WorldTerrain
         ChunkCoordinate cc = world.GetChunkCoordinateFromVector3(pos);
 
         #region Constants
+
         //  If outside of world, block is air
 
         if (!IsVoxelInWorld(pos))
@@ -24,9 +25,7 @@ public static class WorldTerrain
 
         #region Biome
 
-        //  Gets chunkBiome and adjacentBiomes
-        //  Gets the positin inside the chunk, as to be able to blend each block in chunk
-        //  Checks if biome should blend, then blends noise values accordinly, else set noise values to chunkBiome
+        //  Gets the biome from biome map
 
         Biome chunkBiome = world.biomeMap[cc.x + 1, cc.z + 1];
 
@@ -34,8 +33,9 @@ public static class WorldTerrain
 
         #region Terrain
 
-        int terrainHeight;
+        //  If we don't have a cached value for terrainheight, calculate terrainheight
 
+        int terrainHeight;
         int yPos = Mathf.FloorToInt(pos.y);
 
         if (_terrainHeight < 0)
@@ -55,6 +55,8 @@ public static class WorldTerrain
             float noiseCutoff = 0;
 
             #endregion
+
+            //  Gets voxel positon in chunk, and checks if we should blend the chunk with adjacent chunks
 
             int xPos = GetPositionInChunk(cc, pos).Item1;
             int zPos = GetPositionInChunk(cc, pos).Item2;
@@ -120,6 +122,7 @@ public static class WorldTerrain
         #endregion
 
         #region BlockType
+
         //  Determines the blocktype according to parameters
 
         if (yPos == terrainHeight) return chunkBiome.surfaceBlockId;
@@ -135,6 +138,9 @@ public static class WorldTerrain
 
     private static float GetBiomeWeight(Biome[] adjacentBiomes, int voxelX, int voxelZ)
     {
+        //  Chunk is divided into 4 parts, depending on where voxel is inside chunk, use different calculations
+        //  Gets the distance from voxel to edge of chunk part
+
         int a = VoxelData.chunkWidth / 2;
         int b = (VoxelData.chunkWidth / 2) + 1;
 
@@ -161,21 +167,20 @@ public static class WorldTerrain
 
     private static float _GetBiomeWeight(Biome[] adjacentBiomes, int x, int z, int biomeX, int corner, int biomeZ)
     {
+        //  We only blend towards biomes that arent chunk biome
+        //  Weight is distance from voxel pos in chunk part, to average biome pos
+
         int a = VoxelData.chunkWidth / 2;
 
         Vector2 xPos = new(a, 1);
-        Vector2 cornerPos = new(a, a);
         Vector2 zPos = new(1, a);
-
-        Vector2 centerPos = new(1, 1);
+        Vector2 cornerPos = new(a, a);
 
         Vector2 voxelPos = new(x, z);
 
         bool[] adjacentBlendStates = GetAdjacentBlendStates(adjacentBiomes);
 
         float distance = VoxelData.chunkWidth;
-
-        //  Works
 
         if (!adjacentBlendStates[biomeX] && adjacentBlendStates[biomeZ]) // If adjacent biome is on the y/z axis, take distance from y/z edge
         {
@@ -205,8 +210,6 @@ public static class WorldTerrain
 
             return 1 - (distance / a);
         }
-
-        //  no works
 
         if (!adjacentBlendStates[biomeX] && !adjacentBlendStates[corner] && !adjacentBlendStates[biomeZ]) //    If no adjacent
         {
@@ -245,6 +248,8 @@ public static class WorldTerrain
 
     private static float[] GetBlendNoiseValues(Biome[] adjacentBiomes, Chunk chunk,int voxelX, int voxelZ)
     {
+        //  Gets the average noise values of adjacent chunks, depending on which part of chunk we are in
+
         int a = VoxelData.chunkWidth / 2;
 
         if(voxelX <= a && voxelZ <= a) //   bottom right corner
@@ -317,6 +322,9 @@ public static class WorldTerrain
 
     private static float[] GetAverageNoiseAtCorner(Biome[] biomes)
     {
+        //  Gets the average noise at a corner of a chunk
+        //  Loops through each biome
+
         List<float> blendNoiseValues = new List<float>
         {
             0,
@@ -363,6 +371,9 @@ public static class WorldTerrain
 
     private static float[] GetAverageNoiseAtCenter(Biome[] biomes, Chunk chunk)
     {
+        //  Gets average noise at center of chunk
+        //  Loops through each biome
+
         int a = VoxelData.chunkWidth;
 
         if(chunk.centerNoise == null)
@@ -437,6 +448,8 @@ public static class WorldTerrain
 
     private static bool[] GetAdjacentBlendStates(Biome[] adjacentBiomes)
     {
+        //  Checks which adjacent chunks are of a different biome than chunk
+
         List<bool> _adjacentBiomesBlend = new List<bool>();
 
         foreach (Biome biome in adjacentBiomes)
