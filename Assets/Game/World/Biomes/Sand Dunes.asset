@@ -18,7 +18,7 @@ MonoBehaviour:
   minBiomeSizeInChunks: 1
   height: 15
   startHeight: 84
-  noiseScale: 10
+  noiseScale: 50
   octaves: 4
   persistence: 0.5
   lacunarity: 2

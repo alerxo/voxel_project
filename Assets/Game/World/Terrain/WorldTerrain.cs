@@ -102,9 +102,13 @@ public static class WorldTerrain
             //  Meaning terrain thats approaching world border aproaches a height of 0
             //  This makes it so edges of world always are water, ie world surrounded by water
 
-            if (Noise.GetFallOffMap(new Vector2(pos.x, pos.z)) < world.falloff)
+            float noise = Noise.GetFallOffMap(new Vector2(pos.x, pos.z));
+
+            if (noise < world.falloff)
             {
-                terrainHeight = Mathf.FloorToInt((1 / world.falloff) * terrainHeight * Noise.GetFallOffMap(new Vector2(pos.x, pos.z)));
+                float falloffValue = (noise + (1 - world.falloff));
+
+                terrainHeight = Mathf.FloorToInt(terrainHeight * falloffValue);
             }
 
             //  Chaching the height

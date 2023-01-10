@@ -38,6 +38,8 @@ public static class Noise
     public static float GetFallOffMap(Vector2 pos)
     {
         //  Value aproaching 0 from spawn
+        //  Distance from spawn divided by half world, so the further we are, the larger the number
+        //  1 minus this because we want opposite
 
         float halfWorldSizeInVoxel = VoxelData.WorldSizeInVoxel / 2;
 
