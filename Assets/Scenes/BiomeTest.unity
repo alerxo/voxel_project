@@ -336,7 +336,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 2049a1ba29ed8904f81e8769062d8fbd, type: 2}
   - {fileID: 11400000, guid: 8265a8344388b4e408dbc888b839e1b2, type: 2}
   - {fileID: 11400000, guid: 7753d4b4d5423664b9bf9206d817cdd2, type: 2}
-  falloff: 0.01
+  falloff: 0
+  oceanAmountPerSide: 100
   oceanReference: {fileID: 11400000, guid: 4f3dcad22395b7746b68a44d61311a22, type: 2}
   spawn: {fileID: 6015017800736192328}
   material: {fileID: 2100000, guid: 184ca111073942747aaf76ef298afa97, type: 2}

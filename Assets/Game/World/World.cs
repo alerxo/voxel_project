@@ -17,11 +17,11 @@ public class World : MonoBehaviour
     public int randomSeed { get; private set; }
 
     public Climate[] climates;
-    public float falloff;
+    public int oceanAmountPerSide;
 
     [Space]
 
-    public Biome[,] biomeMap = new Biome[VoxelData.WorldSizeInChunks + 2, VoxelData.WorldSizeInChunks + 2];
+    public Biome[,] biomeMap = new Biome[VoxelData.worldSizeInChunks + 2, VoxelData.worldSizeInChunks + 2];
 
     public Biome oceanReference;
 
@@ -38,7 +38,7 @@ public class World : MonoBehaviour
     public Material transparentMaterial;
     public Block[] blocks;
 
-    public Chunk[,] chunksInWorld = new Chunk[VoxelData.WorldSizeInChunks, VoxelData.WorldSizeInChunks];
+    public Chunk[,] chunksInWorld = new Chunk[VoxelData.worldSizeInChunks, VoxelData.worldSizeInChunks];
 
     public List<ChunkCoordinate> chunksToInitialize = new List<ChunkCoordinate>();
 
@@ -90,7 +90,7 @@ public class World : MonoBehaviour
         //  Loops through every y block on spawn x,z looking for the grass block, (which is on terrainheight)
         //  Sets spawn at terrainheight
 
-        spawn.transform.position = new Vector3((VoxelData.WorldSizeInChunks * VoxelData.chunkWidth) / 2f, VoxelData.chunkHeight, (VoxelData.WorldSizeInChunks * VoxelData.chunkWidth) / 2f);
+        spawn.transform.position = new Vector3((VoxelData.worldSizeInChunks * VoxelData.chunkWidth) / 2f, VoxelData.chunkHeight, (VoxelData.worldSizeInChunks * VoxelData.chunkWidth) / 2f);
 
         for (int i = 0; i < VoxelData.chunkHeight; i++)
         {
@@ -107,9 +107,9 @@ public class World : MonoBehaviour
         //  Remove render distance value form starting loop and add it to ending loop,
         //  so we get square with width 2 renderdistances, ie renderdistance ín all directions
 
-        for (int x = (VoxelData.WorldSizeInChunks / 2) - VoxelData.RenderDistanceInChunks; x < (VoxelData.WorldSizeInChunks / 2) + VoxelData.RenderDistanceInChunks; x++)
+        for (int x = (VoxelData.worldSizeInChunks / 2) - VoxelData.RenderDistanceInChunks; x < (VoxelData.worldSizeInChunks / 2) + VoxelData.RenderDistanceInChunks; x++)
         {
-            for (int z = (VoxelData.WorldSizeInChunks / 2) - VoxelData.RenderDistanceInChunks; z < (VoxelData.WorldSizeInChunks / 2) + VoxelData.RenderDistanceInChunks; z++)
+            for (int z = (VoxelData.worldSizeInChunks / 2) - VoxelData.RenderDistanceInChunks; z < (VoxelData.worldSizeInChunks / 2) + VoxelData.RenderDistanceInChunks; z++)
             {
                 NewChunk(x, z);
             }
@@ -300,7 +300,7 @@ public class World : MonoBehaviour
     {
         //  Checks if chunk is inside world
 
-        if (coord.x >= 0 && coord.x < VoxelData.WorldSizeInChunks && coord.z >= 0 && coord.z < VoxelData.WorldSizeInChunks)
+        if (coord.x >= 0 && coord.x < VoxelData.worldSizeInChunks && coord.z >= 0 && coord.z < VoxelData.worldSizeInChunks)
             return true;
         else
             return false;

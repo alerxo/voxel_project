@@ -104,9 +104,11 @@ public static class WorldTerrain
 
             float noise = Noise.GetFallOffMap(new Vector2(pos.x, pos.z));
 
-            if (noise < world.falloff)
+            float falloff = (float)VoxelData.mapEdgeSizeInChunks / (float)VoxelData.worldSizeInChunks;
+
+            if (noise < falloff)
             {
-                float falloffValue = (noise + (1 - world.falloff));
+                float falloffValue = noise / falloff;
 
                 terrainHeight = Mathf.FloorToInt(terrainHeight * falloffValue);
             }

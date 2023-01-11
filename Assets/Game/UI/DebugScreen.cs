@@ -21,7 +21,7 @@ public class DebugScreen : MonoBehaviour
         text = GetComponent<TextMeshProUGUI >();
 
         halfWorldSizeInVoxel = VoxelData.WorldSizeInVoxel / 2;
-        halfWorldSizeInChunk = VoxelData.WorldSizeInChunks / 2;
+        halfWorldSizeInChunk = VoxelData.worldSizeInChunks / 2;
     }
 
     private void Update()
