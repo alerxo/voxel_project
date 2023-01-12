@@ -94,7 +94,7 @@ public class World : MonoBehaviour
 
         for (int i = 0; i < VoxelData.chunkHeight; i++)
         {
-            if(WorldTerrain.GetVoxelBlockType(this, new Vector3(spawn.transform.position.x, i, spawn.transform.position.z), -1) == 1)
+            if(WorldTerrain.GetVoxelBlockType(this, new Vector3(spawn.transform.position.x, i, spawn.transform.position.z), null, 0) == 1)
             {
                 spawn.transform.position = new Vector3(spawn.transform.position.x, i + 2, spawn.transform.position.z);
             }
@@ -282,7 +282,7 @@ public class World : MonoBehaviour
         if (!IsChunkInWorld(thisChunk) || pos.y < 0 || pos.y >= VoxelData.chunkHeight)
         {
             //  If voxel is air, return true
-            if (WorldTerrain.GetVoxelBlockType(this, pos, _tempTerrainHeight) == 0)
+            if (WorldTerrain.GetVoxelBlockType(this, pos, null, _tempTerrainHeight) == 0)
                 return true;
             else
                 return false;
@@ -293,7 +293,7 @@ public class World : MonoBehaviour
             return blocks[chunksInWorld[thisChunk.x, thisChunk.z].GetVoxelFromGlobalVector3(pos)].isTransparent;
         }
 
-        return blocks[WorldTerrain.GetVoxelBlockType(this, pos, _tempTerrainHeight)].isTransparent;
+        return blocks[WorldTerrain.GetVoxelBlockType(this, pos, null, _tempTerrainHeight)].isTransparent;
     }
 
     public bool IsChunkInWorld(ChunkCoordinate coord)

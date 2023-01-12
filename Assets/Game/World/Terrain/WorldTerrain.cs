@@ -5,7 +5,7 @@ using UnityEngine;
 
 public static class WorldTerrain
 {
-    public static byte GetVoxelBlockType(World world, Vector3 pos, int _terrainHeight)
+    public static byte GetVoxelBlockType(World world, Vector3 pos, Biome _blendBiome, int _terrainHeight)
     {
         //  Goes through different parameters to determine blocktype
 
@@ -38,7 +38,7 @@ public static class WorldTerrain
         int terrainHeight;
         int yPos = Mathf.FloorToInt(pos.y);
 
-        if (_terrainHeight < 0)
+        if (_blendBiome == null)
         {
             Biome[] adjacentBiomes = GetAdjacentBiomes(world, cc);
 
@@ -61,12 +61,16 @@ public static class WorldTerrain
             int xPos = GetPositionInChunk(cc, pos).Item1;
             int zPos = GetPositionInChunk(cc, pos).Item2;
 
-            if (IsBlend(adjacentBiomes, chunkBiome))
+            if (IsBlend(adjacentBiomes))
             {
                 float[] blendNoiseValues = GetBlendNoiseValues(adjacentBiomes, world.GetChunkFromVector3(pos), xPos, zPos);
                 float[] averageNoiseAtCenter = GetAverageNoiseAtCenter(adjacentBiomes, world.GetChunkFromVector3(pos));
 
-                float weight = GetBiomeWeight(adjacentBiomes, xPos, zPos);
+                Tuple<float, Biome> blendValues = GetBlendValues(world, pos, adjacentBiomes, xPos, zPos);
+
+                float weight = blendValues.Item1;
+                chunkBiome = blendValues.Item2;
+
 
                 #region math
 
@@ -116,6 +120,7 @@ public static class WorldTerrain
             //  Chaching the height
 
             world.chunksInWorld[cc.x, cc.z].tempTerrainHeight = terrainHeight;
+            world.chunksInWorld[cc.x, cc.z].tempBlendBiome = chunkBiome;
 
             #endregion
         }
@@ -123,6 +128,7 @@ public static class WorldTerrain
         else
         {
             terrainHeight = _terrainHeight;
+            chunkBiome = _blendBiome;
         }
 
         #endregion
@@ -142,7 +148,7 @@ public static class WorldTerrain
 
     #region Weight
 
-    private static float GetBiomeWeight(Biome[] adjacentBiomes, int voxelX, int voxelZ)
+    private static Tuple<float, Biome> GetBlendValues(World world, Vector3 pos, Biome[] adjacentBiomes, int voxelX, int voxelZ)
     {
         //  Chunk is divided into 4 parts, depending on where voxel is inside chunk, use different calculations
         //  Gets the distance from voxel to edge of chunk part
@@ -152,31 +158,31 @@ public static class WorldTerrain
 
         if (voxelX <= 8 && voxelZ <= 8) //    bottom left corner
         {
-            return _GetBiomeWeight(adjacentBiomes, b - voxelX, b - voxelZ, 5, 8, 7);
+            return GetBlend(world, pos, adjacentBiomes, b - voxelX, b - voxelZ, 5, 8, 7);
         }
 
         else if (voxelX > 8 && voxelZ <= 8) //   bottom right corner
         {
-            return _GetBiomeWeight(adjacentBiomes, voxelX - a, b - voxelZ, 3, 6, 7);
+            return GetBlend(world, pos, adjacentBiomes, voxelX - a, b - voxelZ, 3, 6, 7);
         }
 
         else if (voxelX <= 8 && voxelZ > 8) //     top left corner
         {
-            return _GetBiomeWeight(adjacentBiomes, b - voxelX, voxelZ - a, 5, 2, 1);
+            return GetBlend(world, pos, adjacentBiomes, b - voxelX, voxelZ - a, 5, 2, 1);
         }
 
         else //    top right corner
         {
-            return _GetBiomeWeight(adjacentBiomes, voxelX - a, voxelZ - a, 3, 0, 1);
+            return GetBlend(world, pos, adjacentBiomes, voxelX - a, voxelZ - a, 3, 0, 1);
         }
     }
 
-    private static float _GetBiomeWeight(Biome[] adjacentBiomes, int x, int z, int biomeX, int corner, int biomeZ)
+    private static Tuple<float, Biome> GetBlend(World world, Vector3 pos, Biome[] adjacentBiomes, int x, int z, int biomeX, int corner, int biomeZ)
     {
         //  We only blend towards biomes that arent chunk biome
         //  Weight is distance from voxel pos in chunk part, to average biome pos
 
-        int a = VoxelData.chunkWidth / 2;
+        float a = VoxelData.chunkWidth / 2;
 
         Vector2 xPos = new(a, 1);
         Vector2 zPos = new(1, a);
@@ -186,81 +192,99 @@ public static class WorldTerrain
 
         bool[] adjacentBlendStates = GetAdjacentBlendStates(adjacentBiomes);
 
-        float distance = VoxelData.chunkWidth;
+        float distance = a;
+
+        Biome biome;
+
+        #region nasty
 
         if (!adjacentBlendStates[biomeX] && adjacentBlendStates[biomeZ]) // If adjacent biome is on the y/z axis, take distance from y/z edge
         {
             distance = MathF.Min(zPos.y - voxelPos.y, distance);
-
-            return 1 - (distance / a);
         }
 
-        if (adjacentBlendStates[biomeX] && !adjacentBlendStates[biomeZ]) // If adjacent biome is on the x axis, take distance from x edge
+        else if (adjacentBlendStates[biomeX] && !adjacentBlendStates[biomeZ]) // If adjacent biome is on the x axis, take distance from x edge
         {
             distance = MathF.Min(xPos.x - voxelPos.x, distance);
-
-            return 1 - (distance / a);
         }
 
-        if(!adjacentBlendStates[biomeX] && adjacentBlendStates[corner] && !adjacentBlendStates[biomeZ]) //  If adjacent biome is the corner, take distance from corner, (dived by 1.4 because pythagaros therorem)
+        else if (!adjacentBlendStates[biomeX] && adjacentBlendStates[corner] && !adjacentBlendStates[biomeZ]) //  If adjacent biome is the corner, take distance from corner, (dived by 1.4 because pythagaros therorem)
         {
             distance = MathF.Min(Vector2.Distance(voxelPos, cornerPos) / 1.4f, distance);
-            return 1 - (distance / a);
         }
 
-        if (adjacentBlendStates[biomeX] && adjacentBlendStates[corner] && adjacentBlendStates[biomeZ]) //   If all 3 biomes are adjacent, take distance from the closest
+        else if (adjacentBlendStates[biomeX] && adjacentBlendStates[corner] && adjacentBlendStates[biomeZ]) //   If all 3 biomes are adjacent, take distance from the closest
         {
             distance = MathF.Min(Vector2.Distance(voxelPos, xPos), distance);
             distance = MathF.Min(Vector2.Distance(voxelPos, cornerPos), distance);
             distance = MathF.Min(Vector2.Distance(voxelPos, zPos), distance);
-
-            return 1 - (distance / a);
         }
 
-        if (!adjacentBlendStates[biomeX] && !adjacentBlendStates[corner] && !adjacentBlendStates[biomeZ]) //    If no adjacent
+        else if (!adjacentBlendStates[biomeX] && !adjacentBlendStates[corner] && !adjacentBlendStates[biomeZ]) //    If no adjacent
         {
             //  look for an adjacent to entire chunk
 
             if ((adjacentBlendStates[3] || adjacentBlendStates[5]) && !adjacentBlendStates[1] && !adjacentBlendStates[7]) //    if the adjacent is left/right, ie x axis, take distance from x edge
             {
                 distance = MathF.Min(xPos.x - voxelPos.x, distance);
-
-                return 1 - (distance / a);
             }
 
             else if ((adjacentBlendStates[1] || adjacentBlendStates[7]) && !adjacentBlendStates[3] && !adjacentBlendStates[5]) //   if the adjacent is top/bottom, ie y/z axis, take distance from y/z edge
             {
                 distance = MathF.Min(zPos.y - voxelPos.y, distance);
-
-                return 1 - (distance / a);
             }
 
-            if ((adjacentBlendStates[0] || adjacentBlendStates[2] || adjacentBlendStates[6] || adjacentBlendStates[8]))
+            else if ((adjacentBlendStates[0] || adjacentBlendStates[2] || adjacentBlendStates[6] || adjacentBlendStates[8]))
             {
                 distance = MathF.Min(Vector2.Distance(voxelPos, cornerPos), distance);
-
-                return 1 - (distance / a);
             }
         }
 
-        Debug.Log("problem boss");
+        #endregion
 
-        return 0;
+        float noise = Noise.Get2DPerlin(world, new Vector2(pos.x, pos.z), 0, 5f, 1, 0.5f, 2f, 1f);
+
+        #region nasty number 2
+
+        if (noise < 0.15f)
+        {
+            biome = adjacentBiomes[biomeX];
+        }
+
+        else if(noise < 0.30f)
+        {
+            biome = adjacentBiomes[corner];
+        }
+
+        else if(noise < 0.45f)
+        {
+            biome = adjacentBiomes[biomeZ];
+        }
+
+        else
+        {
+            biome = adjacentBiomes[4];
+        }
+
+        #endregion
+
+
+        return Tuple.Create((1f - (distance / a)) * (1 - (noise * noise)), biome);
     }
 
     #endregion
 
     #region Noise
 
-    private static float[] GetBlendNoiseValues(Biome[] adjacentBiomes, Chunk chunk,int voxelX, int voxelZ)
+    private static float[] GetBlendNoiseValues(Biome[] adjacentBiomes, Chunk chunk, int voxelX, int voxelZ)
     {
         //  Gets the average noise values of adjacent chunks, depending on which part of chunk we are in
 
         int a = VoxelData.chunkWidth / 2;
 
-        if(voxelX <= a && voxelZ <= a) //   bottom right corner
+        if (voxelX <= a && voxelZ <= a) //   bottom right corner
         {
-            if(chunk.bottomRightCornerNoise == null)
+            if (chunk.bottomRightCornerNoise == null)
             {
                 chunk.bottomRightCornerNoise = GetAverageNoiseAtCorner(new Biome[]
                 {
@@ -274,9 +298,9 @@ public static class WorldTerrain
             return chunk.bottomRightCornerNoise;
         }
 
-        else if(voxelX <= a && voxelZ > a) //    top right corner
+        else if (voxelX <= a && voxelZ > a) //    top right corner
         {
-            if(chunk.topRightCornerNoise == null)
+            if (chunk.topRightCornerNoise == null)
             {
                 chunk.topRightCornerNoise = GetAverageNoiseAtCorner(new Biome[]
                 {
@@ -291,11 +315,11 @@ public static class WorldTerrain
             return chunk.topRightCornerNoise;
         }
 
-        else if(voxelX > a && voxelZ <= a) //    bottom left corner
+        else if (voxelX > a && voxelZ <= a) //    bottom left corner
         {
-            if(chunk.bottomLeftCornerNoise == null)
+            if (chunk.bottomLeftCornerNoise == null)
             {
-                chunk.bottomLeftCornerNoise =  GetAverageNoiseAtCorner(new Biome[]
+                chunk.bottomLeftCornerNoise = GetAverageNoiseAtCorner(new Biome[]
                 {
                     adjacentBiomes[7],
                     adjacentBiomes[6],
@@ -310,7 +334,7 @@ public static class WorldTerrain
 
         else //     top left corner
         {
-            if(chunk.topLeftCornerNoise == null)
+            if (chunk.topLeftCornerNoise == null)
             {
                 chunk.topLeftCornerNoise = GetAverageNoiseAtCorner(new Biome[]
                 {
@@ -382,7 +406,7 @@ public static class WorldTerrain
 
         int a = VoxelData.chunkWidth;
 
-        if(chunk.centerNoise == null)
+        if (chunk.centerNoise == null)
         {
             List<float> blendNoiseValues = new List<float>
             {
@@ -487,16 +511,16 @@ public static class WorldTerrain
         return Tuple.Create(x + 1, z + 1);
     }
 
-    private static bool IsBlend(Biome[] adjacentBiomes, Biome chunkBiome)
+    private static bool IsBlend(Biome[] adjacentBiomes)
     {
         //  We blend if unique adjacent biomes is larger than 1
 
-        if(adjacentBiomes.Distinct().ToArray().Length > 1)
+        if (adjacentBiomes.Distinct().ToArray().Length > 1)
         {
             return true;
         }
 
-        return false;   
+        return false;
     }
 
     private static bool IsVoxelInWorld(Vector3 pos)

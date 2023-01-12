@@ -12,11 +12,11 @@ public static class Noise
 
         //  creates a curve where amplitude is x and frequency is y
 
-        float amplituide = 1;
-        float frequency = 1;
-        float noiseHeight = 0;
+        float amplituide = 1f;
+        float frequency = 1f;
+        float noiseHeight = 0f;
 
-        float offset = _offset + world.randomSeed;
+        float offset = _offset + world.randomSeed + 0.1f;
 
         for (int i = 0; i < octaves; i++)
         {
@@ -30,7 +30,7 @@ public static class Noise
             frequency *= lacunarity;
         }
 
-        if(noiseHeight > noiseCutoff) noiseHeight = 1;
+        if(noiseHeight > noiseCutoff) noiseHeight = 1f;
 
         return noiseHeight;
     }

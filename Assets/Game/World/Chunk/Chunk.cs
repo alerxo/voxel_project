@@ -37,6 +37,7 @@ public class Chunk
     //  terrain cache
 
     public int tempTerrainHeight;
+    public Biome tempBlendBiome;
 
     public float[] bottomRightCornerNoise;
     public float[] topRightCornerNoise;
@@ -99,14 +100,16 @@ public class Chunk
         {
             for (int z = 0; z < VoxelData.chunkWidth; z++)
             {
-                tempTerrainHeight = -1;
+                tempTerrainHeight = 0;
+                tempBlendBiome = null;
 
                 for (int y = 0; y < VoxelData.chunkHeight; y++)
                 {
-                    voxelMap[x, y, z] = WorldTerrain.GetVoxelBlockType(world, new Vector3(x, y, z) + position, tempTerrainHeight);
+                    voxelMap[x, y, z] = WorldTerrain.GetVoxelBlockType(world, new Vector3(x, y, z) + position, tempBlendBiome, tempTerrainHeight);
                 }
 
-                tempTerrainHeight = -1;
+                tempTerrainHeight = 0;
+                tempBlendBiome = null;
             }
         }
 
@@ -138,7 +141,8 @@ public class Chunk
         {
             for (int z = 0; z < VoxelData.chunkWidth; z++)
             {
-                tempTerrainHeight= -1;
+                tempTerrainHeight = 0;
+                tempBlendBiome = null;
 
                 for (int y = 0; y < VoxelData.chunkHeight; y++)
                 {
@@ -146,7 +150,8 @@ public class Chunk
                         UpdateMeshData(new Vector3(x, y, z), tempTerrainHeight);
                 }
 
-                tempTerrainHeight= -1;
+                tempTerrainHeight = 0;
+                tempBlendBiome = null;
             }
         }
 
