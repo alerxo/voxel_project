@@ -307,7 +307,7 @@ public class Chunk
 
                 //  Adding the uvs
 
-                AddTexture(world.blocks[blockID].textureID);
+                AddTexture(world.blocks[blockID].GetTextureID(r));
 
                 //  Adding the triangles, either to normal or transparent
 
@@ -330,7 +330,6 @@ public class Chunk
                     transparentTriangles.Add(vertexIndex + 1);
                     transparentTriangles.Add(vertexIndex + 3);
                 }
-
 
                 //  Incrementing the vertex index
 

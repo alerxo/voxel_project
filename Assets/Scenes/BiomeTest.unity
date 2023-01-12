@@ -336,7 +336,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 2049a1ba29ed8904f81e8769062d8fbd, type: 2}
   - {fileID: 11400000, guid: 8265a8344388b4e408dbc888b839e1b2, type: 2}
   - {fileID: 11400000, guid: 7753d4b4d5423664b9bf9206d817cdd2, type: 2}
-  falloff: 0
   oceanAmountPerSide: 100
   oceanReference: {fileID: 11400000, guid: 4f3dcad22395b7746b68a44d61311a22, type: 2}
   spawn: {fileID: 6015017800736192328}
@@ -346,43 +345,84 @@ MonoBehaviour:
   - name: Air
     isSolid: 0
     isTransparent: 1
-    textureID: 0
+    backFaceTexture: 0
+    frontFaceTexture: 0
+    topFaceTexture: 0
+    bottomFaceTexture: 0
+    leftFaceTexture: 0
+    rightFaceTexture: 0
   - name: Grass
     isSolid: 1
     isTransparent: 0
-    textureID: 0
+    backFaceTexture: 3
+    frontFaceTexture: 3
+    topFaceTexture: 4
+    bottomFaceTexture: 2
+    leftFaceTexture: 3
+    rightFaceTexture: 3
   - name: Dirt
     isSolid: 1
     isTransparent: 0
-    textureID: 1
+    backFaceTexture: 2
+    frontFaceTexture: 2
+    topFaceTexture: 2
+    bottomFaceTexture: 2
+    leftFaceTexture: 2
+    rightFaceTexture: 2
   - name: Stone
     isSolid: 1
     isTransparent: 0
-    textureID: 2
-  - name: Glass
-    isSolid: 1
-    isTransparent: 1
-    textureID: 3
+    backFaceTexture: 5
+    frontFaceTexture: 5
+    topFaceTexture: 5
+    bottomFaceTexture: 5
+    leftFaceTexture: 5
+    rightFaceTexture: 5
   - name: Wood
     isSolid: 1
     isTransparent: 0
-    textureID: 4
+    backFaceTexture: 9
+    frontFaceTexture: 9
+    topFaceTexture: 10
+    bottomFaceTexture: 10
+    leftFaceTexture: 9
+    rightFaceTexture: 9
   - name: Leaf
     isSolid: 1
     isTransparent: 0
-    textureID: 5
+    backFaceTexture: 11
+    frontFaceTexture: 11
+    topFaceTexture: 11
+    bottomFaceTexture: 11
+    leftFaceTexture: 11
+    rightFaceTexture: 11
   - name: Sand
     isSolid: 1
     isTransparent: 0
-    textureID: 6
+    backFaceTexture: 6
+    frontFaceTexture: 6
+    topFaceTexture: 6
+    bottomFaceTexture: 6
+    leftFaceTexture: 6
+    rightFaceTexture: 6
   - name: Snow
     isSolid: 1
     isTransparent: 0
-    textureID: 7
+    backFaceTexture: 8
+    frontFaceTexture: 8
+    topFaceTexture: 7
+    bottomFaceTexture: 2
+    leftFaceTexture: 8
+    rightFaceTexture: 8
   - name: Water
     isSolid: 1
     isTransparent: 0
-    textureID: 8
+    backFaceTexture: 1
+    frontFaceTexture: 1
+    topFaceTexture: 1
+    bottomFaceTexture: 1
+    leftFaceTexture: 1
+    rightFaceTexture: 1
 --- !u!1 &6015017800736192328
 GameObject:
   m_ObjectHideFlags: 0

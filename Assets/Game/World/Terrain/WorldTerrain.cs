@@ -140,7 +140,7 @@ public static class WorldTerrain
         if (yPos == terrainHeight) return chunkBiome.surfaceBlockId;
         else if (yPos < terrainHeight && yPos > terrainHeight - 4) return chunkBiome.subSurfaceBlockId;
         else if (yPos < terrainHeight) return 3;
-        else if (yPos < 64) return 9;
+        else if (yPos < 64) return 8;
         else return 0;
 
         #endregion
