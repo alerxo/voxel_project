@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: TextureAtlas
+  m_Name: TextureAtlas_Solid
   m_Shader: {fileID: -6465566751694194690, guid: 6f5b72f218f2ad94f82342ec24df7404, type: 3}
   m_ValidKeywords: []
   m_InvalidKeywords: []

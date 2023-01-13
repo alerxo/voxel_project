@@ -8,7 +8,9 @@ public class Block
     //  Block stuff
 
     public string name;
+    public bool drawBlock;
     public bool isSolid;
+    public bool isLiquid;
     public bool isTransparent;
 
     [Header("Texture IDs")]

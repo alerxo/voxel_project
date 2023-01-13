@@ -14,9 +14,12 @@ public class Chunk
 
     private int vertexIndex = 0;
     private List<Vector3> verticies = new List<Vector3>();
-    private List<int> triangles = new List<int>();
+
+    private List<int> solidTriangles = new List<int>();
     private List<int> transparentTriangles = new List<int>();
-    private Material[] materials = new Material[2];
+    private List<int> liquidTriangles = new List<int>();
+
+    private Material[] materials = new Material[3];
     private List<Vector2> uvs = new List<Vector2>();
 
     public Vector3 position;
@@ -46,7 +49,6 @@ public class Chunk
 
     public float[] centerNoise;
 
-
     public Biome biome { get; private set; }
 
     public Chunk(ChunkCoordinate _coord, World _world)
@@ -72,8 +74,9 @@ public class Chunk
         meshRenderer = chunkObject.AddComponent<MeshRenderer>();
         meshCollider = chunkObject.AddComponent<MeshCollider>();
 
-        materials[0] = world.material;
+        materials[0] = world.solidMaterial;
         materials[1] = world.transparentMaterial;
+        materials[2] = world.liquidMaterial;
 
         meshRenderer.materials = materials;
 
@@ -146,7 +149,7 @@ public class Chunk
 
                 for (int y = 0; y < VoxelData.chunkHeight; y++)
                 {
-                    if (world.blocks[voxelMap[x, y, z]].isSolid)
+                    if (world.blocks[voxelMap[x, y, z]].drawBlock)
                         UpdateMeshData(new Vector3(x, y, z), tempTerrainHeight);
                 }
 
@@ -162,8 +165,11 @@ public class Chunk
     {
         vertexIndex = 0;
         verticies.Clear();
-        triangles.Clear();
+
+        solidTriangles.Clear();
         transparentTriangles.Clear();
+        liquidTriangles.Clear();
+
         uvs.Clear();
     }
     
@@ -251,21 +257,42 @@ public class Chunk
         }
     }
 
-    private bool CheckVoxel(Vector3 pos, int _tempTerrainHeight)
+    private bool CheckVoxelTransparancy(Vector3 pos, int _tempTerrainHeight)
     {
         //  Converts into ints
         //  Checks if voxel pos is inside of chunk
         //  Checks the position of given coordinates for voxel
-        //  Returns true if voxel is there and the voxel is a solid block
+        //  Returns true if voxel is there and the voxel is not transparent
 
         int x = Mathf.FloorToInt(pos.x);
         int y = Mathf.FloorToInt(pos.y);
         int z = Mathf.FloorToInt(pos.z);
 
         if (!IsVoxelInChunk(x, y, z))
+        {
             return world.CheckIfVoxelTransparent(pos + position, _tempTerrainHeight);
+        }
 
         return world.blocks[voxelMap[x, y, z]].isTransparent;
+    }
+
+    private bool CheckVoxelLiquid(Vector3 pos, int _tempTerrainHeight)
+    {
+        //  Converts into ints
+        //  Checks if voxel pos is inside of chunk
+        //  Checks the position of given coordinates for voxel
+        //  Returns true if voxel is there and the voxel is not liquid
+
+        int x = Mathf.FloorToInt(pos.x);
+        int y = Mathf.FloorToInt(pos.y);
+        int z = Mathf.FloorToInt(pos.z);
+
+        if (!IsVoxelInChunk(x, y, z))
+        {
+            return world.CheckIfVoxelLiquid(pos + position, _tempTerrainHeight);
+        }
+
+        return world.blocks[voxelMap[x, y, z]].isLiquid;
     }
 
     public byte GetVoxelFromGlobalVector3(Vector3 pos)
@@ -288,15 +315,28 @@ public class Chunk
     private void UpdateMeshData(Vector3 pos, int _tempTerrainHeight)
     {
         //  Goes through each face of voxel
-        //  Checking if there is something adjacent
+        //  Checking for parameters
         //  If not, create verticies, uvs and triangles for face
 
         byte blockID = voxelMap[(int)pos.x, (int)pos.y, (int)pos.z];
+
+        bool isSolid = world.blocks[blockID].isSolid;
         bool isTransparent = world.blocks[blockID].isTransparent;
+        bool isLiquid = world.blocks[blockID].isLiquid;
 
         for (int r = 0; r < 6; r++) // Each row (face)
         {
-            if(CheckVoxel(pos + VoxelData.faceChecks[r], _tempTerrainHeight)) 
+            bool skip = false;
+
+            if(isLiquid) // If we are liquid, check if adjacent also is
+            {
+                if(CheckVoxelLiquid(pos + VoxelData.faceChecks[r], _tempTerrainHeight))
+                {
+                    skip = true;
+                }
+            }
+
+            if(!skip && CheckVoxelTransparancy(pos + VoxelData.faceChecks[r], _tempTerrainHeight))   //  If we survived the parameters, draw face
             {
                 //  Adding the verticies
 
@@ -309,19 +349,19 @@ public class Chunk
 
                 AddTexture(world.blocks[blockID].GetTextureID(r));
 
-                //  Adding the triangles, either to normal or transparent
+                //  Adding the triangles, depending on mesh type
 
-                if (!isTransparent)
+                if (isLiquid)
                 {
-                    triangles.Add(vertexIndex);
-                    triangles.Add(vertexIndex + 1);
-                    triangles.Add(vertexIndex + 2);
-                    triangles.Add(vertexIndex + 2);
-                    triangles.Add(vertexIndex + 1);
-                    triangles.Add(vertexIndex + 3);
+                    liquidTriangles.Add(vertexIndex);
+                    liquidTriangles.Add(vertexIndex + 1);
+                    liquidTriangles.Add(vertexIndex + 2);
+                    liquidTriangles.Add(vertexIndex + 2);
+                    liquidTriangles.Add(vertexIndex + 1);
+                    liquidTriangles.Add(vertexIndex + 3);
                 }
 
-                else
+                else if (isTransparent)
                 {
                     transparentTriangles.Add(vertexIndex);
                     transparentTriangles.Add(vertexIndex + 1);
@@ -329,6 +369,21 @@ public class Chunk
                     transparentTriangles.Add(vertexIndex + 2);
                     transparentTriangles.Add(vertexIndex + 1);
                     transparentTriangles.Add(vertexIndex + 3);
+                }
+
+                else if (isSolid)
+                {
+                    solidTriangles.Add(vertexIndex);
+                    solidTriangles.Add(vertexIndex + 1);
+                    solidTriangles.Add(vertexIndex + 2);
+                    solidTriangles.Add(vertexIndex + 2);
+                    solidTriangles.Add(vertexIndex + 1);
+                    solidTriangles.Add(vertexIndex + 3);
+                }
+
+                else
+                {
+                    Debug.Log("Error in Chunk/UpdateMeshData: Did not find mesh type");
                 }
 
                 //  Incrementing the vertex index
@@ -346,9 +401,11 @@ public class Chunk
         Mesh mesh = new Mesh();
         mesh.vertices = verticies.ToArray();
 
-        mesh.subMeshCount = 2;
-        mesh.SetTriangles(triangles.ToArray(), 0);
+        mesh.subMeshCount = 3;
+        mesh.SetTriangles(solidTriangles.ToArray(), 0);
+
         mesh.SetTriangles(transparentTriangles.ToArray(), 1);
+        mesh.SetTriangles(liquidTriangles.ToArray(), 2);
 
         mesh.uv = uvs.ToArray();
 

@@ -34,8 +34,10 @@ public class World : MonoBehaviour
 
     private List<ChunkCoordinate> activeChunks = new List<ChunkCoordinate>();
 
-    public Material material;
+    public Material solidMaterial;
     public Material transparentMaterial;
+    public Material liquidMaterial;
+
     public Block[] blocks;
 
     public Chunk[,] chunksInWorld = new Chunk[VoxelData.worldSizeInChunks, VoxelData.worldSizeInChunks];
@@ -272,7 +274,7 @@ public class World : MonoBehaviour
 
     public bool CheckIfVoxelTransparent(Vector3 pos, int _tempTerrainHeight)
     {
-        //  First looks if the voxel is in world, if not in world and an air voxel, return true,
+        //  First looks if the voxel is in world, if not in world, return true,
         //  (face generation scrip doesnt recognize adjacent chunks as in world sometimes and we get into first check when we shoudlnt, so we draw face just in case)
         //  Then check chunk who is in world to check if chunk has been loaded, if it has, use istransparent
         //  If it hasnt been loaded, use get voxel
@@ -281,11 +283,7 @@ public class World : MonoBehaviour
 
         if (!IsChunkInWorld(thisChunk) || pos.y < 0 || pos.y >= VoxelData.chunkHeight)
         {
-            //  If voxel is air, return true
-            if (WorldTerrain.GetVoxelBlockType(this, pos, null, _tempTerrainHeight) == 0)
-                return true;
-            else
-                return false;
+            return true;
         }
 
         if (chunksInWorld[thisChunk.x, thisChunk.z] != null && chunksInWorld[thisChunk.x, thisChunk.z].IsEditable)
@@ -294,6 +292,28 @@ public class World : MonoBehaviour
         }
 
         return blocks[WorldTerrain.GetVoxelBlockType(this, pos, null, _tempTerrainHeight)].isTransparent;
+    }
+
+    public bool CheckIfVoxelLiquid(Vector3 pos, int _tempTerrainHeight)
+    {
+        //  First looks if the voxel is in world, if not in world, return true,
+        //  (face generation scrip doesnt recognize adjacent chunks as in world sometimes and we get into first check when we shoudlnt, so we draw face just in case)
+        //  Then check chunk who is in world to check if chunk has been loaded, if it has, use isLiquid
+        //  If it hasnt been loaded, use get voxel
+
+        ChunkCoordinate thisChunk = new ChunkCoordinate(pos);
+
+        if (!IsChunkInWorld(thisChunk) || pos.y < 0 || pos.y >= VoxelData.chunkHeight)
+        {
+            return false;
+        }
+
+        if (chunksInWorld[thisChunk.x, thisChunk.z] != null && chunksInWorld[thisChunk.x, thisChunk.z].IsEditable)
+        {
+            return blocks[chunksInWorld[thisChunk.x, thisChunk.z].GetVoxelFromGlobalVector3(pos)].isLiquid;
+        }
+
+        return blocks[WorldTerrain.GetVoxelBlockType(this, pos, null, _tempTerrainHeight)].isLiquid;
     }
 
     public bool IsChunkInWorld(ChunkCoordinate coord)

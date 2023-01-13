@@ -478,11 +478,14 @@ MonoBehaviour:
   oceanAmountPerSide: 100
   oceanReference: {fileID: 11400000, guid: 4f3dcad22395b7746b68a44d61311a22, type: 2}
   spawn: {fileID: 6015017800736192328}
-  material: {fileID: 2100000, guid: 184ca111073942747aaf76ef298afa97, type: 2}
+  solidMaterial: {fileID: 2100000, guid: 184ca111073942747aaf76ef298afa97, type: 2}
   transparentMaterial: {fileID: 2100000, guid: 53e29320e16150745a98241fe95f37d5, type: 2}
+  liquidMaterial: {fileID: 2100000, guid: 4a6cdac9d4d7a844e8f96e3cb698e056, type: 2}
   blocks:
   - name: Air
+    drawBlock: 0
     isSolid: 0
+    isLiquid: 0
     isTransparent: 1
     backFaceTexture: 0
     frontFaceTexture: 0
@@ -491,7 +494,9 @@ MonoBehaviour:
     leftFaceTexture: 0
     rightFaceTexture: 0
   - name: Grass
+    drawBlock: 1
     isSolid: 1
+    isLiquid: 0
     isTransparent: 0
     backFaceTexture: 3
     frontFaceTexture: 3
@@ -500,7 +505,9 @@ MonoBehaviour:
     leftFaceTexture: 3
     rightFaceTexture: 3
   - name: Dirt
+    drawBlock: 1
     isSolid: 1
+    isLiquid: 0
     isTransparent: 0
     backFaceTexture: 2
     frontFaceTexture: 2
@@ -509,7 +516,9 @@ MonoBehaviour:
     leftFaceTexture: 2
     rightFaceTexture: 2
   - name: Stone
+    drawBlock: 1
     isSolid: 1
+    isLiquid: 0
     isTransparent: 0
     backFaceTexture: 5
     frontFaceTexture: 5
@@ -518,7 +527,9 @@ MonoBehaviour:
     leftFaceTexture: 5
     rightFaceTexture: 5
   - name: Wood
+    drawBlock: 1
     isSolid: 1
+    isLiquid: 0
     isTransparent: 0
     backFaceTexture: 9
     frontFaceTexture: 9
@@ -527,7 +538,9 @@ MonoBehaviour:
     leftFaceTexture: 9
     rightFaceTexture: 9
   - name: Leaf
+    drawBlock: 1
     isSolid: 1
+    isLiquid: 0
     isTransparent: 0
     backFaceTexture: 11
     frontFaceTexture: 11
@@ -536,7 +549,9 @@ MonoBehaviour:
     leftFaceTexture: 11
     rightFaceTexture: 11
   - name: Sand
+    drawBlock: 1
     isSolid: 1
+    isLiquid: 0
     isTransparent: 0
     backFaceTexture: 6
     frontFaceTexture: 6
@@ -545,7 +560,9 @@ MonoBehaviour:
     leftFaceTexture: 6
     rightFaceTexture: 6
   - name: Snow
+    drawBlock: 1
     isSolid: 1
+    isLiquid: 0
     isTransparent: 0
     backFaceTexture: 8
     frontFaceTexture: 8
@@ -554,8 +571,10 @@ MonoBehaviour:
     leftFaceTexture: 8
     rightFaceTexture: 8
   - name: Water
-    isSolid: 1
-    isTransparent: 0
+    drawBlock: 1
+    isSolid: 0
+    isLiquid: 1
+    isTransparent: 1
     backFaceTexture: 1
     frontFaceTexture: 1
     topFaceTexture: 1
