@@ -482,7 +482,7 @@ MonoBehaviour:
   transparentMaterial: {fileID: 2100000, guid: 53e29320e16150745a98241fe95f37d5, type: 2}
   liquidMaterial: {fileID: 2100000, guid: 4a6cdac9d4d7a844e8f96e3cb698e056, type: 2}
   blocks:
-  - name: Air
+  - name: 000-Air
     drawBlock: 0
     isSolid: 0
     isLiquid: 0
@@ -493,7 +493,7 @@ MonoBehaviour:
     bottomFaceTexture: 0
     leftFaceTexture: 0
     rightFaceTexture: 0
-  - name: Grass
+  - name: 001-Grass
     drawBlock: 1
     isSolid: 1
     isLiquid: 0
@@ -504,7 +504,7 @@ MonoBehaviour:
     bottomFaceTexture: 2
     leftFaceTexture: 3
     rightFaceTexture: 3
-  - name: Dirt
+  - name: 002-Dirt
     drawBlock: 1
     isSolid: 1
     isLiquid: 0
@@ -515,7 +515,7 @@ MonoBehaviour:
     bottomFaceTexture: 2
     leftFaceTexture: 2
     rightFaceTexture: 2
-  - name: Stone
+  - name: 003-Stone
     drawBlock: 1
     isSolid: 1
     isLiquid: 0
@@ -526,7 +526,7 @@ MonoBehaviour:
     bottomFaceTexture: 5
     leftFaceTexture: 5
     rightFaceTexture: 5
-  - name: Wood
+  - name: 004-Wood
     drawBlock: 1
     isSolid: 1
     isLiquid: 0
@@ -537,7 +537,7 @@ MonoBehaviour:
     bottomFaceTexture: 10
     leftFaceTexture: 9
     rightFaceTexture: 9
-  - name: Leaf
+  - name: 005-Leaf
     drawBlock: 1
     isSolid: 1
     isLiquid: 0
@@ -548,7 +548,7 @@ MonoBehaviour:
     bottomFaceTexture: 11
     leftFaceTexture: 11
     rightFaceTexture: 11
-  - name: Sand
+  - name: 006-Sand
     drawBlock: 1
     isSolid: 1
     isLiquid: 0
@@ -559,7 +559,7 @@ MonoBehaviour:
     bottomFaceTexture: 6
     leftFaceTexture: 6
     rightFaceTexture: 6
-  - name: Snow
+  - name: 007-Snow
     drawBlock: 1
     isSolid: 1
     isLiquid: 0
@@ -570,7 +570,7 @@ MonoBehaviour:
     bottomFaceTexture: 2
     leftFaceTexture: 8
     rightFaceTexture: 8
-  - name: Water
+  - name: 008-Water
     drawBlock: 1
     isSolid: 0
     isLiquid: 1
@@ -581,6 +581,17 @@ MonoBehaviour:
     bottomFaceTexture: 1
     leftFaceTexture: 1
     rightFaceTexture: 1
+  - name: 009-Glass
+    drawBlock: 1
+    isSolid: 0
+    isLiquid: 0
+    isTransparent: 1
+    backFaceTexture: 12
+    frontFaceTexture: 12
+    topFaceTexture: 12
+    bottomFaceTexture: 12
+    leftFaceTexture: 12
+    rightFaceTexture: 12
 --- !u!1 &6015017800736192328
 GameObject:
   m_ObjectHideFlags: 0
