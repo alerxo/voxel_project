@@ -2,12 +2,30 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Threading;
-using Unity.Netcode;
 
-public class World : NetworkBehaviour
+public class World : MonoBehaviour
 {
+    //  Test values
+
+    public bool initializeChunkActive;
+
+    [Space]
+
+    //  Terrain and climate
+
     [SerializeField] private int seed;
-    public Biome biome;
+    public int randomSeed { get; private set; }
+
+    public Climate[] climates;
+    public int oceanAmountPerSide;
+
+    [Space]
+
+    public Biome[,] biomeMap = new Biome[VoxelData.worldSizeInChunks + 2, VoxelData.worldSizeInChunks + 2];
+
+    public Biome oceanReference;
+
+    //  Spawn
 
     [SerializeField] private GameObject spawn;
     public int spawnedChunksCount { get; private set; }
@@ -20,13 +38,13 @@ public class World : NetworkBehaviour
     public Material transparentMaterial;
     public Block[] blocks;
 
-    public Chunk[,] chunksInWorld = new Chunk[VoxelData.WorldSizeInChunks, VoxelData.WorldSizeInChunks];
+    public Chunk[,] chunksInWorld = new Chunk[VoxelData.worldSizeInChunks, VoxelData.worldSizeInChunks];
 
     public List<ChunkCoordinate> chunksToInitialize = new List<ChunkCoordinate>();
 
     //  Threading related
 
-    private Queue<Queue<VoxelMod>> modifications = new Queue<Queue<VoxelMod>>();
+    public Queue<Queue<VoxelMod>> modifications = new Queue<Queue<VoxelMod>>();
     public List<Chunk> chunksToUpdate = new List<Chunk>();
     public List<Chunk> chunksToPopulate = new List<Chunk>();
     public Queue<Chunk> chunksToDraw = new Queue<Chunk>();
@@ -41,6 +59,9 @@ public class World : NetworkBehaviour
         //  Starts a new threads for chunk updating, renderdistance checks and voxelmap populating
 
         Random.InitState(seed);
+        randomSeed = Random.Range(0, 1000000);
+
+        biomeMap = BiomeMap.GetBiomeMap(this);
 
         ThreadedUpdate = new Thread(new ThreadStart(ThreadedUpdate_2));
         ThreadedUpdate.Start();
@@ -69,11 +90,11 @@ public class World : NetworkBehaviour
         //  Loops through every y block on spawn x,z looking for the grass block, (which is on terrainheight)
         //  Sets spawn at terrainheight
 
-        spawn.transform.position = new Vector3((VoxelData.WorldSizeInChunks * VoxelData.chunkWidth) / 2f, VoxelData.chunkHeight, (VoxelData.WorldSizeInChunks * VoxelData.chunkWidth) / 2f);
+        spawn.transform.position = new Vector3((VoxelData.worldSizeInChunks * VoxelData.chunkWidth) / 2f, VoxelData.chunkHeight, (VoxelData.worldSizeInChunks * VoxelData.chunkWidth) / 2f);
 
         for (int i = 0; i < VoxelData.chunkHeight; i++)
         {
-            if(GetVoxelBlockType(new Vector3(spawn.transform.position.x, i, spawn.transform.position.z)) == 1)
+            if(WorldTerrain.GetVoxelBlockType(this, new Vector3(spawn.transform.position.x, i, spawn.transform.position.z), null, 0) == 1)
             {
                 spawn.transform.position = new Vector3(spawn.transform.position.x, i + 2, spawn.transform.position.z);
             }
@@ -86,9 +107,9 @@ public class World : NetworkBehaviour
         //  Remove render distance value form starting loop and add it to ending loop,
         //  so we get square with width 2 renderdistances, ie renderdistance ín all directions
 
-        for (int x = (VoxelData.WorldSizeInChunks / 2) - VoxelData.RenderDistanceInChunks; x < (VoxelData.WorldSizeInChunks / 2) + VoxelData.RenderDistanceInChunks; x++)
+        for (int x = (VoxelData.worldSizeInChunks / 2) - VoxelData.RenderDistanceInChunks; x < (VoxelData.worldSizeInChunks / 2) + VoxelData.RenderDistanceInChunks; x++)
         {
-            for (int z = (VoxelData.WorldSizeInChunks / 2) - VoxelData.RenderDistanceInChunks; z < (VoxelData.WorldSizeInChunks / 2) + VoxelData.RenderDistanceInChunks; z++)
+            for (int z = (VoxelData.worldSizeInChunks / 2) - VoxelData.RenderDistanceInChunks; z < (VoxelData.worldSizeInChunks / 2) + VoxelData.RenderDistanceInChunks; z++)
             {
                 NewChunk(x, z);
             }
@@ -134,12 +155,17 @@ public class World : NetworkBehaviour
 
             if (chunksToUpdate.Count > 0)
                 UpdateChunks();
-
-            Thread.Sleep(10);
         }
     }
 
     private void OnDisable()
+    {
+        //  Aborts infinite loop when we shut down program just in case
+
+        ThreadedUpdate.Abort();
+    }
+
+    private void OnDestroy()
     {
         //  Aborts infinite loop when we shut down program just in case
 
@@ -244,7 +270,7 @@ public class World : NetworkBehaviour
         return chunksInWorld[x, z];
     }
 
-    public bool CheckIfVoxelTransparent(Vector3 pos)
+    public bool CheckIfVoxelTransparent(Vector3 pos, int _tempTerrainHeight)
     {
         //  First looks if the voxel is in world, if not in world and an air voxel, return true,
         //  (face generation scrip doesnt recognize adjacent chunks as in world sometimes and we get into first check when we shoudlnt, so we draw face just in case)
@@ -253,13 +279,11 @@ public class World : NetworkBehaviour
 
         ChunkCoordinate thisChunk = new ChunkCoordinate(pos);
 
-        if (!IsChunkInWorld(thisChunk) || pos.y < 0 || pos.y > VoxelData.chunkHeight)
+        if (!IsChunkInWorld(thisChunk) || pos.y < 0 || pos.y >= VoxelData.chunkHeight)
         {
             //  If voxel is air, return true
-            if (GetVoxelBlockType(pos) == 0)
+            if (WorldTerrain.GetVoxelBlockType(this, pos, null, _tempTerrainHeight) == 0)
                 return true;
-
-
             else
                 return false;
         }
@@ -269,85 +293,14 @@ public class World : NetworkBehaviour
             return blocks[chunksInWorld[thisChunk.x, thisChunk.z].GetVoxelFromGlobalVector3(pos)].isTransparent;
         }
 
-        return blocks[GetVoxelBlockType(pos)].isTransparent;
+        return blocks[WorldTerrain.GetVoxelBlockType(this, pos, null, _tempTerrainHeight)].isTransparent;
     }
-
-    public byte GetVoxelBlockType(Vector3 pos)
-    {
-        //  World generation basically
-        //  Has few parameters per block of code, uses noise to see if it passes parameters, and assigns block thereafter
-
-        int yPos = Mathf.FloorToInt(pos.y);
-
-        //  Constant
-
-        if (!IsVoxelInWorld(pos))
-        {
-            //  If outside world, return air
-            return 0;
-        }
-
-        //  Terrain
-
-        int terrainheight = Mathf.FloorToInt((biome.maxGroundY - biome.minGroundY) * Noise.Get2DPerlin(new Vector2(pos.x, pos.z), 0, biome.terrainScale)) + biome.minGroundY;
-
-        byte voxelValue = 0;
-
-
-        if (yPos == terrainheight)
-            voxelValue = 1;
-        else if (yPos < terrainheight && yPos > terrainheight - 4)
-            voxelValue = 2;
-        else if (yPos < terrainheight)
-            voxelValue = 3;
-        else
-            voxelValue = 0;
-
-        //  Lode
-
-        if (voxelValue == 0)
-        {
-            foreach(Lode lode in biome.lodes)
-            {
-                if (yPos > lode.minHeight && yPos < lode.maxHeight)
-                    if (Noise.Get3DPerlin(pos, lode.noiseOffset, lode.scale, lode.threshold))
-                        voxelValue = lode.blockID;
-            }
-        }
-
-        //  Tree
-
-        if(yPos == terrainheight + 1)
-        {
-            if (Noise.Get2DPerlin(new Vector2(pos.x, pos.z), 10000, biome.treeZoneScale) > biome.treeZoneThreshHold)
-            {
-                if (Noise.Get2DPerlin(new Vector2(pos.x, pos.z), 20000, biome.treePlacementScale) > biome.treePlacementThreshold)
-                {
-                    voxelValue = 5;
-                    modifications.Enqueue(Structure.MakeTree(new Vector3(pos.x, pos.y, pos.z), biome.minTreeY, biome.maxTreeY));
-                }
-            }
-                
-        }
-
-        return voxelValue;
-    }   
 
     public bool IsChunkInWorld(ChunkCoordinate coord)
     {
         //  Checks if chunk is inside world
 
-        if (coord.x > 0 && coord.x < VoxelData.WorldSizeInChunks - 1 && coord.z > 0 && coord.z < VoxelData.WorldSizeInChunks)
-            return true;
-        else
-            return false;
-    }
-
-    private bool IsVoxelInWorld(Vector3 pos)
-    {
-        //  Checks if voxel is inside world
-
-        if (pos.x >= 0 && pos.x < VoxelData.WorldSizeInVoxel && pos.y >= 0 && pos.y < VoxelData.chunkHeight && pos.z >= 0 && pos.z < VoxelData.WorldSizeInVoxel)
+        if (coord.x >= 0 && coord.x < VoxelData.worldSizeInChunks && coord.z >= 0 && coord.z < VoxelData.worldSizeInChunks)
             return true;
         else
             return false;

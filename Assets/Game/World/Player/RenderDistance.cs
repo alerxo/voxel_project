@@ -2,10 +2,9 @@ using Mono.Cecil;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
-using Unity.Netcode;
 using UnityEngine;
 
-public class RenderDistance : NetworkBehaviour
+public class RenderDistance : MonoBehaviour
 {
     public ChunkCoordinate playerChunk;
     private ChunkCoordinate playerLastChunk;
@@ -89,10 +88,16 @@ public class RenderDistance : NetworkBehaviour
     {
         //  Aborts infinite loop when we shut down program just in case
 
-        if (IsOwner) CheckRenderDistance_Thread.Abort();
-
+        CheckRenderDistance_Thread?.Abort();
     }
 
+    private void OnDestroy()
+    {
+        //  Aborts infinite loop when we shut down program just in case
+
+        CheckRenderDistance_Thread?.Abort();
+    }
+        
     private void CheckRenderDistance()
     {
         //  Makes a copy of active chunks to compare in loop, if we find it, ie in render distance, we remove it,

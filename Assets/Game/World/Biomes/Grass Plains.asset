@@ -13,13 +13,16 @@ MonoBehaviour:
   m_Name: Grass Plains
   m_EditorClassIdentifier: 
   biomeName: Grass Plains
-  maxGroundY: 50
-  minGroundY: 40
-  terrainScale: 0.1
-  treeZoneScale: 1.3
-  treeZoneThreshHold: 0.6
-  treePlacementScale: 15
-  treePlacementThreshold: 0.8
-  minTreeY: 5
-  maxTreeY: 12
+  amount: 5
+  weight: 1
+  minBiomeSizeInChunks: 1
+  height: 6
+  startHeight: 64
+  noiseScale: 50
+  octaves: 4
+  persistence: 0.5
+  lacunarity: 2
+  noiseCutoff: 1
+  surfaceBlockId: 1
+  subSurfaceBlockId: 2
   lodes: []
