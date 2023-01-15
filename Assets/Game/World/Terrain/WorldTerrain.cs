@@ -5,7 +5,7 @@ using UnityEngine;
 
 public static class WorldTerrain
 {
-    public static byte GetVoxelBlockType(World world, Vector3 pos, Biome _blendBiome, int _terrainHeight)
+    public static byte GetVoxelBlockType(World world, Vector3 pos, Biome _blendBiome, int _terrainHeight, bool blend)
     {
         //  Goes through different parameters to determine blocktype
 
@@ -61,7 +61,7 @@ public static class WorldTerrain
             int xPos = GetPositionInChunk(cc, pos).Item1;
             int zPos = GetPositionInChunk(cc, pos).Item2;
 
-            if (IsBlend(adjacentBiomes))
+            if (IsBlend(adjacentBiomes, blend))
             {
                 float[] blendNoiseValues = GetBlendNoiseValues(adjacentBiomes, world.GetChunkFromVector3(pos), xPos, zPos);
                 float[] averageNoiseAtCenter = GetAverageNoiseAtCenter(adjacentBiomes, world.GetChunkFromVector3(pos));
@@ -511,11 +511,11 @@ public static class WorldTerrain
         return Tuple.Create(x + 1, z + 1);
     }
 
-    private static bool IsBlend(Biome[] adjacentBiomes)
+    private static bool IsBlend(Biome[] adjacentBiomes, bool blend)
     {
         //  We blend if unique adjacent biomes is larger than 1
 
-        if (adjacentBiomes.Distinct().ToArray().Length > 1)
+        if (!blend || adjacentBiomes.Distinct().ToArray().Length > 1)
         {
             return true;
         }

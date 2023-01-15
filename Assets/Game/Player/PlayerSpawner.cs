@@ -19,7 +19,9 @@ public class PlayerSpawner : NetworkBehaviour
     {
         //  Waits untill entire spawnchunk has been loaded
 
-        if (world.spawnedChunksCount >= ((VoxelData.worldSizeInChunks * VoxelData.worldSizeInChunks) - 10))
+        int rd = (VoxelData.RenderDistanceInChunks + VoxelData.RenderDistanceLodTwoInChunks) * 2;
+
+        if (world.spawnedChunksCount >= ((rd * rd) - 10))
         {
             SpawnPlayer();
         }

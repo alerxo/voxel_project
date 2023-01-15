@@ -97,11 +97,12 @@ public class World : MonoBehaviour
 
         spawn.transform.position = new Vector3((VoxelData.worldSizeInChunks * VoxelData.chunkWidth) / 2f, VoxelData.chunkHeight, (VoxelData.worldSizeInChunks * VoxelData.chunkWidth) / 2f);
 
-        for (int i = 0; i < VoxelData.chunkHeight; i++)
+        for (int i = VoxelData.chunkHeight; i < 0; i--)
         {
-            if(WorldTerrain.GetVoxelBlockType(this, new Vector3(spawn.transform.position.x, i, spawn.transform.position.z), null, 0) == 1)
+            if(WorldTerrain.GetVoxelBlockType(this, new Vector3(spawn.transform.position.x, i, spawn.transform.position.z), null, 0, true) != 0)
             {
                 spawn.transform.position = new Vector3(spawn.transform.position.x, i + 2, spawn.transform.position.z);
+                return;
             }
         }
     }
@@ -112,9 +113,12 @@ public class World : MonoBehaviour
         //  Remove render distance value form starting loop and add it to ending loop,
         //  so we get square with width 2 renderdistances, ie renderdistance ín all directions
 
-        for (int x = 0; x < VoxelData.worldSizeInChunks; x++)
+        int wz = VoxelData.worldSizeInChunks / 2;
+        int rd = VoxelData.RenderDistanceInChunks + VoxelData.RenderDistanceLodTwoInChunks;
+
+        for (int x = wz - rd; x < wz + rd; x++)
         {
-            for (int z = 0; z < VoxelData.worldSizeInChunks; z++)
+            for (int z = wz - rd; z < wz + rd; z++)
             {
                 InitializeChunk(x, z);
             }
@@ -134,19 +138,22 @@ public class World : MonoBehaviour
         }
     }
 
-    private void InitializeChunk(int x, int z)
+    public void InitializeChunk(int x, int z)
     {
         //  Initializes first chunk in list and removes,
         //  adds to spawned chunks so other scripts can caluclate when to do something
 
-        ChunkCoordinate newChunk = new ChunkCoordinate(x, z);
-        chunksInWorld[x, z] = new Chunk(newChunk, this);
-        chunksToInitialize.Add(newChunk);
+        if (chunksInWorld[x, z] == null)
+        {
+            ChunkCoordinate newChunk = new ChunkCoordinate(x, z);
+            chunksInWorld[x, z] = new Chunk(newChunk, this);
+            chunksToInitialize.Add(newChunk);
 
-        ChunkCoordinate cc = chunksToInitialize[0];
+            ChunkCoordinate cc = chunksToInitialize[0];
 
-        chunksToInitialize.RemoveAt(0);
-        chunksInWorld[cc.x, cc.z].Initialize();
+            chunksToInitialize.RemoveAt(0);
+            chunksInWorld[cc.x, cc.z].Initialize();
+        }
     }
 
     private void ThreadedUpdate_2()
@@ -302,7 +309,7 @@ public class World : MonoBehaviour
             return blocks[chunksInWorld[thisChunk.x, thisChunk.z].GetVoxelFromGlobalVector3(pos)].isTransparent;
         }
 
-        return blocks[WorldTerrain.GetVoxelBlockType(this, pos, null, _tempTerrainHeight)].isTransparent;
+        return blocks[WorldTerrain.GetVoxelBlockType(this, pos, null, _tempTerrainHeight, true)].isTransparent;
     }
 
     public bool CheckIfVoxelLiquid(Vector3 pos, int _tempTerrainHeight)
@@ -324,7 +331,7 @@ public class World : MonoBehaviour
             return blocks[chunksInWorld[thisChunk.x, thisChunk.z].GetVoxelFromGlobalVector3(pos)].isLiquid;
         }
 
-        return blocks[WorldTerrain.GetVoxelBlockType(this, pos, null, _tempTerrainHeight)].isLiquid;
+        return blocks[WorldTerrain.GetVoxelBlockType(this, pos, null, _tempTerrainHeight, true)].isLiquid;
     }
 
     public bool IsChunkInWorld(ChunkCoordinate coord)

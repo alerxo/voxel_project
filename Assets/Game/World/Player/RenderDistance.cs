@@ -22,6 +22,7 @@ public class RenderDistance : MonoBehaviour
     private Queue<Chunk> chunksToDeactivate = new Queue<Chunk>();
 
     private Queue<ChunkCoordinate> chunksToCreateLodOne = new Queue<ChunkCoordinate>();
+    private Queue<ChunkCoordinate> chunksToCreateLodTwo = new Queue<ChunkCoordinate>();
 
     private void Start()
     {
@@ -53,6 +54,12 @@ public class RenderDistance : MonoBehaviour
             //  Sends chunks that should be activate to the server via rpcmanager
             ChunkCoordinate cc = chunksToCreateLodOne.Dequeue();
             world.NewChunkLodOne(cc.x, cc.z);
+        }
+
+        if(chunksToCreateLodTwo.Count > 0)
+        {
+            ChunkCoordinate cc = chunksToCreateLodTwo.Dequeue();
+            world.InitializeChunk(cc.x, cc.z);
         }
 
         if (chunksToActivate.Count > 0)
@@ -102,36 +109,55 @@ public class RenderDistance : MonoBehaviour
         //  Add all chunks in renderdistance to active chunks
 
         ChunkCoordinate coord = world.GetChunkCoordinateFromVector3(playerPosition);
+
         playerLastChunk = playerChunk;
 
         List<ChunkCoordinate> previoslyActiveChunks = new List<ChunkCoordinate>(activeChunks);
 
         activeChunks.Clear();
 
-        for (int x = coord.x - VoxelData.RenderDistanceInChunks; x < coord.x + VoxelData.RenderDistanceInChunks; x++)
+        int r = VoxelData.RenderDistanceInChunks;
+        int rd = r + VoxelData.RenderDistanceLodTwoInChunks;
+
+        Debug.Log(coord.x + " " + coord.z);
+        Debug.Log(r + " " + rd);
+
+        for (int x = coord.x - rd; x < coord.x + rd; x++)
         {
-            for (int z = coord.z - VoxelData.RenderDistanceInChunks; z < coord.z + VoxelData.RenderDistanceInChunks; z++)
+            for (int z = coord.z - rd; z < coord.z + rd; z++)
             {
                 if (world.IsChunkInWorld(new ChunkCoordinate(x, z)))
                 {
-                    if (!world.chunksInWorld[x, z].lodOneCreated)
+                    if((coord.x - r < x && x < coord.x + r) && (coord.z - r < z && z < coord.z + r))
                     {
-                        world.chunksInWorld[x, z].lodOneCreated = true;
-                        chunksToCreateLodOne.Enqueue(new ChunkCoordinate(x, z));
+                        if (!world.chunksInWorld[x, z].IsEditable)
+                        {
+                            chunksToCreateLodOne.Enqueue(new ChunkCoordinate(x, z));
+                        }
+
+                        else if (!world.chunksInWorld[x, z].IsActive)
+                        {
+                            chunksToActivate.Enqueue(world.chunksInWorld[x, z]);
+                        }
+
+                        activeChunks.Add(new ChunkCoordinate(x, z));
+
+                        for (int i = 0; i < previoslyActiveChunks.Count; i++)
+                        {
+                            if (previoslyActiveChunks[i].Equals(new ChunkCoordinate(x, z)))
+                            {
+                                previoslyActiveChunks.RemoveAt(i);
+                            }
+                        }
                     }
 
-                    else if (!world.chunksInWorld[x, z].IsActive)
+                    else
                     {
-                        chunksToActivate.Enqueue(world.chunksInWorld[x, z]);
+                        if (world.chunksInWorld[x, z] == null)
+                        {
+                            chunksToCreateLodTwo.Enqueue(new ChunkCoordinate(x, z));
+                        }
                     }
-
-                    activeChunks.Add(new ChunkCoordinate(x, z));
-                }
-
-                for (int i = 0; i < previoslyActiveChunks.Count; i++)
-                {
-                    if (previoslyActiveChunks[i].Equals(new ChunkCoordinate(x, z)))
-                        previoslyActiveChunks.RemoveAt(i);
                 }
             }
         }
@@ -149,7 +175,9 @@ public class RenderDistance : MonoBehaviour
     private void ActivateChunks()
     {
         while (chunksToActivate.Count > 0)
+        {
             chunksToActivate.Dequeue().IsActive = true;
+        }       
     }
 
     private void DeactivateChunks()

@@ -28,8 +28,6 @@ public class Chunk
 
     public ChunkCoordinate coord;
 
-    public bool lodOneCreated = false;
-
     #region lodonemeshdata
 
     private int lodOneVertexIndex = 0;
@@ -192,7 +190,7 @@ public class Chunk
 
                 for (int y = 0; y < VoxelData.chunkHeight; y++)
                 {
-                    voxelMap[x, y, z] = WorldTerrain.GetVoxelBlockType(world, new Vector3(x, y, z) + position, tempBlendBiome, tempTerrainHeight);
+                    voxelMap[x, y, z] = WorldTerrain.GetVoxelBlockType(world, new Vector3(x, y, z) + position, tempBlendBiome, tempTerrainHeight, true);
                 }
 
                 tempTerrainHeight = 0;
@@ -528,7 +526,7 @@ public class Chunk
 
         int halfChunkWidth = VoxelData.chunkWidth / 2;
 
-        WorldTerrain.GetVoxelBlockType(world, new Vector3(position.x + halfChunkWidth, position.y, position.z + halfChunkWidth), null, 0);
+        WorldTerrain.GetVoxelBlockType(world, new Vector3(position.x + halfChunkWidth, position.y, position.z + halfChunkWidth), null, 0, false);
         int highestY = tempTerrainHeight;
 
         if(highestY < 64 )
