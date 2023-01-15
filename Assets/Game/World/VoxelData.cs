@@ -35,7 +35,7 @@ public static class VoxelData
 
     public static int RenderDistanceLodTwoInChunks
     {
-        get { return RenderDistanceInChunks; }
+        get { return RenderDistanceInChunks / 2; }
     }
 
     //  Texture atlas

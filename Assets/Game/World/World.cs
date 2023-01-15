@@ -61,9 +61,8 @@ public class World : MonoBehaviour
     {
         //  Starts a new threads for chunk updating, renderdistance checks and voxelmap populating
 
-        RenderSettings.fogStartDistance = VoxelData.RenderDistanceInChunks * VoxelData.chunkWidth / 2;
-        RenderSettings.fogEndDistance = (VoxelData.RenderDistanceInChunks + VoxelData.RenderDistanceLodTwoInChunks) * VoxelData.chunkWidth;
-
+        RenderSettings.fogStartDistance = (VoxelData.RenderDistanceInChunks * VoxelData.chunkWidth) - VoxelData.chunkWidth * 6;
+        RenderSettings.fogEndDistance = (VoxelData.RenderDistanceInChunks * VoxelData.chunkWidth) - VoxelData.chunkWidth * 2;
 
         Random.InitState(seed);
         randomSeed = Random.Range(0, 1000000);
@@ -169,9 +168,6 @@ public class World : MonoBehaviour
             if (chunksToPopulate.Count > 0)
             {
                 CreateLodOne();
-
-                //  When we try to create lod one to many times we get laggy, so we sleep
-                Thread.Sleep(100);
             }
                 
             if (!applyingModifications)

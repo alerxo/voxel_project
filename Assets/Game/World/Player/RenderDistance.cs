@@ -35,7 +35,6 @@ public class RenderDistance : MonoBehaviour
 
         playerPosition = transform.position;
         hasCheckedRenderDistance = false;
-
     }
 
     private void Update()
@@ -63,10 +62,14 @@ public class RenderDistance : MonoBehaviour
         }
 
         if (chunksToActivate.Count > 0)
+        {
             ActivateChunks();
-
+        }
+            
         if (chunksToDeactivate.Count > 0)
+        {
             DeactivateChunks();
+        }
     }
 
     private void ThreadedUpdate_3()
