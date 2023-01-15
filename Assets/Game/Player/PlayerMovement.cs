@@ -145,7 +145,7 @@ public class PlayerMovement : NetworkBehaviour
             return false;
     }
 
-    private bool CanMove()
+    public bool CanMove()
     {
         //  If terrain exists under player, ie, chunk loaded
 

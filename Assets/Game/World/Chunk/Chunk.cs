@@ -5,22 +5,65 @@ using UnityEngine;
 public class Chunk
 {
     public GameObject chunkObject { get; private set; }
-    private MeshRenderer meshRenderer;
-    private MeshFilter meshFilter;
 
-    private MeshCollider meshCollider;
+    #region lodobj
+
+    public GameObject lodOneObject { get; private set; }
+    public GameObject lodOneWaterObject { get; private set; }
+
+    public GameObject lodTwoObject { get; private set; }
+
+    private MeshRenderer lodOneObjectMeshRenderer;
+    private MeshFilter lodOneObjectMeshFilter;
+    private MeshCollider lodOneObjectMeshCollider;
+
+    private MeshRenderer lodOneWaterObjectMeshRenderer;
+    private MeshFilter lodOneWaterObjectMeshFilter;
+    private MeshCollider lodOneWaterObjectMeshCollider;
+
+    private MeshRenderer lodTwoObjectMeshRenderer;
+    private MeshFilter lodTwoObjectMeshFilter;
+
+    #endregion
 
     public ChunkCoordinate coord;
 
-    private int vertexIndex = 0;
-    private List<Vector3> verticies = new List<Vector3>();
+    public bool lodOneCreated = false;
 
-    private List<int> solidTriangles = new List<int>();
-    private List<int> transparentTriangles = new List<int>();
-    private List<int> liquidTriangles = new List<int>();
+    #region lodonemeshdata
 
-    private Material[] materials = new Material[3];
-    private List<Vector2> uvs = new List<Vector2>();
+    private int lodOneVertexIndex = 0;
+    private List<Vector3> lodOneVerticies = new List<Vector3>();
+
+    private List<int> lodOneSolidTriangles = new List<int>();
+    private List<int> lodOneTransparentTriangles = new List<int>();
+
+    private List<Vector2> lodOneUvs = new List<Vector2>();
+
+    #endregion
+
+    #region lodonemeshdata
+
+    private int lodOneWaterVertexIndex = 0;
+    private List<Vector3> lodOneWaterVerticies = new List<Vector3>();
+
+    private List<int> lodOneWaterTriangles = new List<int>();
+
+    private List<Vector2> lodOneWaterUvs = new List<Vector2>();
+
+    #endregion
+
+    #region lodtwomeshdata
+
+    int lodTwoVertexIndex = 0;
+
+    private List<Vector3> lodTwoVerticies = new List<Vector3>();
+    private List<int> lodTwoTriangles = new List<int>();
+    private List<Vector2> lodTwoUvs = new List<Vector2>();
+
+    #endregion
+
+    private Material[] materials = new Material[2];
 
     public Vector3 position;
 
@@ -62,42 +105,83 @@ public class Chunk
     public void Initialize()
     {
         //  Adds an inactove gameobject and sets it to ground layer
+
+        #region gameobjects
+
         chunkObject = new GameObject();
+
+        lodOneObject = new GameObject();
+        lodOneWaterObject = new GameObject();
+
+        lodTwoObject = new GameObject();
+
+        #endregion
+
         IsActive = world.initializeChunkActive;
-        chunkObject.layer = 8;
+
+        #region layers
+
+        lodOneObject.layer = 8;
+        lodOneWaterObject.layer = 4;
+
+        lodTwoObject.layer = 8;
+
+        #endregion
 
         biome = world.biomeMap[coord.x, coord.z];
 
-        //  components
+        #region components
 
-        meshFilter = chunkObject.AddComponent<MeshFilter>();
-        meshRenderer = chunkObject.AddComponent<MeshRenderer>();
-        meshCollider = chunkObject.AddComponent<MeshCollider>();
+        lodOneObjectMeshFilter = lodOneObject.AddComponent<MeshFilter>();
+        lodOneObjectMeshRenderer = lodOneObject.AddComponent<MeshRenderer>();
+        lodOneObjectMeshCollider = lodOneObject.AddComponent<MeshCollider>();
+
+        lodOneWaterObjectMeshFilter = lodOneWaterObject.AddComponent<MeshFilter>();
+        lodOneWaterObjectMeshRenderer = lodOneWaterObject.AddComponent<MeshRenderer>();
+        lodOneWaterObjectMeshCollider = lodOneWaterObject.AddComponent<MeshCollider>();
+
+        lodTwoObjectMeshFilter = lodTwoObject.AddComponent<MeshFilter>();
+        lodTwoObjectMeshRenderer = lodTwoObject.AddComponent<MeshRenderer>();
 
         materials[0] = world.solidMaterial;
         materials[1] = world.transparentMaterial;
-        materials[2] = world.liquidMaterial;
 
-        meshRenderer.materials = materials;
+        lodOneObjectMeshRenderer.materials = materials;
+        lodOneWaterObjectMeshRenderer.material = world.liquidMaterial;
+        lodTwoObjectMeshRenderer.materials = materials;
 
-        //  Parents to world obj and changes name
+        #endregion
+
+        #region Parents to world obj and changes name
 
         chunkObject.transform.SetParent(world.transform);
+
+        lodOneObject.transform.SetParent(chunkObject.transform);
+        lodOneWaterObject.transform.SetParent(lodOneObject.transform);
+
+        lodTwoObject.transform.SetParent(chunkObject.transform);
+        
         chunkObject.transform.position = new Vector3(coord.x * VoxelData.chunkWidth, 0f, coord.z * VoxelData.chunkWidth);
 
         chunkObject.name = "Chunk " + coord.x + ", " + coord.z;
+        lodOneObject.name = "Lod one";
+        lodOneWaterObject.name = "Lod one water";
+        lodTwoObject.name = "Lod two";
 
         position = chunkObject.transform.position;
 
-        //  Tells world to populate this chunk, not doing it here cus we do it on another thread
+        #endregion
 
-        world.chunksToPopulate.Add(this);
+        lock (world.ThreadedUpdate_Lock)
+        {
+            world.chunksToForceUpdateLodTwo.Add(this);
+        }
     }
 
     public void PopulateVoxelMap()
     {
         //  Fills the chunk with voxel data
-        //  Locks the chunksupdate list and adds itself, as to avoid confuction between threads
+        //  Locks the chunksupdate list and adds itself, as to avoid confusion between threads
 
         for (int x = 0; x < VoxelData.chunkWidth; x++)
         {
@@ -118,13 +202,10 @@ public class Chunk
 
         isVoxelMapPopulated = true;
 
-        lock (world.ThreadedUpdate_Lock)
-        {
-            world.chunksToUpdate.Add(this);
-        }
+        UpdateChunk(true);
     }
 
-    public void UpdateChunk()
+    public void UpdateChunk(bool lodOne)
     {
         //  Adds all the modifications to the chunk, ie changing block id
         //  Adding voxel mesh data at each spot in the chunk if its a solid
@@ -132,50 +213,83 @@ public class Chunk
 
         ClearMeshData();
 
-        while(modifications.Count > 0)
+        if (lodOne)
         {
-            VoxelMod vm = modifications.Dequeue();
-
-            Vector3 pos = vm.position -= position;
-            voxelMap[(int)pos.x, (int)pos.y, (int)pos.z] = vm.id;
-        }
-
-        for (int x = 0; x < VoxelData.chunkWidth; x++)
-        {
-            for (int z = 0; z < VoxelData.chunkWidth; z++)
+            while (modifications.Count > 0)
             {
-                tempTerrainHeight = 0;
-                tempBlendBiome = null;
+                VoxelMod vm = modifications.Dequeue();
 
-                for (int y = 0; y < VoxelData.chunkHeight; y++)
+                Vector3 pos = vm.position -= position;
+                voxelMap[(int)pos.x, (int)pos.y, (int)pos.z] = vm.id;
+            }
+
+            for (int x = 0; x < VoxelData.chunkWidth; x++)
+            {
+                for (int z = 0; z < VoxelData.chunkWidth; z++)
                 {
-                    if (world.blocks[voxelMap[x, y, z]].drawBlock)
-                        UpdateMeshData(new Vector3(x, y, z), tempTerrainHeight);
-                }
+                    tempTerrainHeight = 0;
+                    tempBlendBiome = null;
 
-                tempTerrainHeight = 0;
-                tempBlendBiome = null;
+                    for (int y = 0; y < VoxelData.chunkHeight; y++)
+                    {
+                        if (world.blocks[voxelMap[x, y, z]].drawBlock)
+                        {
+                            UpdateLodOneMeshData(new Vector3(x, y, z), tempTerrainHeight);
+                        }
+                    }
+
+                    tempTerrainHeight = 0;
+                    tempBlendBiome = null;
+                }
             }
         }
+
+        UpdateLodTwoMeshData();
 
         world.chunksToDraw.Enqueue(this);
     }
 
     private void ClearMeshData()
     {
-        vertexIndex = 0;
-        verticies.Clear();
+        #region lodone
 
-        solidTriangles.Clear();
-        transparentTriangles.Clear();
-        liquidTriangles.Clear();
+        lodOneVertexIndex = 0;
+        lodOneVerticies.Clear();
 
-        uvs.Clear();
+        lodOneSolidTriangles.Clear();
+        lodOneTransparentTriangles.Clear();
+
+        lodOneUvs.Clear();
+
+        #endregion
+
+        #region lodonewater
+
+        lodOneWaterVertexIndex = 0;
+        lodOneWaterVerticies.Clear();
+
+        lodOneWaterTriangles.Clear();
+
+        lodOneWaterUvs.Clear();
+
+        #endregion
+
+        #region lodtwo
+
+        lodTwoVertexIndex = 0;
+
+        lodTwoVerticies.Clear();
+
+        lodTwoTriangles.Clear();
+
+        lodTwoUvs.Clear();
+
+        #endregion
     }
-    
+
     public bool IsActive
     {
-        //  If changing the activate state, will update child objects, ie entities in chunk,
+        //  If changing the activate statem, if active, lod one, if inactive, lod two, will update child objects, ie entities in chunk,
         //  related to render distance we want to render entities in chunk with chunk
 
         get { return _isActive; }
@@ -186,9 +300,10 @@ public class Chunk
             
             if(chunkObject != null)
             {
-                chunkObject.SetActive(value);
+                lodOneObject.SetActive(value);
+                lodTwoObject.SetActive(!value);
 
-                foreach(GameObject child in childObjects)
+                foreach (GameObject child in childObjects)
                 {
                     child.SetActive(value);
                 }
@@ -234,7 +349,7 @@ public class Chunk
 
         lock (world.ThreadedUpdate_Lock)
         {
-            world.chunksToUpdate.Insert(0, this);
+            world.chunksToUpdateLodOne.Insert(0, this);
             UpdateAdjacentVoxels(xCheck, yCheck, zCheck);
         }
     }
@@ -251,7 +366,7 @@ public class Chunk
 
             if(!IsVoxelInChunk((int)currentVoxel.x, (int)currentVoxel.y, (int)currentVoxel.z))
             {
-                world.chunksToUpdate.Insert(0, world.GetChunkFromVector3(currentVoxel + position));
+                world.chunksToUpdateLodOne.Insert(0, world.GetChunkFromVector3(currentVoxel + position));
 
             }
         }
@@ -312,7 +427,7 @@ public class Chunk
         return voxelMap[xCheck, yCheck, zCheck];
     }
 
-    private void UpdateMeshData(Vector3 pos, int _tempTerrainHeight)
+    private void UpdateLodOneMeshData(Vector3 pos, int _tempTerrainHeight)
     {
         //  Goes through each face of voxel
         //  Checking for parameters
@@ -338,59 +453,192 @@ public class Chunk
 
             if(!skip && CheckVoxelTransparancy(pos + VoxelData.faceChecks[r], _tempTerrainHeight))   //  If we survived the parameters, draw face
             {
-                //  Adding the verticies
-
-                verticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 0]]);
-                verticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 1]]);
-                verticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 2]]);
-                verticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 3]]);
-
-                //  Adding the uvs
-
-                AddTexture(world.blocks[blockID].GetTextureID(r));
-
-                //  Adding the triangles, depending on mesh type
+                //  Adding the uvs, the triangles and verticies, depending on mesh type, then incrementing the vertex index
 
                 if (isLiquid)
                 {
-                    liquidTriangles.Add(vertexIndex);
-                    liquidTriangles.Add(vertexIndex + 1);
-                    liquidTriangles.Add(vertexIndex + 2);
-                    liquidTriangles.Add(vertexIndex + 2);
-                    liquidTriangles.Add(vertexIndex + 1);
-                    liquidTriangles.Add(vertexIndex + 3);
+                    lodOneWaterVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 0]]);
+                    lodOneWaterVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 1]]);
+                    lodOneWaterVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 2]]);
+                    lodOneWaterVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 3]]);
+
+                    AddTexture(world.blocks[blockID].GetTextureID(r), lodOneWaterUvs);
+
+                    lodOneWaterTriangles.Add(lodOneWaterVertexIndex);
+                    lodOneWaterTriangles.Add(lodOneWaterVertexIndex + 1);
+                    lodOneWaterTriangles.Add(lodOneWaterVertexIndex + 2);
+                    lodOneWaterTriangles.Add(lodOneWaterVertexIndex + 2);
+                    lodOneWaterTriangles.Add(lodOneWaterVertexIndex + 1);
+                    lodOneWaterTriangles.Add(lodOneWaterVertexIndex + 3);
+
+                    lodOneWaterVertexIndex += 4;
                 }
 
                 else if (isTransparent)
                 {
-                    transparentTriangles.Add(vertexIndex);
-                    transparentTriangles.Add(vertexIndex + 1);
-                    transparentTriangles.Add(vertexIndex + 2);
-                    transparentTriangles.Add(vertexIndex + 2);
-                    transparentTriangles.Add(vertexIndex + 1);
-                    transparentTriangles.Add(vertexIndex + 3);
+                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 0]]);
+                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 1]]);
+                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 2]]);
+                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 3]]);
+
+                    AddTexture(world.blocks[blockID].GetTextureID(r), lodOneUvs);
+
+                    lodOneTransparentTriangles.Add(lodOneVertexIndex);
+                    lodOneTransparentTriangles.Add(lodOneVertexIndex + 1);
+                    lodOneTransparentTriangles.Add(lodOneVertexIndex + 2);
+                    lodOneTransparentTriangles.Add(lodOneVertexIndex + 2);
+                    lodOneTransparentTriangles.Add(lodOneVertexIndex + 1);
+                    lodOneTransparentTriangles.Add(lodOneVertexIndex + 3);
+
+                    lodOneVertexIndex += 4;
                 }
 
                 else if (isSolid)
                 {
-                    solidTriangles.Add(vertexIndex);
-                    solidTriangles.Add(vertexIndex + 1);
-                    solidTriangles.Add(vertexIndex + 2);
-                    solidTriangles.Add(vertexIndex + 2);
-                    solidTriangles.Add(vertexIndex + 1);
-                    solidTriangles.Add(vertexIndex + 3);
+                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 0]]);
+                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 1]]);
+                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 2]]);
+                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 3]]);
+
+                    AddTexture(world.blocks[blockID].GetTextureID(r), lodOneUvs);
+
+                    lodOneSolidTriangles.Add(lodOneVertexIndex);
+                    lodOneSolidTriangles.Add(lodOneVertexIndex + 1);
+                    lodOneSolidTriangles.Add(lodOneVertexIndex + 2);
+                    lodOneSolidTriangles.Add(lodOneVertexIndex + 2);
+                    lodOneSolidTriangles.Add(lodOneVertexIndex + 1);
+                    lodOneSolidTriangles.Add(lodOneVertexIndex + 3);
+
+                    lodOneVertexIndex += 4;
                 }
 
                 else
                 {
                     Debug.Log("Error in Chunk/UpdateMeshData: Did not find mesh type");
                 }
-
-                //  Incrementing the vertex index
-
-                vertexIndex += 4;
             }
         }
+    }
+
+    private void UpdateLodTwoMeshData()
+    {
+        //  Hardcoded square, with top vertices being terrai height at chunk local positon, using cached height value and bottom being 0.
+
+        Block block = world.blocks[biome.surfaceBlockId];
+
+        int halfChunkWidth = VoxelData.chunkWidth / 2;
+
+        WorldTerrain.GetVoxelBlockType(world, new Vector3(position.x + halfChunkWidth, position.y, position.z + halfChunkWidth), null, 0);
+        int highestY = tempTerrainHeight;
+
+        if(highestY < 64 )
+        {
+            highestY = 64;
+            block = world.blocks[8];
+        }
+
+        int lowestY = 0;
+        int chunkWidth = VoxelData.chunkWidth;
+
+        #region top
+
+        lodTwoVerticies.Add(new Vector3(0, highestY, 0)); //                   0
+        lodTwoVerticies.Add(new Vector3(0, highestY, chunkWidth)); //          1
+        lodTwoVerticies.Add(new Vector3(chunkWidth, highestY, 0)); //          2
+        lodTwoVerticies.Add(new Vector3(chunkWidth, highestY, chunkWidth)); // 3
+
+        AddTexture(block.GetTextureID(2), lodTwoUvs);
+
+        lodTwoTriangles.Add(lodTwoVertexIndex + 0);
+        lodTwoTriangles.Add(lodTwoVertexIndex + 1);
+        lodTwoTriangles.Add(lodTwoVertexIndex + 2);
+        lodTwoTriangles.Add(lodTwoVertexIndex + 2);
+        lodTwoTriangles.Add(lodTwoVertexIndex + 1);
+        lodTwoTriangles.Add(lodTwoVertexIndex + 3);
+
+        lodTwoVertexIndex += 4;
+
+        #endregion
+
+        #region front
+
+        lodTwoVerticies.Add(new Vector3(0, lowestY, 0)); //           0
+        lodTwoVerticies.Add(new Vector3(chunkWidth, lowestY, 0)); //  1
+        lodTwoVerticies.Add(new Vector3(0, highestY, 0)); //          2
+        lodTwoVerticies.Add(new Vector3(chunkWidth, highestY, 0)); // 3
+
+        AddTexture(block.GetTextureID(1), lodTwoUvs);
+
+        lodTwoTriangles.Add(lodTwoVertexIndex + 2);
+        lodTwoTriangles.Add(lodTwoVertexIndex + 1);
+        lodTwoTriangles.Add(lodTwoVertexIndex + 0);
+        lodTwoTriangles.Add(lodTwoVertexIndex + 3);
+        lodTwoTriangles.Add(lodTwoVertexIndex + 1);
+        lodTwoTriangles.Add(lodTwoVertexIndex + 2);
+
+        lodTwoVertexIndex += 4;
+
+        #endregion
+
+        #region back
+
+        lodTwoVerticies.Add(new Vector3(0, lowestY, chunkWidth)); //           0
+        lodTwoVerticies.Add(new Vector3(chunkWidth, lowestY, chunkWidth)); //  1
+        lodTwoVerticies.Add(new Vector3(0, highestY, chunkWidth)); //          2
+        lodTwoVerticies.Add(new Vector3(chunkWidth, highestY, chunkWidth)); // 3
+
+        AddTexture(block.GetTextureID(0), lodTwoUvs);
+
+        lodTwoTriangles.Add(lodTwoVertexIndex + 0);
+        lodTwoTriangles.Add(lodTwoVertexIndex + 1);
+        lodTwoTriangles.Add(lodTwoVertexIndex + 2);
+        lodTwoTriangles.Add(lodTwoVertexIndex + 2);
+        lodTwoTriangles.Add(lodTwoVertexIndex + 1);
+        lodTwoTriangles.Add(lodTwoVertexIndex + 3);
+
+        lodTwoVertexIndex += 4;
+
+        #endregion
+
+        #region right
+
+        lodTwoVerticies.Add(new Vector3(chunkWidth, lowestY, chunkWidth)); //  0
+        lodTwoVerticies.Add(new Vector3(chunkWidth, lowestY, 0)); //           1
+        lodTwoVerticies.Add(new Vector3(chunkWidth, highestY, chunkWidth)); // 2
+        lodTwoVerticies.Add(new Vector3(chunkWidth, highestY, 0)); //          3
+
+        AddTexture(block.GetTextureID(5), lodTwoUvs);
+
+        lodTwoTriangles.Add(lodTwoVertexIndex + 0);
+        lodTwoTriangles.Add(lodTwoVertexIndex + 1);
+        lodTwoTriangles.Add(lodTwoVertexIndex + 2);
+        lodTwoTriangles.Add(lodTwoVertexIndex + 2);
+        lodTwoTriangles.Add(lodTwoVertexIndex + 1);
+        lodTwoTriangles.Add(lodTwoVertexIndex + 3);
+
+        lodTwoVertexIndex += 4;
+
+        #endregion
+
+        #region left
+
+        lodTwoVerticies.Add(new Vector3(0, lowestY, 0)); //           0
+        lodTwoVerticies.Add(new Vector3(0, lowestY, chunkWidth)); //  1
+        lodTwoVerticies.Add(new Vector3(0, highestY, 0)); //          2
+        lodTwoVerticies.Add(new Vector3(0, highestY, chunkWidth)); // 3
+
+        AddTexture(block.GetTextureID(4), lodTwoUvs);
+
+        lodTwoTriangles.Add(lodTwoVertexIndex + 0);
+        lodTwoTriangles.Add(lodTwoVertexIndex + 1);
+        lodTwoTriangles.Add(lodTwoVertexIndex + 2);
+        lodTwoTriangles.Add(lodTwoVertexIndex + 2);
+        lodTwoTriangles.Add(lodTwoVertexIndex + 1);
+        lodTwoTriangles.Add(lodTwoVertexIndex + 3);
+
+        lodTwoVertexIndex += 4;
+
+        #endregion
     }
 
     public void CreateMesh()
@@ -398,24 +646,60 @@ public class Chunk
         //  Adding the info to a mesh
         //  recalculating normals as to make sure all verticies face the right way
 
-        Mesh mesh = new Mesh();
-        mesh.vertices = verticies.ToArray();
+        #region lodOne
 
-        mesh.subMeshCount = 3;
-        mesh.SetTriangles(solidTriangles.ToArray(), 0);
+        Mesh lodOneMesh = new Mesh();
+        lodOneMesh.vertices = lodOneVerticies.ToArray();
 
-        mesh.SetTriangles(transparentTriangles.ToArray(), 1);
-        mesh.SetTriangles(liquidTriangles.ToArray(), 2);
+        lodOneMesh.subMeshCount = 2;
 
-        mesh.uv = uvs.ToArray();
+        lodOneMesh.SetTriangles(lodOneSolidTriangles.ToArray(), 0);
+        lodOneMesh.SetTriangles(lodOneTransparentTriangles.ToArray(), 1);
 
-        mesh.RecalculateNormals();
+        lodOneMesh.uv = lodOneUvs.ToArray();
 
-        meshFilter.mesh = mesh;
-        meshCollider.sharedMesh = meshFilter.mesh;
+        lodOneMesh.RecalculateNormals();
+
+        lodOneObjectMeshFilter.mesh = lodOneMesh;
+        lodOneObjectMeshCollider.sharedMesh = lodOneObjectMeshFilter.mesh;
+
+        #endregion
+
+        #region lodOne
+
+        Mesh lodOneWaterMesh = new Mesh();
+        lodOneWaterMesh.vertices = lodOneWaterVerticies.ToArray();
+
+        lodOneWaterMesh.subMeshCount = 1;
+        lodOneWaterMesh.SetTriangles(lodOneWaterTriangles.ToArray(), 0);
+
+        lodOneWaterMesh.uv = lodOneWaterUvs.ToArray();
+
+        lodOneWaterMesh.RecalculateNormals();
+
+        lodOneWaterObjectMeshFilter.mesh = lodOneWaterMesh;
+        lodOneWaterObjectMeshCollider.sharedMesh = lodOneWaterObjectMeshFilter.mesh;
+
+        #endregion
+
+        #region lodtwo
+
+        Mesh lodTwoMesh = new Mesh();
+        lodTwoMesh.vertices = lodTwoVerticies.ToArray();
+
+        lodTwoMesh.subMeshCount = 1;
+        lodTwoMesh.SetTriangles(lodTwoTriangles.ToArray(), 0);
+
+        lodTwoMesh.uv = lodTwoUvs.ToArray();
+
+        lodTwoMesh.RecalculateNormals();
+
+        lodTwoObjectMeshFilter.mesh = lodTwoMesh;
+
+        #endregion
     }
 
-    private void AddTexture(int textureID)
+    private void AddTexture(int textureID, List<Vector2> uvs)
     {
         //  Creates x and y coordinates that match the textureID,
         //  as to find it in the texture atlas

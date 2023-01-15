@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Threading;
+using Unity.Collections.LowLevel.Unsafe;
 
 public class World : MonoBehaviour
 {
@@ -32,8 +33,6 @@ public class World : MonoBehaviour
 
     //  Voxel related
 
-    private List<ChunkCoordinate> activeChunks = new List<ChunkCoordinate>();
-
     public Material solidMaterial;
     public Material transparentMaterial;
     public Material liquidMaterial;
@@ -47,7 +46,9 @@ public class World : MonoBehaviour
     //  Threading related
 
     public Queue<Queue<VoxelMod>> modifications = new Queue<Queue<VoxelMod>>();
-    public List<Chunk> chunksToUpdate = new List<Chunk>();
+    public List<Chunk> chunksToUpdateLodOne = new List<Chunk>();
+    public List<Chunk> chunksToForceUpdateLodTwo = new List<Chunk>();
+
     public List<Chunk> chunksToPopulate = new List<Chunk>();
     public Queue<Chunk> chunksToDraw = new Queue<Chunk>();
 
@@ -65,22 +66,24 @@ public class World : MonoBehaviour
 
         biomeMap = BiomeMap.GetBiomeMap(this);
 
-        ThreadedUpdate = new Thread(new ThreadStart(ThreadedUpdate_2));
-        ThreadedUpdate.Start();
-
         GenerateWorld();
         GetSpawnPosition();
+
+        ThreadedUpdate = new Thread(new ThreadStart(ThreadedUpdate_2));
+        ThreadedUpdate.Start();
     }
 
     private void Update()
     {    
-        if(chunksToInitialize.Count > 0)
-            InitializeChunk();
-
-        if(chunksToDraw.Count > 0)
+        if (chunksToDraw.Count > 0)
         {
-            if (chunksToDraw.Peek().IsEditable)
+            if (chunksToDraw.Peek().IsEditable || chunksToDraw.Peek().lodOneObject != null)
             {
+                if (chunksToDraw.Peek().lodOneObject != null)
+                {
+                    spawnedChunksCount++;
+                }
+
                 chunksToDraw.Dequeue().CreateMesh();
             }
         }
@@ -109,54 +112,67 @@ public class World : MonoBehaviour
         //  Remove render distance value form starting loop and add it to ending loop,
         //  so we get square with width 2 renderdistances, ie renderdistance ín all directions
 
-        for (int x = (VoxelData.worldSizeInChunks / 2) - VoxelData.RenderDistanceInChunks; x < (VoxelData.worldSizeInChunks / 2) + VoxelData.RenderDistanceInChunks; x++)
+        for (int x = 0; x < VoxelData.worldSizeInChunks; x++)
         {
-            for (int z = (VoxelData.worldSizeInChunks / 2) - VoxelData.RenderDistanceInChunks; z < (VoxelData.worldSizeInChunks / 2) + VoxelData.RenderDistanceInChunks; z++)
+            for (int z = 0; z < VoxelData.worldSizeInChunks; z++)
             {
-                NewChunk(x, z);
+                InitializeChunk(x, z);
             }
-        }
-    }   
-
-    public void NewChunk(int x, int z)
-    {
-        //  Adds new chunk to chunk array and then initializes it
-
-        if (chunksInWorld[x, z] == null)
-        {
-            ChunkCoordinate newChunk = new ChunkCoordinate(x, z);
-            chunksInWorld[x, z] = new Chunk(newChunk, this);
-            chunksToInitialize.Add(newChunk);
         }
     }
 
-    private void InitializeChunk()
+    public void NewChunkLodOne(int x, int z)
+    {
+        //  Adds new chunk to chunk array and then creates lod one of chunk
+
+        if (chunksInWorld[x, z] != null)
+        {
+            lock (ThreadedUpdate_Lock)
+            {
+                chunksToPopulate.Add(chunksInWorld[x, z]);
+            }
+        }
+    }
+
+    private void InitializeChunk(int x, int z)
     {
         //  Initializes first chunk in list and removes,
         //  adds to spawned chunks so other scripts can caluclate when to do something
 
+        ChunkCoordinate newChunk = new ChunkCoordinate(x, z);
+        chunksInWorld[x, z] = new Chunk(newChunk, this);
+        chunksToInitialize.Add(newChunk);
+
         ChunkCoordinate cc = chunksToInitialize[0];
+
         chunksToInitialize.RemoveAt(0);
         chunksInWorld[cc.x, cc.z].Initialize();
-
-        spawnedChunksCount++;
     }
 
     private void ThreadedUpdate_2()
     {
         //  Infinte while loop on seperate thread, very scary :(
-        //  Sleeps 10 ms after every loop cus we dont need to kill cpu
 
         while (true)
         {
             if (chunksToPopulate.Count > 0)
-                PopulateChunks();
+            {
+                CreateLodOne();
+
+                //  When we try to create lod one to many times we get laggy, so we sleep
+                Thread.Sleep(100);
+            }
+                
 
             if (!applyingModifications)
+            {
                 ApplyModifications();
-
-            if (chunksToUpdate.Count > 0)
-                UpdateChunks();
+            }
+             
+            if (chunksToForceUpdateLodTwo.Count > 0)
+            {
+                CreateLodTwo();
+            }  
         }
     }
 
@@ -174,7 +190,7 @@ public class World : MonoBehaviour
         ThreadedUpdate.Abort();
     }
 
-    private void PopulateChunks()
+    private void CreateLodOne()
     {
         //  Starts a new round of chunk populating when it can
         //  Looks for the first chunk thats not populated, ie not editable
@@ -193,7 +209,28 @@ public class World : MonoBehaviour
                     updated = true;
                 }
                 else
+                {
                     index++;
+                }
+                   
+            }
+        }
+    }
+
+    private void CreateLodTwo()
+    {
+        //  Starts a new round of chunk updating when it can
+
+        bool updated = false;
+        int index = 0;
+
+        lock (ThreadedUpdate_Lock)
+        {
+            while (!updated && index < chunksToForceUpdateLodTwo.Count - 1)
+            {
+                chunksToForceUpdateLodTwo[index].UpdateChunk(false);
+                chunksToForceUpdateLodTwo.RemoveAt(index);
+                updated = true;
             }
         }
     }
@@ -219,8 +256,7 @@ public class World : MonoBehaviour
                 {
                     if (chunksInWorld[cc.x, cc.z] == null)
                     {
-                        chunksInWorld[cc.x, cc.z] = new Chunk(cc, this);
-                        chunksToInitialize.Add(cc);
+                        Debug.Log("Error in World/ApplyModifications: Chunk doesn't exist");
                     }
 
                     chunksInWorld[cc.x, cc.z].modifications.Enqueue(vm);
@@ -229,31 +265,6 @@ public class World : MonoBehaviour
         }
 
         applyingModifications=false;
-    }
-
-    private void UpdateChunks()
-    {
-        //  Starts a new round of chunk updating when it can
-        //  Looks for the first chunk thats populated, ie editable
-
-        bool updated = false;
-        int index = 0;
-
-        lock (ThreadedUpdate_Lock)
-        {
-            while (!updated && index < chunksToUpdate.Count - 1)
-            {
-                if (chunksToUpdate[index].IsEditable)
-                {
-                    chunksToUpdate[index].UpdateChunk();
-                    activeChunks.Add(chunksToUpdate[index].coord);
-                    chunksToUpdate.RemoveAt(index);
-                    updated = true;
-                }
-                else
-                    index++;
-            }
-        }
     }
 
     public ChunkCoordinate GetChunkCoordinateFromVector3(Vector3 pos)

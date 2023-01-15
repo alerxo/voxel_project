@@ -11,8 +11,6 @@ public class RenderDistance : MonoBehaviour
 
     private World world;
 
-    [SerializeField] private GameObject debugScreen;
-
     private List<ChunkCoordinate> activeChunks = new List<ChunkCoordinate>();
 
     private Thread CheckRenderDistance_Thread;
@@ -23,7 +21,7 @@ public class RenderDistance : MonoBehaviour
     private Queue<Chunk> chunksToActivate = new Queue<Chunk>();
     private Queue<Chunk> chunksToDeactivate = new Queue<Chunk>();
 
-    private Queue<ChunkCoordinate> chunksToCreate = new Queue<ChunkCoordinate>();
+    private Queue<ChunkCoordinate> chunksToCreateLodOne = new Queue<ChunkCoordinate>();
 
     private void Start()
     {
@@ -43,18 +41,18 @@ public class RenderDistance : MonoBehaviour
     {
         playerChunk = world.GetChunkCoordinateFromVector3(transform.position);
 
-        if (!playerChunk.Equals(playerLastChunk))
+        if (!playerChunk.Equals(playerLastChunk) || !gameObject.GetComponent<PlayerMovement>().CanMove())
         {
             //  If in new chunk, via check render distance checkrenderdistancethread, uses bool to active
             playerPosition = transform.position;
             hasCheckedRenderDistance = false;
         }
 
-        if(chunksToCreate.Count > 0)
+        if(chunksToCreateLodOne.Count > 0)
         {
             //  Sends chunks that should be activate to the server via rpcmanager
-            ChunkCoordinate cc = chunksToCreate.Dequeue();
-            world.NewChunk(cc.x, cc.z);
+            ChunkCoordinate cc = chunksToCreateLodOne.Dequeue();
+            world.NewChunkLodOne(cc.x, cc.z);
         }
 
         if (chunksToActivate.Count > 0)
@@ -62,10 +60,6 @@ public class RenderDistance : MonoBehaviour
 
         if (chunksToDeactivate.Count > 0)
             DeactivateChunks();
-        
-        //  Should not be here
-        if (Input.GetKeyDown(KeyCode.F3))
-            debugScreen.SetActive(!debugScreen.activeSelf);
     }
 
     private void ThreadedUpdate_3()
@@ -120,9 +114,10 @@ public class RenderDistance : MonoBehaviour
             {
                 if (world.IsChunkInWorld(new ChunkCoordinate(x, z)))
                 {
-                    if (world.chunksInWorld[x, z] == null)
+                    if (!world.chunksInWorld[x, z].lodOneCreated)
                     {
-                        chunksToCreate.Enqueue(new ChunkCoordinate(x, z));
+                        world.chunksInWorld[x, z].lodOneCreated = true;
+                        chunksToCreateLodOne.Enqueue(new ChunkCoordinate(x, z));
                     }
 
                     else if (!world.chunksInWorld[x, z].IsActive)
@@ -163,9 +158,9 @@ public class RenderDistance : MonoBehaviour
         {
             //  null check, if its null this time, its deactivate next batch, so we just skip for now
 
-            Chunk c = chunksToDeactivate.Dequeue();
+            Chunk chunk = chunksToDeactivate.Dequeue();
 
-            if (c != null) c.IsActive = false;
+            if (chunk != null) chunk.IsActive = false;
         }
             
     }

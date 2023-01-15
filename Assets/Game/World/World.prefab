@@ -1,0 +1,201 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &7812258746460824830
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6673483225645008932}
+  m_Layer: 0
+  m_Name: Spawn
+  m_TagString: SpawnObj
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6673483225645008932
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7812258746460824830}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8945734804422624732}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &8945734804422624706
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8945734804422624732}
+  - component: {fileID: 8945734804422624707}
+  m_Layer: 0
+  m_Name: World
+  m_TagString: WorldObj
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8945734804422624732
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8945734804422624706}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 6673483225645008932}
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8945734804422624707
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8945734804422624706}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac3f8c1d06957a443bb0bec91a1618bc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  initializeChunkActive: 1
+  seed: 3
+  climates:
+  - {fileID: 11400000, guid: 2049a1ba29ed8904f81e8769062d8fbd, type: 2}
+  - {fileID: 11400000, guid: 8265a8344388b4e408dbc888b839e1b2, type: 2}
+  - {fileID: 11400000, guid: 7753d4b4d5423664b9bf9206d817cdd2, type: 2}
+  oceanAmountPerSide: 100
+  oceanReference: {fileID: 11400000, guid: 4f3dcad22395b7746b68a44d61311a22, type: 2}
+  spawn: {fileID: 7812258746460824830}
+  solidMaterial: {fileID: 2100000, guid: 184ca111073942747aaf76ef298afa97, type: 2}
+  transparentMaterial: {fileID: 2100000, guid: 53e29320e16150745a98241fe95f37d5, type: 2}
+  liquidMaterial: {fileID: 2100000, guid: 4a6cdac9d4d7a844e8f96e3cb698e056, type: 2}
+  blocks:
+  - name: 000-Air
+    drawBlock: 0
+    isSolid: 0
+    isLiquid: 0
+    isTransparent: 1
+    backFaceTexture: 0
+    frontFaceTexture: 0
+    topFaceTexture: 0
+    bottomFaceTexture: 0
+    leftFaceTexture: 0
+    rightFaceTexture: 0
+  - name: 001-Grass
+    drawBlock: 1
+    isSolid: 1
+    isLiquid: 0
+    isTransparent: 0
+    backFaceTexture: 3
+    frontFaceTexture: 3
+    topFaceTexture: 4
+    bottomFaceTexture: 2
+    leftFaceTexture: 3
+    rightFaceTexture: 3
+  - name: 002-Dirt
+    drawBlock: 1
+    isSolid: 1
+    isLiquid: 0
+    isTransparent: 0
+    backFaceTexture: 2
+    frontFaceTexture: 2
+    topFaceTexture: 2
+    bottomFaceTexture: 2
+    leftFaceTexture: 2
+    rightFaceTexture: 2
+  - name: 003-Stone
+    drawBlock: 1
+    isSolid: 1
+    isLiquid: 0
+    isTransparent: 0
+    backFaceTexture: 5
+    frontFaceTexture: 5
+    topFaceTexture: 5
+    bottomFaceTexture: 5
+    leftFaceTexture: 5
+    rightFaceTexture: 5
+  - name: 004-Wood
+    drawBlock: 1
+    isSolid: 1
+    isLiquid: 0
+    isTransparent: 0
+    backFaceTexture: 9
+    frontFaceTexture: 9
+    topFaceTexture: 10
+    bottomFaceTexture: 10
+    leftFaceTexture: 9
+    rightFaceTexture: 9
+  - name: 005-Leaf
+    drawBlock: 1
+    isSolid: 1
+    isLiquid: 0
+    isTransparent: 0
+    backFaceTexture: 11
+    frontFaceTexture: 11
+    topFaceTexture: 11
+    bottomFaceTexture: 11
+    leftFaceTexture: 11
+    rightFaceTexture: 11
+  - name: 006-Sand
+    drawBlock: 1
+    isSolid: 1
+    isLiquid: 0
+    isTransparent: 0
+    backFaceTexture: 6
+    frontFaceTexture: 6
+    topFaceTexture: 6
+    bottomFaceTexture: 6
+    leftFaceTexture: 6
+    rightFaceTexture: 6
+  - name: 007-Snow
+    drawBlock: 1
+    isSolid: 1
+    isLiquid: 0
+    isTransparent: 0
+    backFaceTexture: 8
+    frontFaceTexture: 8
+    topFaceTexture: 7
+    bottomFaceTexture: 2
+    leftFaceTexture: 8
+    rightFaceTexture: 8
+  - name: 008-Water
+    drawBlock: 1
+    isSolid: 0
+    isLiquid: 1
+    isTransparent: 1
+    backFaceTexture: 1
+    frontFaceTexture: 1
+    topFaceTexture: 1
+    bottomFaceTexture: 1
+    leftFaceTexture: 1
+    rightFaceTexture: 1
+  - name: 009-Glass
+    drawBlock: 1
+    isSolid: 0
+    isLiquid: 0
+    isTransparent: 1
+    backFaceTexture: 12
+    frontFaceTexture: 12
+    topFaceTexture: 12
+    bottomFaceTexture: 12
+    leftFaceTexture: 12
+    rightFaceTexture: 12
