@@ -61,6 +61,10 @@ public class World : MonoBehaviour
     {
         //  Starts a new threads for chunk updating, renderdistance checks and voxelmap populating
 
+        RenderSettings.fogStartDistance = VoxelData.RenderDistanceInChunks * VoxelData.chunkWidth / 2;
+        RenderSettings.fogEndDistance = (VoxelData.RenderDistanceInChunks + VoxelData.RenderDistanceLodTwoInChunks) * VoxelData.chunkWidth;
+
+
         Random.InitState(seed);
         randomSeed = Random.Range(0, 1000000);
 
@@ -170,7 +174,6 @@ public class World : MonoBehaviour
                 Thread.Sleep(100);
             }
                 
-
             if (!applyingModifications)
             {
                 ApplyModifications();
@@ -228,16 +231,12 @@ public class World : MonoBehaviour
     {
         //  Starts a new round of chunk updating when it can
 
-        bool updated = false;
-        int index = 0;
-
         lock (ThreadedUpdate_Lock)
         {
-            while (!updated && index < chunksToForceUpdateLodTwo.Count - 1)
+            if (chunksToForceUpdateLodTwo.Count > 0)
             {
-                chunksToForceUpdateLodTwo[index].UpdateChunk(false);
-                chunksToForceUpdateLodTwo.RemoveAt(index);
-                updated = true;
+                chunksToForceUpdateLodTwo[0].UpdateChunk(false);
+                chunksToForceUpdateLodTwo.RemoveAt(0);
             }
         }
     }

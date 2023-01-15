@@ -9,9 +9,9 @@ public static class VoxelData
     public static readonly int chunkWidth = 16;
     public static readonly int chunkHeight = 256;
 
-    public static readonly int mapEdgeSizeInChunks = 1; //  Edge of world, which is forced ocean
-    public static readonly int oceanSizeInChunks = 2; //   Ocean surrounding center of map
-    public static readonly int landSizeInChunks = 16; //    Land, where continents are found
+    public static readonly int mapEdgeSizeInChunks = 10; //  Edge of world, which is forced ocean
+    public static readonly int oceanSizeInChunks = 16; //   Ocean surrounding center of map
+    public static readonly int landSizeInChunks = 128; //    Land, where continents are found
 
 
     public static int worldSizeInChunks
@@ -31,7 +31,7 @@ public static class VoxelData
 
     // Player settings
 
-    public static readonly int RenderDistanceInChunks = 4;
+    public static readonly int RenderDistanceInChunks = 16;
 
     public static int RenderDistanceLodTwoInChunks
     {

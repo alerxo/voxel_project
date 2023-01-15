@@ -138,6 +138,8 @@ public class Chunk
         lodOneWaterObjectMeshRenderer = lodOneWaterObject.AddComponent<MeshRenderer>();
         lodOneWaterObjectMeshCollider = lodOneWaterObject.AddComponent<MeshCollider>();
 
+        lodOneWaterObjectMeshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+
         lodTwoObjectMeshFilter = lodTwoObject.AddComponent<MeshFilter>();
         lodTwoObjectMeshRenderer = lodTwoObject.AddComponent<MeshRenderer>();
 
@@ -460,7 +462,7 @@ public class Chunk
                     lodOneWaterVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 2]]);
                     lodOneWaterVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 3]]);
 
-                    AddTexture(world.blocks[blockID].GetTextureID(r), lodOneWaterUvs);
+                    AddWaterTexture(pos, lodOneWaterUvs);
 
                     lodOneWaterTriangles.Add(lodOneWaterVertexIndex);
                     lodOneWaterTriangles.Add(lodOneWaterVertexIndex + 1);
@@ -714,5 +716,18 @@ public class Chunk
         uvs.Add(new Vector2(x, y + VoxelData.NormalizedBlockTextureSize));
         uvs.Add(new Vector2(x + VoxelData.NormalizedBlockTextureSize, y));
         uvs.Add(new Vector2(x + VoxelData.NormalizedBlockTextureSize, y + VoxelData.NormalizedBlockTextureSize)); 
+    }
+
+    private void AddWaterTexture(Vector3 pos, List<Vector2> uvs)
+    {
+        float step = 1f / (float)VoxelData.WorldSizeInVoxel;
+
+        float x = ((VoxelData.chunkWidth * coord.x) + pos.x) * step;
+        float z = ((VoxelData.chunkWidth * coord.z) + pos.z) * step;
+
+        uvs.Add(new Vector2(x, z));
+        uvs.Add(new Vector2(x, (z + step)));
+        uvs.Add(new Vector2((x + step), z));
+        uvs.Add(new Vector2((x + step), (z + step)));
     }
 }

@@ -119,9 +119,6 @@ public class RenderDistance : MonoBehaviour
         int r = VoxelData.RenderDistanceInChunks;
         int rd = r + VoxelData.RenderDistanceLodTwoInChunks;
 
-        Debug.Log(coord.x + " " + coord.z);
-        Debug.Log(r + " " + rd);
-
         for (int x = coord.x - rd; x < coord.x + rd; x++)
         {
             for (int z = coord.z - rd; z < coord.z + rd; z++)

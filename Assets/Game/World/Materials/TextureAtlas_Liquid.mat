@@ -14,7 +14,7 @@ Material:
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
+  m_CustomRenderQueue: 3006
   stringTagMap: {}
   disabledShaderPasses: []
   m_SavedProperties:
@@ -44,6 +44,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _MainNormal:
+        m_Texture: {fileID: 2800000, guid: 8af99e74f9d8af54793f27a02d660c0b, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -58,6 +62,10 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _ParallaxMap:
         m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SecondNormal:
+        m_Texture: {fileID: 2800000, guid: 511705daef4aae246a139d333bc00cae, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SpecGlossMap:
@@ -89,7 +97,7 @@ Material:
     - _ClearCoatSmoothness: 0
     - _Cull: 2
     - _Cutoff: 0.5
-    - _Depth: 2.58
+    - _Depth: 6
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
@@ -98,23 +106,37 @@ Material:
     - _Glossiness: 0
     - _GlossyReflections: 0
     - _Metallic: 0
+    - _Normal_Strength: 0.5
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _QueueControl: 0
-    - _QueueOffset: 0
+    - _QueueOffset: 6
     - _ReceiveShadows: 1
+    - _Ripple: 1
+    - _RippleCount: 3
+    - _Ripple_Density: 37
+    - _Ripple_Slimness: 3.22
+    - _Ripple_Speed: 0.7
+    - _Slimness: 5
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
-    - _Strength: 0.365
+    - _Strength: 0.2
     - _Surface: 0
+    - _Wave_Speed: 0.005
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Deep_Water: {r: 0, g: 0.2151404, b: 0.5188679, a: 0.972549}
+    - _Deep_Water_Colour: {r: 0.19166073, g: 0.290362, b: 0.6886792, a: 0.99215686}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _Ripple_Colour: {r: 0.2627451, g: 0.40392157, b: 0.5568628, a: 0}
+    - _Shallow_Water: {r: 0.3644536, g: 0.5219892, b: 0.8490566, a: 0}
+    - _Shallow_Water_Colour: {r: 0.21787111, g: 0.43350253, b: 0.9056604, a: 0.69411767}
+    - _Shallow_water: {r: 0.080322154, g: 0.42129716, b: 0.8962264, a: 0.6509804}
     - _SpecColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
   m_BuildTextureStacks: []
 --- !u!114 &3706215104485235852
