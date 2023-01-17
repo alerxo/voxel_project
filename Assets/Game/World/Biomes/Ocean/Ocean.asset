@@ -10,19 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a69d62bf460106148a958431c9accd04, type: 3}
-  m_Name: Frozen Mountains
+  m_Name: Ocean
   m_EditorClassIdentifier: 
-  biomeName: Frozen Mountains
-  amount: 5
-  weight: 1
-  minBiomeSizeInChunks: 1
-  height: 25
-  startHeight: 84
+  subBiomeName: Ocean
+  threshold: 1
+  height: -10
   noiseScale: 50
   octaves: 4
   persistence: 0.5
   lacunarity: 2
-  noiseCutoff: 1
-  surfaceBlockId: 7
-  subSurfaceBlockId: 2
+  noiseCutoff: 10
+  surfaceBlockId: 6
+  subSurfaceBlockId: 6
   lodes: []

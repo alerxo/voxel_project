@@ -17,14 +17,25 @@ public class World : MonoBehaviour
     [SerializeField] private int seed;
     public int randomSeed { get; private set; }
 
-    public Climate[] climates;
-    public int oceanAmountPerSide;
+    public Biome[] biomes;
+
+    public SubBiome[,] subBiomMap = new SubBiome[VoxelData.worldSizeInChunks + 2, VoxelData.worldSizeInChunks + 2];
 
     [Space]
 
-    public Biome[,] biomeMap = new Biome[VoxelData.worldSizeInChunks + 2, VoxelData.worldSizeInChunks + 2];
+    [Tooltip("Distance between samplepoints, bigger lumps")]
+    public float noiseScale;
+    [Tooltip("Each octave adds another layer of noise")]
+    public int octaves;
+    [Tooltip("Controls decrease in amplitude of octaves, how much the small features made from lacunarity influence the curve")]
+    [Range(0f, 1f)]
+    public float persistence;
+    [Tooltip("Controls increase in frequence of octaves, small features on the curve")]
+    public float lacunarity;
+    [Tooltip("Noise can not get higher than this")]
+    public float noiseCutoff;
 
-    public Biome oceanReference;
+    [Space]
 
     //  Spawn
 
@@ -33,9 +44,13 @@ public class World : MonoBehaviour
 
     //  Voxel related
 
+    [Space]
+
     public Material solidMaterial;
     public Material transparentMaterial;
     public Material liquidMaterial;
+
+    [Space]
 
     public Block[] blocks;
 
@@ -67,7 +82,7 @@ public class World : MonoBehaviour
         Random.InitState(seed);
         randomSeed = Random.Range(0, 1000000);
 
-        biomeMap = BiomeMap.GetBiomeMap(this);
+        subBiomMap = BiomeMap.GetBiomeMap(this);
 
         GenerateWorld();
         GetSpawnPosition();
@@ -102,7 +117,7 @@ public class World : MonoBehaviour
 
         for (int i = VoxelData.chunkHeight; i < 0; i--)
         {
-            if(WorldTerrain.GetVoxelBlockType(this, new Vector3(spawn.transform.position.x, i, spawn.transform.position.z), null, 0, true) != 0)
+            if(WorldTerrain.GetVoxelBlockType(this, new Vector3(spawn.transform.position.x, i, spawn.transform.position.z), 0) != 0)
             {
                 spawn.transform.position = new Vector3(spawn.transform.position.x, i + 2, spawn.transform.position.z);
                 return;
@@ -304,7 +319,7 @@ public class World : MonoBehaviour
             return blocks[chunksInWorld[thisChunk.x, thisChunk.z].GetVoxelFromGlobalVector3(pos)].isTransparent;
         }
 
-        return blocks[WorldTerrain.GetVoxelBlockType(this, pos, null, _tempTerrainHeight, true)].isTransparent;
+        return blocks[WorldTerrain.GetVoxelBlockType(this, pos, _tempTerrainHeight)].isTransparent;
     }
 
     public bool CheckIfVoxelLiquid(Vector3 pos, int _tempTerrainHeight)
@@ -326,7 +341,7 @@ public class World : MonoBehaviour
             return blocks[chunksInWorld[thisChunk.x, thisChunk.z].GetVoxelFromGlobalVector3(pos)].isLiquid;
         }
 
-        return blocks[WorldTerrain.GetVoxelBlockType(this, pos, null, _tempTerrainHeight, true)].isLiquid;
+        return blocks[WorldTerrain.GetVoxelBlockType(this, pos, _tempTerrainHeight)].isLiquid;
     }
 
     public bool IsChunkInWorld(ChunkCoordinate coord)

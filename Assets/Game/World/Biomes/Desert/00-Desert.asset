@@ -10,11 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6bd939c91c0fd99489bd9d4c24170db6, type: 3}
-  m_Name: Arid
+  m_Name: 00-Desert
   m_EditorClassIdentifier: 
-  climateName: Arid
-  temperature: 87.5
-  humidity: 0
-  biomes:
-  - {fileID: 11400000, guid: 3f5a7c49c03e6054bbfca25d149ee5af, type: 2}
-  - {fileID: 11400000, guid: 03725eddccc2a644097f6ec498e5528b, type: 2}
+  biomeName: Desert
+  maxTemperature: 1
+  minTemperature: 0.66
+  maxHumidity: 1
+  minHumidity: 0
+  maxHeight: 0.66
+  minHeight: 0.33
+  arrayPosition: 0
+  subBiomes:
+  - {fileID: 11400000, guid: 5b3b8d09ecc37f947ae57e6c7e0b9fa4, type: 2}

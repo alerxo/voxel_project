@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public static class BiomeMap
@@ -10,49 +11,105 @@ public static class BiomeMap
     //  Edges of map is water, so world is surrounded by ocean
     //  Creates a biome map where each chunk is assigned a biome
 
-    public static Biome[,] GetBiomeMap(World world)
+    public static SubBiome[,] GetBiomeMap(World world)
     {
         //  Creates a biome map with size of worldsize and also creates a layer around this, so edges of map always have surrounding biomes
 
-        Climate[,] climateMap = new Climate[VoxelData.worldSizeInChunks + 2, VoxelData.worldSizeInChunks + 2];
-        Biome[,] biomeMap = new Biome[VoxelData.worldSizeInChunks + 2, VoxelData.worldSizeInChunks + 2];
+        SubBiome[,] subBiomeMap = new SubBiome[VoxelData.worldSizeInChunks + 2, VoxelData.worldSizeInChunks + 2];
 
-        #region Climatemap
-
-        //  Each chunk will be assigen a climate, depedning on temperature and humidity
+        //  Each chunk will be assigen a climate, depedning on temperature, humidity and height
 
         for (int x = 0; x < VoxelData.worldSizeInChunks + 2; x++) //    Assigning each chunk a climate
         {
             for (int z = 0; z < VoxelData.worldSizeInChunks + 2; z++)
             {
-
-                climateMap[x, z] = GetClimate(world.climates, x, z);
+                subBiomeMap[x, z] = GetBiome(world, world.biomes,x, z);
             }
         }
 
-        #endregion
+        return subBiomeMap;
+    }
 
-        #region Biomemap
+    #region Biome
 
-        //  Creates a list of biomeOrigins, which contains a vector3 and a biome,
-        //  Position of origins are chose at random, within their climates
+    private static SubBiome GetBiome(World world, Biome[] biomes, int x, int z)
+    {
+        //  Gets the temperature, humidity and height in chunk
+        //  Loops through each climate and checks which is a best match for the chunk conditions
 
-        List<Tuple<Vector3, Biome>> biomes = GetBiomePositions(world, climateMap, world.climates);
+        Vector2 chunkPos = new Vector3(x * VoxelData.chunkWidth, z * VoxelData.chunkWidth);
 
-        //  Each chunk will check which origin is closest, can be adjusted by weight (so we can adjust size of biomes)
-        //  So biomes will be created around these origins
+        float height = GetHeight(world, chunkPos);
+        float humidity = GetHumidity(world, chunkPos);
+        float temperature = GetTemperature(chunkPos);
 
-        for (int x = 0; x < VoxelData.worldSizeInChunks + 2; x++) //    Assigning each chunk a biome
+        List<Biome> tempBiomes = biomes.ToList();
+        List<Biome> biomesPostTemperature = new List<Biome>();
+        List<Biome> biomesPostHumidity = new List<Biome>();
+        List<Biome> biomesPostHeight = new List<Biome>();
+
+        for (int i = 0; i < tempBiomes.Count; i++)
         {
-            for (int z = 0; z < VoxelData.worldSizeInChunks + 2; z++)
+            if(temperature >= tempBiomes[i].minTemperature && tempBiomes[i].maxTemperature >= temperature)
             {
-                biomeMap[x, z] = GetBiome(world, biomes, x, z);
+                biomesPostTemperature.Add(tempBiomes[i]);
             }
         }
 
-        #endregion
+        for (int i = 0; i < biomesPostTemperature.Count; i++)
+        {
+            if (humidity >= biomesPostTemperature[i].minHumidity && biomesPostTemperature[i].maxHumidity >= humidity)
+            {
+                biomesPostHumidity.Add(biomesPostTemperature[i]);
+            }
+        }
 
-        return biomeMap;
+        for (int i = 0; i < biomesPostHumidity.Count; i++)
+        {
+            if (height >= biomesPostHumidity[i].minHeight && biomesPostHumidity[i].maxHeight >= height)
+            {
+                biomesPostHeight.Add(biomesPostHumidity[i]);
+            }
+        }
+
+        if(biomesPostHeight.Count > 1)
+        {
+            Debug.Log("Error in BiomeMap/GetBiome: Too many biomes fit parameter");
+            Debug.Log(temperature + " " + humidity + " " + height);
+
+            for (int i = 0; i < biomesPostHeight.Count; i++)
+            {
+                Debug.Log(biomesPostHeight[i].biomeName);
+            }
+        }
+
+        else if (biomesPostHeight.Count == 0)
+        {
+            Debug.Log("Error in BiomeMap/GetBiome: No biomes fit parameters");
+            Debug.Log(temperature + " " + humidity + " " + height);
+
+            return biomes[4].subBiomes[0];
+        }
+
+        return GetSubBiome(world, biomesPostHeight[0], x, z);
+    }
+
+    private static SubBiome GetSubBiome(World world, Biome biome, int x, int z)
+    {
+        float noise = Noise.Get2DPerlin(world, new Vector2(x, z), 2000, 50, 1, 1, 1, 1);
+
+        foreach(SubBiome subBiome in biome.subBiomes)
+        {
+            if(subBiome.threshold >= noise)
+            {
+                return subBiome;
+            }
+        }
+
+        Debug.Log("Error in BiomeMap/GetSubBiome: No SubBiome fit threshold");
+        Debug.Log(noise);
+
+        return biome.subBiomes[0];
     }
 
     private static float GetTemperature(Vector2 pos)
@@ -60,160 +117,64 @@ public static class BiomeMap
         //  Gets the distance from equator
         //  Then assign temperature depending on distance
 
-        float distanceToEquator = Vector2.Distance(pos, new Vector3(VoxelData.WorldSizeInVoxel / 2f, pos.y)) + 1f;
-        float temperature = 100f - (distanceToEquator / (VoxelData.landSizeInChunks * VoxelData.chunkWidth / 200f));
+        float longitude = pos.y;
 
-        return temperature;
-    }
+        float distance = Mathf.Abs((VoxelData.WorldSizeInVoxel / 2) - longitude);
 
-    private static float GetHumidity(Vector2 pos)
-    {
-        //  Not implemented
+        float temperature = distance / (VoxelData.WorldSizeInVoxel / 2);
 
-        return 0;
-    }
-
-    private static Climate GetClimate(Climate[] climates, int x, int z)
-    {
-        //  Gets the temperature and humidity in chunk
-        //  Loops through each climate and checks which is a best match for the chunk conditions
-
-        Vector2 chunkPos = new Vector3(x * VoxelData.chunkWidth, z * VoxelData.chunkWidth);
-
-        float temperature = GetTemperature(chunkPos);
-        float humidity = GetHumidity(chunkPos);
-
-        Climate currentClimate = null;
-        float currentTemperatureDistance = Mathf.Infinity;
-
-        foreach (Climate climate in climates)
+        if(temperature < 0)
         {
-            if(Mathf.Abs(temperature - climate.temperature) < currentTemperatureDistance)
-            {
-                currentClimate = climate;
-                currentTemperatureDistance = Mathf.Abs(temperature - climate.temperature);
-            }
+            //Debug.Log("Temperature is too low: " + temperature);
+            temperature = 0;
         }
 
-        return currentClimate;
+        else if (temperature > 1)
+        {
+            //Debug.Log("Temperature is too big: " + temperature);
+            temperature = 1;
+        }
+
+        return 1 - temperature;
     }
 
-    private static List<Tuple<Vector3, Biome>> GetBiomePositions(World world, Climate[,] climateMap, Climate[] climates)
+    private static float GetHumidity(World world, Vector2 pos)
     {
-        List<Tuple<Vector3, Biome>> biomes = new List<Tuple<Vector3, Biome>>();
+        float humidity = Noise.Get2DPerlin(world, pos, 1000, VoxelData.worldSizeInChunks, 1, 1, 1, 1) * (1 - Noise.GetFallOffMap(pos));
 
-        #region land
-
-        //  For each climate
-        //  For each biome in climate
-        //  For each amount of biome
-        //  Place a biome origin if biome origin is inside right climate
-
-        int landMinRange = VoxelData.mapEdgeSizeInChunks + VoxelData.oceanSizeInChunks;
-        int landMaxRange = landMinRange + VoxelData.landSizeInChunks;
-        int chunkWidth = VoxelData.chunkWidth;
-
-        for (int c = 0; c < climates.Length; c++)
+        if (humidity < 0)
         {
-            List<Vector3> positions = new List<Vector3>();
-
-            int amountOfPositions = 0;
-            List<Biome> amountOfBiomes = new List<Biome>();
-
-            for (int b = 0; b < climates[c].biomes.Length; b++)
-            {
-                for (int a = 0; a < climates[c].biomes[b].amount; a++)
-                {
-                    bool foundPos = false;
-
-                    int tries = 0;
-
-                    while (!foundPos)
-                    {
-                        int x = UnityEngine.Random.Range(landMinRange, landMaxRange);
-                        int z = UnityEngine.Random.Range(landMinRange, landMaxRange);
-
-                        if (climateMap[x, z] == climates[c])
-                        {
-                            positions.Add(new Vector3(x * chunkWidth, 0, z * chunkWidth));
-
-                            amountOfPositions++;
-                            amountOfBiomes.Add(climates[c].biomes[b]);
-
-                            foundPos = true;
-                        }
-
-                        tries++;
-
-                        if(tries > 1000)
-                        {
-                            Debug.Log("Cant find spot for " + climates[c].biomes[b].name + "  boss");
-                            foundPos = true;
-                        }
-                    }
-                }
-            }
-
-            for (int b = 0; b < amountOfPositions; b++)
-            {
-                biomes.Add(Tuple.Create(positions[b], amountOfBiomes[b]));
-            }
+            //Debug.Log("Humidity is too low: " + humidity);
+            humidity = 0;
         }
 
-        #endregion
-
-        #region ocean
-
-        int oceanMinRange = VoxelData.mapEdgeSizeInChunks;
-        int oceanMaxRange = landMinRange + VoxelData.oceanSizeInChunks + VoxelData.landSizeInChunks + VoxelData.oceanSizeInChunks;
-
-        int amount = world.oceanAmountPerSide;
-
-
-
-        for(int i = 0; i < amount; i++)
+        else if (humidity > 1)
         {
-            int x = UnityEngine.Random.Range(oceanMinRange, oceanMaxRange);
-            int z = UnityEngine.Random.Range(oceanMinRange, oceanMaxRange);
-
-            Vector3 position = new Vector3(x * chunkWidth, 0, z * chunkWidth);
-
-            biomes.Add(Tuple.Create(position, world.oceanReference));
+            //ebug.Log("Humidity is too big: " + humidity);
+            humidity = 1;
         }
 
-        #endregion
-
-        return biomes;
+        return humidity;
     }
 
-    private static Biome GetBiome(World world, List<Tuple<Vector3, Biome>> biomes, int x, int z)
+    private static float GetHeight(World world, Vector2 pos)
     {
-        //  First checks if chunk is on edge of map, if so go ocean
-        //  Starts checking each biome origin for which is closest
-        //  Stores the closest distance, and compares with new distance
-        //  Distances are multiplied by a weight so certain biomes have less reach (are smaller)
+        float height =  Noise.Get2DPerlin(world, pos, 0, world.noiseScale, world.octaves, world.persistence, world.lacunarity, world.noiseCutoff) * Noise.GetFallOffMap(pos);
 
-        int worldSize = VoxelData.worldSizeInChunks;
-        int edgeSize = VoxelData.mapEdgeSizeInChunks;
-
-        if (x <= edgeSize || x >= worldSize - edgeSize || z <= edgeSize || z >= worldSize - edgeSize)
-            return world.oceanReference;
-
-
-        Vector3 chunkPos = new Vector3(x * VoxelData.chunkWidth, 0, z * VoxelData.chunkWidth);
-
-        Vector3 currentBiomePos = biomes[0].Item1;
-        Biome currentBiome = biomes[0].Item2;
-
-        foreach(Tuple<Vector3, Biome> biome in biomes)
+        if (height < 0)
         {
-            if (Vector3.Distance(chunkPos, biome.Item1) < Vector3.Distance(chunkPos, currentBiomePos))
-            {
-                currentBiomePos = biome.Item1;
-                currentBiome = biome.Item2;
-            }
+           //Debug.Log("Height is too low: " + height);
+            height = 0;
         }
 
-        return currentBiome;
+        else if (height > 1)
+        {
+            //Debug.Log("Height is too big: " + height);
+            height = 1;
+        }
+
+        return height;
     }
+
+    #endregion
 }

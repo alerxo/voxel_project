@@ -37,17 +37,24 @@ public static class Noise
 
     public static float GetFallOffMap(Vector2 pos)
     {
-        //  Value aproaching 0 from spawn
-        //  Distance from spawn divided by half world, so the further we are, the larger the number
-        //  1 minus this because we want opposite
+        //  Value approaching 0 from when we cross the map edge value
 
-        float halfWorldSizeInVoxel = VoxelData.WorldSizeInVoxel / 2;
+        float halfWorldSizeInVoxel = (float)VoxelData.WorldSizeInVoxel / 2;
+        float mapEdge = halfWorldSizeInVoxel - (VoxelData.mapEdgeSizeInChunks * VoxelData.chunkWidth);
 
         float x = Mathf.Abs(Mathf.FloorToInt(pos.x) - halfWorldSizeInVoxel);
         float y = Mathf.Abs(Mathf.FloorToInt(pos.y) - halfWorldSizeInVoxel);
 
-        if (x > y) return 1 - (x / halfWorldSizeInVoxel);
-        else return 1 - (y / halfWorldSizeInVoxel);
+        float distance = Mathf.Max(x, y);
+
+        if(distance > mapEdge)
+        {
+            float fallOffValue = (distance - mapEdge) / (halfWorldSizeInVoxel - mapEdge);
+
+            return 1 - fallOffValue;
+        }
+
+        return 1;
     }
 
     public static bool Get3DPerlin(Vector3 position, float offset, float scale, float threshold)

@@ -81,7 +81,6 @@ public class Chunk
     //  terrain cache
 
     public int tempTerrainHeight;
-    public Biome tempBlendBiome;
 
     public float[] bottomRightCornerNoise;
     public float[] topRightCornerNoise;
@@ -90,7 +89,7 @@ public class Chunk
 
     public float[] centerNoise;
 
-    public Biome biome { get; private set; }
+    public SubBiome biome { get; private set; }
 
     public Chunk(ChunkCoordinate _coord, World _world)
     {
@@ -126,7 +125,7 @@ public class Chunk
 
         #endregion
 
-        biome = world.biomeMap[coord.x, coord.z];
+        biome = world.subBiomMap[coord.x, coord.z];
 
         #region components
 
@@ -188,15 +187,13 @@ public class Chunk
             for (int z = 0; z < VoxelData.chunkWidth; z++)
             {
                 tempTerrainHeight = 0;
-                tempBlendBiome = null;
 
                 for (int y = 0; y < VoxelData.chunkHeight; y++)
                 {
-                    voxelMap[x, y, z] = WorldTerrain.GetVoxelBlockType(world, new Vector3(x, y, z) + position, tempBlendBiome, tempTerrainHeight, true);
+                    voxelMap[x, y, z] = WorldTerrain.GetVoxelBlockType(world, new Vector3(x, y, z) + position, tempTerrainHeight);
                 }
 
                 tempTerrainHeight = 0;
-                tempBlendBiome = null;
             }
         }
 
@@ -228,7 +225,6 @@ public class Chunk
                 for (int z = 0; z < VoxelData.chunkWidth; z++)
                 {
                     tempTerrainHeight = 0;
-                    tempBlendBiome = null;
 
                     for (int y = 0; y < VoxelData.chunkHeight; y++)
                     {
@@ -239,7 +235,6 @@ public class Chunk
                     }
 
                     tempTerrainHeight = 0;
-                    tempBlendBiome = null;
                 }
             }
         }
@@ -367,7 +362,6 @@ public class Chunk
             if(!IsVoxelInChunk((int)currentVoxel.x, (int)currentVoxel.y, (int)currentVoxel.z))
             {
                 world.chunksToUpdateLodOne.Insert(0, world.GetChunkFromVector3(currentVoxel + position));
-
             }
         }
     }
@@ -528,10 +522,10 @@ public class Chunk
 
         int halfChunkWidth = VoxelData.chunkWidth / 2;
 
-        WorldTerrain.GetVoxelBlockType(world, new Vector3(position.x + halfChunkWidth, position.y, position.z + halfChunkWidth), null, 0, false);
+        WorldTerrain.GetVoxelBlockType(world, new Vector3(position.x + halfChunkWidth, position.y, position.z + halfChunkWidth), 0);
         int highestY = tempTerrainHeight;
 
-        if(highestY < 64 )
+        if (highestY < 64 )
         {
             highestY = 64;
             block = world.blocks[8];
