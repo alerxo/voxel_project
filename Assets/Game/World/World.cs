@@ -117,7 +117,7 @@ public class World : MonoBehaviour
 
         for (int i = VoxelData.chunkHeight; i < 0; i--)
         {
-            if(WorldTerrain.GetVoxelBlockType(this, new Vector3(spawn.transform.position.x, i, spawn.transform.position.z), 0) != 0)
+            if(WorldTerrain.GetVoxelBlockType(this, new Vector3(spawn.transform.position.x, i, spawn.transform.position.z), true, 0) != 0)
             {
                 spawn.transform.position = new Vector3(spawn.transform.position.x, i + 2, spawn.transform.position.z);
                 return;
@@ -319,7 +319,7 @@ public class World : MonoBehaviour
             return blocks[chunksInWorld[thisChunk.x, thisChunk.z].GetVoxelFromGlobalVector3(pos)].isTransparent;
         }
 
-        return blocks[WorldTerrain.GetVoxelBlockType(this, pos, _tempTerrainHeight)].isTransparent;
+        return blocks[WorldTerrain.GetVoxelBlockType(this, pos, true, _tempTerrainHeight)].isTransparent;
     }
 
     public bool CheckIfVoxelLiquid(Vector3 pos, int _tempTerrainHeight)
@@ -341,7 +341,7 @@ public class World : MonoBehaviour
             return blocks[chunksInWorld[thisChunk.x, thisChunk.z].GetVoxelFromGlobalVector3(pos)].isLiquid;
         }
 
-        return blocks[WorldTerrain.GetVoxelBlockType(this, pos, _tempTerrainHeight)].isLiquid;
+        return blocks[WorldTerrain.GetVoxelBlockType(this, pos, true, _tempTerrainHeight)].isLiquid;
     }
 
     public bool IsChunkInWorld(ChunkCoordinate coord)

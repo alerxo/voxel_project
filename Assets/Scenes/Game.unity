@@ -500,7 +500,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8945734804422624707, guid: ea8d7bff1037d394ba37e2b3858b5dbf, type: 3}
       propertyPath: seed
-      value: 10
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8945734804422624707, guid: ea8d7bff1037d394ba37e2b3858b5dbf, type: 3}
       propertyPath: octaves
@@ -512,7 +512,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8945734804422624707, guid: ea8d7bff1037d394ba37e2b3858b5dbf, type: 3}
       propertyPath: noiseScale
-      value: 500
+      value: 100
       objectReference: {fileID: 0}
     - target: {fileID: 8945734804422624707, guid: ea8d7bff1037d394ba37e2b3858b5dbf, type: 3}
       propertyPath: noiseCutoff

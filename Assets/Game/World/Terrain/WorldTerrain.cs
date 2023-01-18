@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Mathematics;
 using UnityEngine;
 
 public static class WorldTerrain
 {
-    public static byte GetVoxelBlockType(World world, Vector3 pos, int _terrainHeight)
+    public static byte GetVoxelBlockType(World world, Vector3 pos, bool isBlend,int cachedTerrainHeight)
     {
         //  Goes through different parameters to determine blocktype
 
@@ -36,7 +37,7 @@ public static class WorldTerrain
         int terrainHeight;
         int yPos = Mathf.FloorToInt(pos.y);
 
-        if (_terrainHeight == 0)
+        if (!HasCachedTerrainHeight(cachedTerrainHeight))
         {
             //  If we don't have a cached value for terrainheight, calculate terrainheight
 
@@ -46,10 +47,9 @@ public static class WorldTerrain
 
             SubBiome[] adjacentBiomes = GetAdjacentBiomes(world, cc);
 
-            if (IsBlend(adjacentBiomes))
+            if (IsBlend(isBlend, adjacentBiomes))
             {
-                int xPos = GetPositionInChunk(cc, pos).Item1;
-                int zPos = GetPositionInChunk(cc, pos).Item2;
+                biomeHeight = Mathf.FloorToInt((float)biomeHeight * Blend(world, adjacentBiomes, cc, pos));
             }
 
             terrainHeight += biomeHeight;
@@ -61,7 +61,7 @@ public static class WorldTerrain
 
         else
         {
-            terrainHeight = _terrainHeight;
+            terrainHeight = cachedTerrainHeight;
         }
 
         #endregion
@@ -77,6 +77,96 @@ public static class WorldTerrain
         else return 0;
 
         #endregion
+    }
+
+
+    private static bool IsBlend(bool isBlend, SubBiome[] adjacentBiomes)
+    {
+        //  We blend if unique adjacent biomes is larger than 1, ie there is one more than chunk biome
+
+        if (isBlend && adjacentBiomes.Distinct().ToArray().Length > 1)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private static float Blend(World world, SubBiome[] adjacentBiomes, ChunkCoordinate cc, Vector3 pos)
+    {
+        //  North, east, south, west
+
+        float chunkWidth = VoxelData.chunkWidth;
+
+        Tuple<int, int> positionInChunk = GetPositionInChunk(cc, pos);
+        
+        float x = positionInChunk.Item1;
+        float y = positionInChunk.Item2;
+
+        #region math
+
+        List<bool> ab = new List<bool>();
+
+        foreach(SubBiome sb in adjacentBiomes)
+        {
+            if (sb != adjacentBiomes[4])
+            {
+                ab.Add(true);
+            }
+
+            else
+            {
+                ab.Add(false);
+            }
+        }
+
+        #endregion
+
+        float blendValue = 1;
+
+        if (ab[0])
+        {
+            blendValue = Mathf.Min(blendValue, Vector2.Distance(new Vector2(16, 16), new Vector2(x, y)) / chunkWidth);
+        }
+
+        if (ab[1])
+        {
+            blendValue = Mathf.Min(blendValue, (chunkWidth - y) / chunkWidth);
+        }
+
+        if (ab[2])
+        {
+            blendValue = Mathf.Min(blendValue, Vector2.Distance(new Vector2(0, 16), new Vector2(x, y)) / chunkWidth);
+        }
+
+        if (ab[3])
+        {
+            blendValue = Mathf.Min(blendValue, (chunkWidth - x) / chunkWidth);
+        }
+
+        if (ab[5])
+        {
+            blendValue = Mathf.Min(blendValue, (0 + x) / chunkWidth);
+        }
+
+        if (ab[6])
+        {
+            blendValue = Mathf.Min(blendValue, Vector2.Distance(new Vector2(16, 0), new Vector2(x, y)) / chunkWidth);
+        }
+
+        if (ab[7])
+        {
+            blendValue = Mathf.Min(blendValue, (0 + y) / chunkWidth);
+        }
+
+        if (ab[8])
+        {
+            blendValue = Mathf.Min(blendValue, Vector2.Distance(new Vector2(0, 0), new Vector2(x, y)) / chunkWidth);
+        }
+
+        float noise = Noise.Get2DPerlin(world, new Vector2(pos.x, pos.z), 0, 10, 4, 0.5f, 2f, 1);
+
+        return (blendValue + (noise * blendValue)) / 2;
     }
 
     private static SubBiome[] GetAdjacentBiomes(World world, ChunkCoordinate cc)
@@ -112,16 +202,14 @@ public static class WorldTerrain
         return Tuple.Create(x + 1, z + 1);
     }
 
-    private static bool IsBlend(SubBiome[] adjacentBiomes)
+    private static bool HasCachedTerrainHeight(int terrainheight)
     {
-        //  We blend if unique adjacent biomes is larger than 1
-
-        if (adjacentBiomes.Distinct().ToArray().Length > 1)
+        if(terrainheight == 0)
         {
-            return true;
+            return false;
         }
 
-        return false;
+        return true;
     }
 
     private static bool IsVoxelInWorld(Vector3 pos)
