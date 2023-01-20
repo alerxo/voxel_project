@@ -4,6 +4,48 @@ using UnityEngine;
 
 public static class Noise
 {
+    public static float Get2DPerlinHighResoltion(World world, int resolution, Vector2 pos, float _offset, float scale, int octaves, float persistence, float lacunarity, float noiseCutoff)
+    {
+        //  Sample perlin noise, gets layered through octaves,
+        //  persistance changes amplitude through each octave
+        //  lacunarity changes frequency through each octave
+
+        //  creates a curve where amplitude is x and frequency is y
+
+        //  Does this x amount of times, and changes the offset, as to get more detailed results
+        //  Because the perlin noise has too few asmple points, so when passed very small numbers, 
+        //  A lot of coodrinates get the same result
+
+        float noiseHeight = 0f;
+        float offset = _offset + world.randomSeed + 0.1f;
+
+        for (int i = 0; i < resolution; i++)
+        {
+            float noise = 0f;
+            offset += i;
+            float amplituide = 1f;
+            float frequency = 1f;
+
+            for (int n = 0; n < octaves; n++)
+            {
+                float sampleX = pos.x / scale * frequency;
+                float sampleY = pos.y / scale * frequency;
+
+                float perlinValue = Mathf.PerlinNoise(sampleX + offset, sampleY + offset);
+
+                noise += perlinValue * amplituide;
+                amplituide *= persistence;
+                frequency *= lacunarity;
+            }
+
+            if (noise > noiseCutoff) noise = noiseCutoff;
+
+            noiseHeight += noise;
+        }
+
+        return noiseHeight / (float)resolution;
+    }
+
     public static float Get2DPerlin(World world, Vector2 pos, float _offset, float scale, int octaves, float persistence, float lacunarity, float noiseCutoff)
     {
         //  Sample perlin noise, gets layered through octaves,

@@ -23,6 +23,8 @@ public class World : MonoBehaviour
 
     [Space]
 
+    [Tooltip("How much detail between sample points")]
+    public int resolution;
     [Tooltip("Distance between samplepoints, bigger lumps")]
     public float noiseScale;
     [Tooltip("Each octave adds another layer of noise")]

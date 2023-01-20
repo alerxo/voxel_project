@@ -6,10 +6,8 @@ using UnityEngine;
 
 public static class BiomeMap
 {
-    //  Divides the world into biomes with voroni noise,
-    //  Biomes are placed at points, within their climates, 
-    //  Edges of map is water, so world is surrounded by ocean
-    //  Creates a biome map where each chunk is assigned a biome
+    //  Divides the world into biomes using temperature, humidity and terrainheight parameters
+    //  Adds these to a two-dimenstional array, for x and z coordinates, which acts as a map
 
     public static SubBiome[,] GetBiomeMap(World world)
     {
@@ -19,7 +17,7 @@ public static class BiomeMap
 
         //  Each chunk will be assigen a climate, depedning on temperature, humidity and height
 
-        for (int x = 0; x < VoxelData.worldSizeInChunks + 2; x++) //    Assigning each chunk a climate
+        for (int x = 0; x < VoxelData.worldSizeInChunks + 2; x++)
         {
             for (int z = 0; z < VoxelData.worldSizeInChunks + 2; z++)
             {
@@ -30,12 +28,11 @@ public static class BiomeMap
         return subBiomeMap;
     }
 
-    #region Biome
-
     private static SubBiome GetBiome(World world, Biome[] biomes, int x, int z)
     {
         //  Gets the temperature, humidity and height in chunk
-        //  Loops through each climate and checks which is a best match for the chunk conditions
+        //  Goes through each parameter and removes biomes that don't fit
+        //  Only one should be left, and we get a subbiome of that
 
         Vector2 chunkPos = new Vector3(x * VoxelData.chunkWidth, z * VoxelData.chunkWidth);
 
@@ -96,6 +93,10 @@ public static class BiomeMap
 
     private static SubBiome GetSubBiome(World world, Biome biome, int x, int z)
     {
+        //  Gets noise at chunk pos, loops through each subbiome and checks which fits
+        //  Subbiomes are arranged in ascending order of thresholds
+        //  First subbiome whos treshold is bigger than noise, is the one that fits, and is returned
+
         float noise = Noise.Get2DPerlin(world, new Vector2(x, z), 2000, 50, 1, 1, 1, 1);
 
         foreach(SubBiome subBiome in biome.subBiomes)
@@ -140,6 +141,8 @@ public static class BiomeMap
 
     private static float GetHumidity(World world, Vector2 pos)
     {
+        //  Humidity is random noise, multiplied by falloff, so closer to edge of world, which should be ocean is more humid
+
         float humidity = Noise.Get2DPerlin(world, pos, 1000, VoxelData.worldSizeInChunks, 1, 1, 1, 1) * (1 - Noise.GetFallOffMap(pos));
 
         if (humidity < 0)
@@ -159,7 +162,9 @@ public static class BiomeMap
 
     private static float GetHeight(World world, Vector2 pos)
     {
-        float height =  Noise.Get2DPerlin(world, pos, 0, world.noiseScale, world.octaves, world.persistence, world.lacunarity, world.noiseCutoff) * Noise.GetFallOffMap(pos);
+        //  Terrainheight by perlin noise multiplied by falloff
+
+        float height =  Noise.Get2DPerlinHighResoltion(world, world.resolution, pos, 0, world.noiseScale, world.octaves, world.persistence, world.lacunarity, world.noiseCutoff) * Noise.GetFallOffMap(pos);
 
         if (height < 0)
         {
@@ -175,6 +180,4 @@ public static class BiomeMap
 
         return height;
     }
-
-    #endregion
 }
