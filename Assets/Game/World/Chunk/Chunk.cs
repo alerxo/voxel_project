@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class Chunk
 {
+    #region oof
+
     public GameObject chunkObject { get; private set; }
 
     #region lodobj
@@ -88,6 +90,8 @@ public class Chunk
     public float[] topLeftCornerNoise;
 
     public float[] centerNoise;
+
+    #endregion
 
     public SubBiome biome { get; private set; }
 
@@ -177,31 +181,6 @@ public class Chunk
         }
     }
 
-    public void PopulateVoxelMap()
-    {
-        //  Fills the chunk with voxel data
-        //  Locks the chunksupdate list and adds itself, as to avoid confusion between threads
-
-        for (int x = 0; x < VoxelData.chunkWidth; x++)
-        {
-            for (int z = 0; z < VoxelData.chunkWidth; z++)
-            {
-                tempTerrainHeight = 0;
-
-                for (int y = 0; y < VoxelData.chunkHeight; y++)
-                {
-                    voxelMap[x, y, z] = WorldTerrain.GetVoxelBlockType(world, new Vector3(x, y, z) + position, true, tempTerrainHeight);
-                }
-
-                tempTerrainHeight = 0;
-            }
-        }
-
-        isVoxelMapPopulated = true;
-
-        UpdateChunk(true);
-    }
-
     public void UpdateChunk(bool lodOne)
     {
         //  Adds all the modifications to the chunk, ie changing block id
@@ -242,6 +221,45 @@ public class Chunk
         UpdateLodTwoMeshData();
 
         world.chunksToDraw.Enqueue(this);
+    }
+
+    private void UpdateAdjacentVoxels(int x, int y, int z)
+    {
+        //  Uses face list i voxel data to loop through faces and adds to chunks to update list
+
+        Vector3 thisVoxel = new Vector3(x, y, z);
+
+        for (int r = 0; r < 6; r++)
+        {
+            Vector3 currentVoxel = thisVoxel + VoxelData.faceChecks[r];
+
+            if(!IsVoxelInChunk((int)currentVoxel.x, (int)currentVoxel.y, (int)currentVoxel.z))
+            {
+                world.chunksToUpdateLodOne.Insert(0, Voxel_Util.GetChunkFromVector3(world, currentVoxel + position));
+            }
+        }
+    }
+
+    public void EditVoxel(Vector3 pos, byte newID)
+    {
+        //  Changes the ID of voxel and updates itself, and adjacent voxels
+
+        //  Not used rn but can be if block placing should be a thing
+
+        int xCheck = Mathf.FloorToInt(pos.x);
+        int yCheck = Mathf.FloorToInt(pos.y);
+        int zCheck = Mathf.FloorToInt(pos.z);
+
+        xCheck -= Mathf.FloorToInt(position.x);
+        zCheck -= Mathf.FloorToInt(position.z);
+
+        voxelMap[xCheck, yCheck, zCheck] = newID;
+
+        lock (world.ThreadedUpdate_Lock)
+        {
+            world.chunksToUpdateLodOne.Insert(0, this);
+            UpdateAdjacentVoxels(xCheck, yCheck, zCheck);
+        }
     }
 
     private void ClearMeshData()
@@ -289,11 +307,11 @@ public class Chunk
 
         get { return _isActive; }
 
-        set 
-        { 
+        set
+        {
             _isActive = value;
-            
-            if(chunkObject != null)
+
+            if (chunkObject != null)
             {
                 lodOneObject.SetActive(value);
                 lodTwoObject.SetActive(!value);
@@ -317,108 +335,31 @@ public class Chunk
         }
     }
 
-    private bool IsVoxelInChunk(int x, int y, int z)
+    #region lod one
+
+    public void PopulateVoxelMap()
     {
-        //  If voxel is insite the perimiter of the chunk, return true
+        //  Fills the chunk with voxel data
+        //  Locks the chunksupdate list and adds itself, as to avoid confusion between threads
 
-        if (x < 0 || x > VoxelData.chunkWidth - 1 || y < 0 || y > VoxelData.chunkHeight - 1 || z < 0 || z > VoxelData.chunkWidth - 1)
-            return false;
-        else 
-            return true;
-    }
-
-    public void EditVoxel(Vector3 pos, byte newID)
-    {
-        //  Changes the ID of voxel and updates itself, and adjacent voxels
-
-        //  Not used rn but can be if block placing should be a thing
-
-        int xCheck = Mathf.FloorToInt(pos.x);
-        int yCheck = Mathf.FloorToInt(pos.y);
-        int zCheck = Mathf.FloorToInt(pos.z);
-
-        xCheck -= Mathf.FloorToInt(position.x);
-        zCheck -= Mathf.FloorToInt(position.z);
-
-        voxelMap[xCheck, yCheck, zCheck] = newID;
-
-        lock (world.ThreadedUpdate_Lock)
+        for (int x = 0; x < VoxelData.chunkWidth; x++)
         {
-            world.chunksToUpdateLodOne.Insert(0, this);
-            UpdateAdjacentVoxels(xCheck, yCheck, zCheck);
-        }
-    }
-
-    private void UpdateAdjacentVoxels(int x, int y, int z)
-    {
-        //  Uses face list i voxel data to loop through faces and adds to chunks to update list
-
-        Vector3 thisVoxel = new Vector3(x, y, z);
-
-        for (int r = 0; r < 6; r++)
-        {
-            Vector3 currentVoxel = thisVoxel + VoxelData.faceChecks[r];
-
-            if(!IsVoxelInChunk((int)currentVoxel.x, (int)currentVoxel.y, (int)currentVoxel.z))
+            for (int z = 0; z < VoxelData.chunkWidth; z++)
             {
-                world.chunksToUpdateLodOne.Insert(0, Voxel_Util.GetChunkFromVector3(world, currentVoxel + position));
+                tempTerrainHeight = 0;
+
+                for (int y = 0; y < VoxelData.chunkHeight; y++)
+                {
+                    voxelMap[x, y, z] = WorldTerrain.GetVoxelBlockType(world, new Vector3(x, y, z) + position, true, tempTerrainHeight);
+                }
+
+                tempTerrainHeight = 0;
             }
         }
-    }
 
-    private bool CheckVoxelTransparancy(Vector3 pos, int _tempTerrainHeight)
-    {
-        //  Converts into ints
-        //  Checks if voxel pos is inside of chunk
-        //  Checks the position of given coordinates for voxel
-        //  Returns true if voxel is there and the voxel is not transparent
+        isVoxelMapPopulated = true;
 
-        int x = Mathf.FloorToInt(pos.x);
-        int y = Mathf.FloorToInt(pos.y);
-        int z = Mathf.FloorToInt(pos.z);
-
-        if (!IsVoxelInChunk(x, y, z))
-        {
-            return Voxel_Util.CheckIfVoxelTransparent(world, pos + position, _tempTerrainHeight);
-        }
-
-        return world.blocks[voxelMap[x, y, z]].isTransparent;
-    }
-
-    private bool CheckVoxelLiquid(Vector3 pos, int _tempTerrainHeight)
-    {
-        //  Converts into ints
-        //  Checks if voxel pos is inside of chunk
-        //  Checks the position of given coordinates for voxel
-        //  Returns true if voxel is there and the voxel is not liquid
-
-        int x = Mathf.FloorToInt(pos.x);
-        int y = Mathf.FloorToInt(pos.y);
-        int z = Mathf.FloorToInt(pos.z);
-
-        if (!IsVoxelInChunk(x, y, z))
-        {
-            return Voxel_Util.CheckIfVoxelLiquid(world, pos + position, _tempTerrainHeight);
-        }
-
-        return world.blocks[voxelMap[x, y, z]].isLiquid;
-    }
-
-    public byte GetVoxelFromGlobalVector3(Vector3 pos)
-    {
-        //  -||-
-
-        int xCheck = Mathf.FloorToInt(pos.x);
-        int yCheck = Mathf.FloorToInt(pos.y);
-        int zCheck = Mathf.FloorToInt(pos.z);
-
-        xCheck -= Mathf.FloorToInt(position.x);
-        zCheck -= Mathf.FloorToInt(position.z);
-
-        if (xCheck < 0) xCheck = 0;
-        if (zCheck < 0) zCheck = 0;
-            
-        return voxelMap[xCheck, yCheck, zCheck];
+        UpdateChunk(true);
     }
 
     private void UpdateLodOneMeshData(Vector3 pos, int _tempTerrainHeight)
@@ -437,15 +378,15 @@ public class Chunk
         {
             bool skip = false;
 
-            if(isLiquid) // If we are liquid, check if adjacent also is
+            if (isLiquid) // If we are liquid, check if adjacent also is
             {
-                if(CheckVoxelLiquid(pos + VoxelData.faceChecks[r], _tempTerrainHeight))
+                if (CheckVoxelLiquid(pos + VoxelData.faceChecks[r], _tempTerrainHeight))
                 {
                     skip = true;
                 }
             }
 
-            if(!skip && CheckVoxelTransparancy(pos + VoxelData.faceChecks[r], _tempTerrainHeight))   //  If we survived the parameters, draw face
+            if (!skip && CheckVoxelTransparancy(pos + VoxelData.faceChecks[r], _tempTerrainHeight))   //  If we survived the parameters, draw face
             {
                 //  Adding the uvs, the triangles and verticies, depending on mesh type, then incrementing the vertex index
 
@@ -514,6 +455,10 @@ public class Chunk
         }
     }
 
+    #endregion
+
+    #region lod two
+
     private void UpdateLodTwoMeshData()
     {
         //  Hardcoded square, with top vertices being terrai height at chunk local positon, using cached height value and bottom being 0.
@@ -525,7 +470,7 @@ public class Chunk
         WorldTerrain.GetVoxelBlockType(world, new Vector3(position.x + halfChunkWidth, position.y, position.z + halfChunkWidth), false, 0);
         int highestY = tempTerrainHeight;
 
-        if (highestY < 64 )
+        if (highestY < 64)
         {
             highestY = 64;
             block = world.blocks[8];
@@ -635,6 +580,8 @@ public class Chunk
         #endregion
     }
 
+    #endregion
+
     public void CreateMesh()
     {
         //  Adding the info to a mesh
@@ -699,7 +646,7 @@ public class Chunk
         //  as to find it in the texture atlas
 
         float y = textureID / VoxelData.TextureAtlasBlockWidth;
-        float x = textureID - (y * VoxelData.TextureAtlasBlockWidth);   
+        float x = textureID - (y * VoxelData.TextureAtlasBlockWidth);
 
         x *= VoxelData.NormalizedBlockTextureSize;
         y *= VoxelData.NormalizedBlockTextureSize;
@@ -709,7 +656,7 @@ public class Chunk
         uvs.Add(new Vector2(x, y));
         uvs.Add(new Vector2(x, y + VoxelData.NormalizedBlockTextureSize));
         uvs.Add(new Vector2(x + VoxelData.NormalizedBlockTextureSize, y));
-        uvs.Add(new Vector2(x + VoxelData.NormalizedBlockTextureSize, y + VoxelData.NormalizedBlockTextureSize)); 
+        uvs.Add(new Vector2(x + VoxelData.NormalizedBlockTextureSize, y + VoxelData.NormalizedBlockTextureSize));
     }
 
     private void AddWaterTexture(Vector3 pos, List<Vector2> uvs)
@@ -724,4 +671,73 @@ public class Chunk
         uvs.Add(new Vector2((x + step), z));
         uvs.Add(new Vector2((x + step), (z + step)));
     }
+
+    #region util
+
+    public byte GetVoxelFromGlobalVector3(Vector3 pos)
+    {
+        //  -||-
+
+        int xCheck = Mathf.FloorToInt(pos.x);
+        int yCheck = Mathf.FloorToInt(pos.y);
+        int zCheck = Mathf.FloorToInt(pos.z);
+
+        xCheck -= Mathf.FloorToInt(position.x);
+        zCheck -= Mathf.FloorToInt(position.z);
+
+        if (xCheck < 0) xCheck = 0;
+        if (zCheck < 0) zCheck = 0;
+
+        return voxelMap[xCheck, yCheck, zCheck];
+    }
+
+    private bool CheckVoxelTransparancy(Vector3 pos, int _tempTerrainHeight)
+    {
+        //  Converts into ints
+        //  Checks if voxel pos is inside of chunk
+        //  Checks the position of given coordinates for voxel
+        //  Returns true if voxel is there and the voxel is not transparent
+
+        int x = Mathf.FloorToInt(pos.x);
+        int y = Mathf.FloorToInt(pos.y);
+        int z = Mathf.FloorToInt(pos.z);
+
+        if (!IsVoxelInChunk(x, y, z))
+        {
+            return Voxel_Util.CheckIfVoxelTransparent(world, pos + position, _tempTerrainHeight);
+        }
+
+        return world.blocks[voxelMap[x, y, z]].isTransparent;
+    }
+
+    private bool CheckVoxelLiquid(Vector3 pos, int _tempTerrainHeight)
+    {
+        //  Converts into ints
+        //  Checks if voxel pos is inside of chunk
+        //  Checks the position of given coordinates for voxel
+        //  Returns true if voxel is there and the voxel is not liquid
+
+        int x = Mathf.FloorToInt(pos.x);
+        int y = Mathf.FloorToInt(pos.y);
+        int z = Mathf.FloorToInt(pos.z);
+
+        if (!IsVoxelInChunk(x, y, z))
+        {
+            return Voxel_Util.CheckIfVoxelLiquid(world, pos + position, _tempTerrainHeight);
+        }
+
+        return world.blocks[voxelMap[x, y, z]].isLiquid;
+    }
+
+    private bool IsVoxelInChunk(int x, int y, int z)
+    {
+        //  If voxel is insite the perimiter of the chunk, return true
+
+        if (x < 0 || x > VoxelData.chunkWidth - 1 || y < 0 || y > VoxelData.chunkHeight - 1 || z < 0 || z > VoxelData.chunkWidth - 1)
+            return false;
+        else
+            return true;
+    }
+
+    #endregion
 }
