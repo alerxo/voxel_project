@@ -27,7 +27,7 @@ public class EntityChunkParent : NetworkBehaviour
 
         if (!IsOwner) return;
 
-        playerChunkCoordinate = world.GetChunkCoordinateFromVector3(entity.transform.position);
+        playerChunkCoordinate = Voxel_Util.GetChunkCoordinateFromVector3(entity.transform.position);
 
         if (!playerChunkCoordinate.Equals(playerLastChunkCoordinate))
         {

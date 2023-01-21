@@ -9,7 +9,7 @@ public static class WorldTerrain
     {
         //  Goes through different parameters to determine blocktype
 
-        ChunkCoordinate cc = world.GetChunkCoordinateFromVector3(pos);
+        ChunkCoordinate cc = Voxel_Util.GetChunkCoordinateFromVector3(pos);
 
         #region Constants
 

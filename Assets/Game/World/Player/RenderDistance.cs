@@ -31,7 +31,7 @@ public class RenderDistance : MonoBehaviour
         CheckRenderDistance_Thread = new Thread(new ThreadStart(ThreadedUpdate_3));
         CheckRenderDistance_Thread.Start();
 
-        playerChunk = world.GetChunkCoordinateFromVector3(transform.position);
+        playerChunk = Voxel_Util.GetChunkCoordinateFromVector3(transform.position);
 
         playerPosition = transform.position;
         hasCheckedRenderDistance = false;
@@ -39,7 +39,7 @@ public class RenderDistance : MonoBehaviour
 
     private void Update()
     {
-        playerChunk = world.GetChunkCoordinateFromVector3(transform.position);
+        playerChunk = Voxel_Util.GetChunkCoordinateFromVector3(transform.position);
 
         if (!playerChunk.Equals(playerLastChunk) || !gameObject.GetComponent<PlayerMovement>().CanMove())
         {
@@ -111,7 +111,7 @@ public class RenderDistance : MonoBehaviour
         //  If not activate, activate (in main thread -||-)
         //  Add all chunks in renderdistance to active chunks
 
-        ChunkCoordinate coord = world.GetChunkCoordinateFromVector3(playerPosition);
+        ChunkCoordinate coord = Voxel_Util.GetChunkCoordinateFromVector3(playerPosition);
 
         playerLastChunk = playerChunk;
 
@@ -126,7 +126,7 @@ public class RenderDistance : MonoBehaviour
         {
             for (int z = coord.z - rd; z < coord.z + rd; z++)
             {
-                if (world.IsChunkInWorld(new ChunkCoordinate(x, z)))
+                if (Voxel_Util.IsChunkInWorld(new ChunkCoordinate(x, z)))
                 {
                     if((coord.x - r < x && x < coord.x + r) && (coord.z - r < z && z < coord.z + r))
                     {

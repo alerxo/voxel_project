@@ -361,7 +361,7 @@ public class Chunk
 
             if(!IsVoxelInChunk((int)currentVoxel.x, (int)currentVoxel.y, (int)currentVoxel.z))
             {
-                world.chunksToUpdateLodOne.Insert(0, world.GetChunkFromVector3(currentVoxel + position));
+                world.chunksToUpdateLodOne.Insert(0, Voxel_Util.GetChunkFromVector3(world, currentVoxel + position));
             }
         }
     }
@@ -379,7 +379,7 @@ public class Chunk
 
         if (!IsVoxelInChunk(x, y, z))
         {
-            return world.CheckIfVoxelTransparent(pos + position, _tempTerrainHeight);
+            return Voxel_Util.CheckIfVoxelTransparent(world, pos + position, _tempTerrainHeight);
         }
 
         return world.blocks[voxelMap[x, y, z]].isTransparent;
@@ -398,7 +398,7 @@ public class Chunk
 
         if (!IsVoxelInChunk(x, y, z))
         {
-            return world.CheckIfVoxelLiquid(pos + position, _tempTerrainHeight);
+            return Voxel_Util.CheckIfVoxelLiquid(world, pos + position, _tempTerrainHeight);
         }
 
         return world.blocks[voxelMap[x, y, z]].isLiquid;
