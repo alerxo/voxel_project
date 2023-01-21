@@ -8,6 +8,8 @@ public class Chunk
 
     public GameObject chunkObject { get; private set; }
 
+    public bool hasBeenEnqueued = false;
+
     #region lodobj
 
     public GameObject lodOneObject { get; private set; }
@@ -174,53 +176,6 @@ public class Chunk
         position = chunkObject.transform.position;
 
         #endregion
-
-        lock (world.ThreadedUpdate_Lock)
-        {
-            world.chunksToForceUpdateLodTwo.Add(this);
-        }
-    }
-
-    public void UpdateChunk(bool lodOne)
-    {
-        //  Adds all the modifications to the chunk, ie changing block id
-        //  Adding voxel mesh data at each spot in the chunk if its a solid
-        //  Adds itself to draw queue, threading -||-
-
-        ClearMeshData();
-
-        if (lodOne)
-        {
-            while (modifications.Count > 0)
-            {
-                VoxelMod vm = modifications.Dequeue();
-
-                Vector3 pos = vm.position -= position;
-                voxelMap[(int)pos.x, (int)pos.y, (int)pos.z] = vm.id;
-            }
-
-            for (int x = 0; x < VoxelData.chunkWidth; x++)
-            {
-                for (int z = 0; z < VoxelData.chunkWidth; z++)
-                {
-                    tempTerrainHeight = 0;
-
-                    for (int y = 0; y < VoxelData.chunkHeight; y++)
-                    {
-                        if (world.blocks[voxelMap[x, y, z]].drawBlock)
-                        {
-                            UpdateLodOneMeshData(new Vector3(x, y, z), tempTerrainHeight);
-                        }
-                    }
-
-                    tempTerrainHeight = 0;
-                }
-            }
-        }
-
-        UpdateLodTwoMeshData();
-
-        world.chunksToDraw.Enqueue(this);
     }
 
     private void UpdateAdjacentVoxels(int x, int y, int z)
@@ -235,7 +190,7 @@ public class Chunk
 
             if(!IsVoxelInChunk((int)currentVoxel.x, (int)currentVoxel.y, (int)currentVoxel.z))
             {
-                world.chunksToUpdateLodOne.Insert(0, Voxel_Util.GetChunkFromVector3(world, currentVoxel + position));
+                world.chunksToCreateChunkData.Insert(0, Voxel_Util.GetChunkFromVector3(world, currentVoxel + position));
             }
         }
     }
@@ -257,47 +212,9 @@ public class Chunk
 
         lock (world.ThreadedUpdate_Lock)
         {
-            world.chunksToUpdateLodOne.Insert(0, this);
+            world.chunksToCreateChunkData.Insert(0, this);
             UpdateAdjacentVoxels(xCheck, yCheck, zCheck);
         }
-    }
-
-    private void ClearMeshData()
-    {
-        #region lodone
-
-        lodOneVertexIndex = 0;
-        lodOneVerticies.Clear();
-
-        lodOneSolidTriangles.Clear();
-        lodOneTransparentTriangles.Clear();
-
-        lodOneUvs.Clear();
-
-        #endregion
-
-        #region lodonewater
-
-        lodOneWaterVertexIndex = 0;
-        lodOneWaterVerticies.Clear();
-
-        lodOneWaterTriangles.Clear();
-
-        lodOneWaterUvs.Clear();
-
-        #endregion
-
-        #region lodtwo
-
-        lodTwoVertexIndex = 0;
-
-        lodTwoVerticies.Clear();
-
-        lodTwoTriangles.Clear();
-
-        lodTwoUvs.Clear();
-
-        #endregion
     }
 
     public bool IsActive
@@ -335,8 +252,6 @@ public class Chunk
         }
     }
 
-    #region lod one
-
     public void PopulateVoxelMap()
     {
         //  Fills the chunk with voxel data
@@ -359,105 +274,109 @@ public class Chunk
 
         isVoxelMapPopulated = true;
 
-        UpdateChunk(true);
+        UpdateChunk();
     }
 
-    private void UpdateLodOneMeshData(Vector3 pos, int _tempTerrainHeight)
+    public void UpdateChunk()
     {
-        //  Goes through each face of voxel
-        //  Checking for parameters
-        //  If not, create verticies, uvs and triangles for face
+        //  Adds all the modifications to the chunk, ie changing block id
+        //  Adding voxel mesh data at each spot in the chunk if its a solid
+        //  Adds itself to draw queue, threading -||-
 
-        byte blockID = voxelMap[(int)pos.x, (int)pos.y, (int)pos.z];
+        ClearMeshDataLodOne();
+        ClearMeshDataLodTwo();
 
-        bool isSolid = world.blocks[blockID].isSolid;
-        bool isTransparent = world.blocks[blockID].isTransparent;
-        bool isLiquid = world.blocks[blockID].isLiquid;
+        UpdateLodOneMeshData();
+        UpdateLodTwoMeshData();
 
-        for (int r = 0; r < 6; r++) // Each row (face)
+        world.chunksToDrawLodOne.Enqueue(this);
+        world.chunksToDrawLodTwo.Enqueue(this);
+    }
+
+    public void CreateMeshLodOne()
+    {
+        //  Adding the info to a mesh
+        //  recalculating normals as to make sure all verticies face the right way
+
+        Mesh lodOneMesh = new Mesh();
+        lodOneMesh.vertices = lodOneVerticies.ToArray();
+
+        lodOneMesh.subMeshCount = 2;
+
+        lodOneMesh.SetTriangles(lodOneSolidTriangles.ToArray(), 0);
+        lodOneMesh.SetTriangles(lodOneTransparentTriangles.ToArray(), 1);
+
+        lodOneMesh.uv = lodOneUvs.ToArray();
+
+        lodOneMesh.RecalculateNormals();
+
+        lodOneObjectMeshFilter.mesh = lodOneMesh;
+        lodOneObjectMeshCollider.sharedMesh = lodOneObjectMeshFilter.mesh;
+    }
+
+    public void CreateMeshWater()
+    {
+        //  -||-
+
+        Mesh lodOneWaterMesh = new Mesh();
+        lodOneWaterMesh.vertices = lodOneWaterVerticies.ToArray();
+
+        lodOneWaterMesh.subMeshCount = 1;
+        lodOneWaterMesh.SetTriangles(lodOneWaterTriangles.ToArray(), 0);
+
+        lodOneWaterMesh.uv = lodOneWaterUvs.ToArray();
+
+        lodOneWaterMesh.RecalculateNormals();
+
+        lodOneWaterObjectMeshFilter.mesh = lodOneWaterMesh;
+        lodOneWaterObjectMeshCollider.sharedMesh = lodOneWaterObjectMeshFilter.mesh;
+    }
+
+    public void CreateMeshLodTwo()
+    {
+        //  -||-
+
+        Mesh lodTwoMesh = new Mesh();
+        lodTwoMesh.vertices = lodTwoVerticies.ToArray();
+
+        lodTwoMesh.subMeshCount = 1;
+        lodTwoMesh.SetTriangles(lodTwoTriangles.ToArray(), 0);
+
+        lodTwoMesh.uv = lodTwoUvs.ToArray();
+
+        lodTwoMesh.RecalculateNormals();
+
+        lodTwoObjectMeshFilter.mesh = lodTwoMesh;
+    }
+
+    private void UpdateLodOneMeshData()
+    {
+        while (modifications.Count > 0)
         {
-            bool skip = false;
+            VoxelMod vm = modifications.Dequeue();
 
-            if (isLiquid) // If we are liquid, check if adjacent also is
+            Vector3 pos = vm.position -= position;
+            voxelMap[(int)pos.x, (int)pos.y, (int)pos.z] = vm.id;
+        }
+
+        for (int x = 0; x < VoxelData.chunkWidth; x++)
+        {
+            for (int z = 0; z < VoxelData.chunkWidth; z++)
             {
-                if (CheckVoxelLiquid(pos + VoxelData.faceChecks[r], _tempTerrainHeight))
+                tempTerrainHeight = 0;
+
+                for (int y = 0; y < VoxelData.chunkHeight; y++)
                 {
-                    skip = true;
-                }
-            }
-
-            if (!skip && CheckVoxelTransparancy(pos + VoxelData.faceChecks[r], _tempTerrainHeight))   //  If we survived the parameters, draw face
-            {
-                //  Adding the uvs, the triangles and verticies, depending on mesh type, then incrementing the vertex index
-
-                if (isLiquid)
-                {
-                    lodOneWaterVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 0]]);
-                    lodOneWaterVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 1]]);
-                    lodOneWaterVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 2]]);
-                    lodOneWaterVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 3]]);
-
-                    AddWaterTexture(pos, lodOneWaterUvs);
-
-                    lodOneWaterTriangles.Add(lodOneWaterVertexIndex);
-                    lodOneWaterTriangles.Add(lodOneWaterVertexIndex + 1);
-                    lodOneWaterTriangles.Add(lodOneWaterVertexIndex + 2);
-                    lodOneWaterTriangles.Add(lodOneWaterVertexIndex + 2);
-                    lodOneWaterTriangles.Add(lodOneWaterVertexIndex + 1);
-                    lodOneWaterTriangles.Add(lodOneWaterVertexIndex + 3);
-
-                    lodOneWaterVertexIndex += 4;
+                    if (world.blocks[voxelMap[x, y, z]].drawBlock)
+                    {
+                        UpdateLodOneVoxelMeshData(new Vector3(x, y, z), tempTerrainHeight);
+                    }
                 }
 
-                else if (isTransparent)
-                {
-                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 0]]);
-                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 1]]);
-                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 2]]);
-                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 3]]);
-
-                    AddTexture(world.blocks[blockID].GetTextureID(r), lodOneUvs);
-
-                    lodOneTransparentTriangles.Add(lodOneVertexIndex);
-                    lodOneTransparentTriangles.Add(lodOneVertexIndex + 1);
-                    lodOneTransparentTriangles.Add(lodOneVertexIndex + 2);
-                    lodOneTransparentTriangles.Add(lodOneVertexIndex + 2);
-                    lodOneTransparentTriangles.Add(lodOneVertexIndex + 1);
-                    lodOneTransparentTriangles.Add(lodOneVertexIndex + 3);
-
-                    lodOneVertexIndex += 4;
-                }
-
-                else if (isSolid)
-                {
-                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 0]]);
-                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 1]]);
-                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 2]]);
-                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 3]]);
-
-                    AddTexture(world.blocks[blockID].GetTextureID(r), lodOneUvs);
-
-                    lodOneSolidTriangles.Add(lodOneVertexIndex);
-                    lodOneSolidTriangles.Add(lodOneVertexIndex + 1);
-                    lodOneSolidTriangles.Add(lodOneVertexIndex + 2);
-                    lodOneSolidTriangles.Add(lodOneVertexIndex + 2);
-                    lodOneSolidTriangles.Add(lodOneVertexIndex + 1);
-                    lodOneSolidTriangles.Add(lodOneVertexIndex + 3);
-
-                    lodOneVertexIndex += 4;
-                }
-
-                else
-                {
-                    Debug.Log("Error in Chunk/UpdateMeshData: Did not find mesh type");
-                }
+                tempTerrainHeight = 0;
             }
         }
     }
-
-    #endregion
-
-    #region lod two
 
     private void UpdateLodTwoMeshData()
     {
@@ -580,64 +499,127 @@ public class Chunk
         #endregion
     }
 
-    #endregion
-
-    public void CreateMesh()
+    private void UpdateLodOneVoxelMeshData(Vector3 pos, int _tempTerrainHeight)
     {
-        //  Adding the info to a mesh
-        //  recalculating normals as to make sure all verticies face the right way
+        //  Goes through each face of voxel
+        //  Checking for parameters
+        //  If not, create verticies, uvs and triangles for face
 
-        #region lodOne
+        byte blockID = voxelMap[(int)pos.x, (int)pos.y, (int)pos.z];
 
-        Mesh lodOneMesh = new Mesh();
-        lodOneMesh.vertices = lodOneVerticies.ToArray();
+        bool isSolid = world.blocks[blockID].isSolid;
+        bool isTransparent = world.blocks[blockID].isTransparent;
+        bool isLiquid = world.blocks[blockID].isLiquid;
 
-        lodOneMesh.subMeshCount = 2;
+        for (int r = 0; r < 6; r++) // Each row (face)
+        {
+            bool skip = false;
 
-        lodOneMesh.SetTriangles(lodOneSolidTriangles.ToArray(), 0);
-        lodOneMesh.SetTriangles(lodOneTransparentTriangles.ToArray(), 1);
+            if (isLiquid) // If we are liquid, check if adjacent also is
+            {
+                if (CheckVoxelLiquid(pos + VoxelData.faceChecks[r], _tempTerrainHeight))
+                {
+                    skip = true;
+                }
+            }
 
-        lodOneMesh.uv = lodOneUvs.ToArray();
+            if (!skip && CheckVoxelTransparancy(pos + VoxelData.faceChecks[r], _tempTerrainHeight))   //  If we survived the parameters, draw face
+            {
+                //  Adding the uvs, the triangles and verticies, depending on mesh type, then incrementing the vertex index
 
-        lodOneMesh.RecalculateNormals();
+                if (isLiquid)
+                {
+                    lodOneWaterVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 0]]);
+                    lodOneWaterVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 1]]);
+                    lodOneWaterVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 2]]);
+                    lodOneWaterVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 3]]);
 
-        lodOneObjectMeshFilter.mesh = lodOneMesh;
-        lodOneObjectMeshCollider.sharedMesh = lodOneObjectMeshFilter.mesh;
+                    AddWaterTexture(pos, lodOneWaterUvs);
 
-        #endregion
+                    lodOneWaterTriangles.Add(lodOneWaterVertexIndex);
+                    lodOneWaterTriangles.Add(lodOneWaterVertexIndex + 1);
+                    lodOneWaterTriangles.Add(lodOneWaterVertexIndex + 2);
+                    lodOneWaterTriangles.Add(lodOneWaterVertexIndex + 2);
+                    lodOneWaterTriangles.Add(lodOneWaterVertexIndex + 1);
+                    lodOneWaterTriangles.Add(lodOneWaterVertexIndex + 3);
 
-        #region lodOne
+                    lodOneWaterVertexIndex += 4;
+                }
 
-        Mesh lodOneWaterMesh = new Mesh();
-        lodOneWaterMesh.vertices = lodOneWaterVerticies.ToArray();
+                else if (isTransparent)
+                {
+                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 0]]);
+                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 1]]);
+                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 2]]);
+                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 3]]);
 
-        lodOneWaterMesh.subMeshCount = 1;
-        lodOneWaterMesh.SetTriangles(lodOneWaterTriangles.ToArray(), 0);
+                    AddTexture(world.blocks[blockID].GetTextureID(r), lodOneUvs);
 
-        lodOneWaterMesh.uv = lodOneWaterUvs.ToArray();
+                    lodOneTransparentTriangles.Add(lodOneVertexIndex);
+                    lodOneTransparentTriangles.Add(lodOneVertexIndex + 1);
+                    lodOneTransparentTriangles.Add(lodOneVertexIndex + 2);
+                    lodOneTransparentTriangles.Add(lodOneVertexIndex + 2);
+                    lodOneTransparentTriangles.Add(lodOneVertexIndex + 1);
+                    lodOneTransparentTriangles.Add(lodOneVertexIndex + 3);
 
-        lodOneWaterMesh.RecalculateNormals();
+                    lodOneVertexIndex += 4;
+                }
 
-        lodOneWaterObjectMeshFilter.mesh = lodOneWaterMesh;
-        lodOneWaterObjectMeshCollider.sharedMesh = lodOneWaterObjectMeshFilter.mesh;
+                else if (isSolid)
+                {
+                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 0]]);
+                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 1]]);
+                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 2]]);
+                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 3]]);
 
-        #endregion
+                    AddTexture(world.blocks[blockID].GetTextureID(r), lodOneUvs);
 
-        #region lodtwo
+                    lodOneSolidTriangles.Add(lodOneVertexIndex);
+                    lodOneSolidTriangles.Add(lodOneVertexIndex + 1);
+                    lodOneSolidTriangles.Add(lodOneVertexIndex + 2);
+                    lodOneSolidTriangles.Add(lodOneVertexIndex + 2);
+                    lodOneSolidTriangles.Add(lodOneVertexIndex + 1);
+                    lodOneSolidTriangles.Add(lodOneVertexIndex + 3);
 
-        Mesh lodTwoMesh = new Mesh();
-        lodTwoMesh.vertices = lodTwoVerticies.ToArray();
+                    lodOneVertexIndex += 4;
+                }
 
-        lodTwoMesh.subMeshCount = 1;
-        lodTwoMesh.SetTriangles(lodTwoTriangles.ToArray(), 0);
+                else
+                {
+                    Debug.Log("Error in Chunk/UpdateMeshData: Did not find mesh type");
+                }
+            }
+        }
+    }
 
-        lodTwoMesh.uv = lodTwoUvs.ToArray();
+    private void ClearMeshDataLodOne()
+    {
+        lodOneVertexIndex = 0;
+        lodOneVerticies.Clear();
 
-        lodTwoMesh.RecalculateNormals();
+        lodOneSolidTriangles.Clear();
+        lodOneTransparentTriangles.Clear();
 
-        lodTwoObjectMeshFilter.mesh = lodTwoMesh;
+        lodOneUvs.Clear();
 
-        #endregion
+
+        lodOneWaterVertexIndex = 0;
+        lodOneWaterVerticies.Clear();
+
+        lodOneWaterTriangles.Clear();
+
+        lodOneWaterUvs.Clear();
+    }
+
+    private void ClearMeshDataLodTwo()
+    {
+        lodTwoVertexIndex = 0;
+
+        lodTwoVerticies.Clear();
+
+        lodTwoTriangles.Clear();
+
+        lodTwoUvs.Clear();
     }
 
     private void AddTexture(int textureID, List<Vector2> uvs)

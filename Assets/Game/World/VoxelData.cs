@@ -25,9 +25,7 @@ public static class VoxelData
 
     // Player settings
 
-    public static readonly int RenderDistanceInChunks = 16;
-
-    public static int RenderDistanceLodTwoInChunks = 8;
+    public static readonly int RenderDistanceInChunks = 8;
 
     //  Texture atlas
 

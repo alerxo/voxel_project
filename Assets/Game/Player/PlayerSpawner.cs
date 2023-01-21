@@ -8,20 +8,18 @@ public class PlayerSpawner : NetworkBehaviour
     [SerializeField] private RenderDistance playerRenderDistance;
     [SerializeField] private PlayerMovement playerMovement;
 
-    private World world;
+    private GameObject spawn;
 
     private void Start()
     {
-        world = GameObject.FindGameObjectWithTag("WorldObj").GetComponent<World>();
+        spawn = GameObject.FindGameObjectWithTag("SpawnObj");
     }
 
     private void Update()
     {
         //  Waits untill entire spawnchunk has been loaded
 
-        int rd = (VoxelData.RenderDistanceInChunks + VoxelData.RenderDistanceLodTwoInChunks) * 2;
-
-        if (world.spawnedChunksCount >= ((rd * rd) - 10))
+        if (spawn.transform.position != new Vector3(0, 0, 0))
         {
             SpawnPlayer();
         }

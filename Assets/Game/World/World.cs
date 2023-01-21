@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Threading;
-using Unity.Collections.LowLevel.Unsafe;
 
 public class World : MonoBehaviour
 {
@@ -44,7 +43,6 @@ public class World : MonoBehaviour
     //  Spawn
 
     [SerializeField] private GameObject spawn;
-    public int spawnedChunksCount { get; private set; }
 
     //  Voxel related
 
@@ -65,15 +63,17 @@ public class World : MonoBehaviour
     //  Threading related
 
     public Queue<Queue<VoxelMod>> modifications = new Queue<Queue<VoxelMod>>();
-    public List<Chunk> chunksToUpdateLodOne = new List<Chunk>();
-    public List<Chunk> chunksToForceUpdateLodTwo = new List<Chunk>();
 
-    public List<Chunk> chunksToPopulate = new List<Chunk>();
-    public Queue<Chunk> chunksToDraw = new Queue<Chunk>();
+    public List<Chunk> chunksToCreateChunkData = new List<Chunk>();
+    public List<Chunk> chunksToUpdateLodTwo = new List<Chunk>();
+
+    public Queue<Chunk> chunksToDrawLodOne = new Queue<Chunk>();
+    public Queue<Chunk> chunksToDrawWater = new Queue<Chunk>();
+    public Queue<Chunk> chunksToDrawLodTwo = new Queue<Chunk>();
 
     private bool applyingModifications = false;
 
-    private Thread ThreadedUpdate;
+    private Thread UpdateChunk_Thread;
     public object ThreadedUpdate_Lock = new object();
 
     #endregion
@@ -93,22 +93,33 @@ public class World : MonoBehaviour
         GenerateWorld();
         GetSpawnPosition();
 
-        ThreadedUpdate = new Thread(new ThreadStart(ThreadedUpdate_2));
-        ThreadedUpdate.Start();
+        UpdateChunk_Thread = new Thread(new ThreadStart(ThreadedUpdate));
+        UpdateChunk_Thread.Start();
     }
 
     private void Update()
-    {    
-        if (chunksToDraw.Count > 0)
+    {
+        if (chunksToDrawLodOne.Count > 0)
         {
-            if (chunksToDraw.Peek().IsEditable || chunksToDraw.Peek().lodOneObject != null)
+            if (chunksToDrawLodOne.Peek().IsEditable)
             {
-                if (chunksToDraw.Peek().lodOneObject != null)
-                {
-                    spawnedChunksCount++;
-                }
+                chunksToDrawLodOne.Dequeue().CreateMeshLodOne();
+            }
+        }
 
-                chunksToDraw.Dequeue().CreateMesh();
+        else if (chunksToDrawWater.Count > 0)
+        {
+            if (chunksToDrawWater.Peek().IsEditable)
+            {
+                chunksToDrawWater.Dequeue().CreateMeshWater();
+            }
+        }
+
+        else if (chunksToDrawLodTwo.Count > 0)
+        {
+            if (chunksToDrawLodTwo.Peek().IsEditable)
+            {
+                chunksToDrawLodTwo.Dequeue().CreateMeshLodTwo();
             }
         }
     }
@@ -123,7 +134,7 @@ public class World : MonoBehaviour
 
         for (int i = VoxelData.chunkHeight; i < 0; i--)
         {
-            if(WorldTerrain.GetVoxelBlockType(this, new Vector3(spawn.transform.position.x, i, spawn.transform.position.z), true, 0) != 0)
+            if (WorldTerrain.GetVoxelBlockType(this, new Vector3(spawn.transform.position.x, i, spawn.transform.position.z), true, 0) != 0)
             {
                 spawn.transform.position = new Vector3(spawn.transform.position.x, i + 2, spawn.transform.position.z);
                 return;
@@ -137,19 +148,18 @@ public class World : MonoBehaviour
         //  Remove render distance value form starting loop and add it to ending loop,
         //  so we get square with width 2 renderdistances, ie renderdistance ín all directions
 
-        int wz = VoxelData.worldSizeInChunks / 2;
-        int rd = VoxelData.RenderDistanceInChunks + VoxelData.RenderDistanceLodTwoInChunks;
+        int worldSize = VoxelData.worldSizeInChunks;
 
-        for (int x = wz - rd; x < wz + rd; x++)
+        for (int x = 0; x < worldSize; x++)
         {
-            for (int z = wz - rd; z < wz + rd; z++)
+            for (int z = 0; z < worldSize; z++)
             {
                 InitializeChunk(x, z);
             }
         }
     }
 
-    public void NewChunkLodOne(int x, int z)
+    public void EnqueueNewChunk(int x, int z)
     {
         //  Adds new chunk to chunk array and then creates lod one of chunk
 
@@ -157,7 +167,7 @@ public class World : MonoBehaviour
         {
             lock (ThreadedUpdate_Lock)
             {
-                chunksToPopulate.Add(chunksInWorld[x, z]);
+                chunksToCreateChunkData.Add(chunksInWorld[x, z]);
             }
         }
     }
@@ -180,44 +190,25 @@ public class World : MonoBehaviour
         }
     }
 
-    private void ThreadedUpdate_2()
+    private void ThreadedUpdate()
     {
         //  Infinte while loop on seperate thread, very scary :(
 
         while (true)
         {
-            if (chunksToPopulate.Count > 0)
-            {
-                CreateLodOne();
-            }
-                
             if (!applyingModifications)
             {
                 ApplyModifications();
             }
-             
-            if (chunksToForceUpdateLodTwo.Count > 0)
+
+            if (chunksToCreateChunkData.Count > 0)
             {
-                CreateLodTwo();
-            }  
+                CreateChunkData();
+            }
         }
     }
 
-    private void OnDisable()
-    {
-        //  Aborts infinite loop when we shut down program just in case
-
-        ThreadedUpdate.Abort();
-    }
-
-    private void OnDestroy()
-    {
-        //  Aborts infinite loop when we shut down program just in case
-
-        ThreadedUpdate.Abort();
-    }
-
-    private void CreateLodOne()
+    private void CreateChunkData()
     {
         //  Starts a new round of chunk populating when it can
         //  Looks for the first chunk thats not populated, ie not editable
@@ -227,33 +218,18 @@ public class World : MonoBehaviour
 
         lock (ThreadedUpdate_Lock)
         {
-            while (!updated && index < chunksToPopulate.Count - 1)
+            while (!updated && index < chunksToCreateChunkData.Count - 1)
             {
-                if (chunksToPopulate[index].IsEditable == false)
+                if (chunksToCreateChunkData[index].IsEditable == false)
                 {
-                    chunksToPopulate[index].PopulateVoxelMap();
-                    chunksToPopulate.RemoveAt(index);
+                    chunksToCreateChunkData[index].PopulateVoxelMap();
+                    chunksToCreateChunkData.RemoveAt(index);
                     updated = true;
                 }
                 else
                 {
                     index++;
                 }
-                   
-            }
-        }
-    }
-
-    private void CreateLodTwo()
-    {
-        //  Starts a new round of chunk updating when it can
-
-        lock (ThreadedUpdate_Lock)
-        {
-            if (chunksToForceUpdateLodTwo.Count > 0)
-            {
-                chunksToForceUpdateLodTwo[0].UpdateChunk(false);
-                chunksToForceUpdateLodTwo.RemoveAt(0);
             }
         }
     }
@@ -269,7 +245,7 @@ public class World : MonoBehaviour
         {
             Queue<VoxelMod> modQueue = modifications.Dequeue();
 
-            while(modQueue.Count > 0)
+            while (modQueue.Count > 0)
             {
                 VoxelMod vm = modQueue.Dequeue();
 
@@ -287,6 +263,20 @@ public class World : MonoBehaviour
             }
         }
 
-        applyingModifications=false;
+        applyingModifications = false;
+    }
+
+    private void OnDisable()
+    {
+        //  Aborts infinite loop when we shut down program just in case
+
+        UpdateChunk_Thread.Abort();
+    }
+
+    private void OnDestroy()
+    {
+        //  Aborts infinite loop when we shut down program just in case
+
+        UpdateChunk_Thread.Abort();
     }
 }

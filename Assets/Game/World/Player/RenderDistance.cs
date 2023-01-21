@@ -1,4 +1,3 @@
-using Mono.Cecil;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
@@ -15,26 +14,24 @@ public class RenderDistance : MonoBehaviour
 
     private Thread CheckRenderDistance_Thread;
 
-    private bool hasCheckedRenderDistance = true;
     private Vector3 playerPosition;
 
     private Queue<Chunk> chunksToActivate = new Queue<Chunk>();
     private Queue<Chunk> chunksToDeactivate = new Queue<Chunk>();
+    private Queue<ChunkCoordinate> chunksToEnqueue = new Queue<ChunkCoordinate>();
 
-    private Queue<ChunkCoordinate> chunksToCreateLodOne = new Queue<ChunkCoordinate>();
-    private Queue<ChunkCoordinate> chunksToCreateLodTwo = new Queue<ChunkCoordinate>();
+    private int sweepDistanceIncrease;
 
     private void Start()
     {
         world = GameObject.FindGameObjectWithTag("WorldObj").GetComponent<World>();
 
-        CheckRenderDistance_Thread = new Thread(new ThreadStart(ThreadedUpdate_3));
+        CheckRenderDistance_Thread = new Thread(new ThreadStart(ThreadedUpdate));
         CheckRenderDistance_Thread.Start();
 
         playerChunk = Voxel_Util.GetChunkCoordinateFromVector3(transform.position);
 
         playerPosition = transform.position;
-        hasCheckedRenderDistance = false;
     }
 
     private void Update()
@@ -43,46 +40,38 @@ public class RenderDistance : MonoBehaviour
 
         if (!playerChunk.Equals(playerLastChunk) || !gameObject.GetComponent<PlayerMovement>().CanMove())
         {
-            //  If in new chunk, via check render distance checkrenderdistancethread, uses bool to active
+            //  If in new chunk, reset sweep distance
             playerPosition = transform.position;
-            hasCheckedRenderDistance = false;
+            sweepDistanceIncrease = 0;
         }
 
-        if(chunksToCreateLodOne.Count > 0)
+        if (chunksToEnqueue.Count > 0)
         {
-            //  Sends chunks that should be activate to the server via rpcmanager
-            ChunkCoordinate cc = chunksToCreateLodOne.Dequeue();
-            world.NewChunkLodOne(cc.x, cc.z);
-        }
+            //  Sends chunks that should be activate to world
 
-        if(chunksToCreateLodTwo.Count > 0)
-        {
-            ChunkCoordinate cc = chunksToCreateLodTwo.Dequeue();
-            world.InitializeChunk(cc.x, cc.z);
+            ChunkCoordinate cc = chunksToEnqueue.Dequeue();
+            world.EnqueueNewChunk(cc.x, cc.z);
         }
 
         if (chunksToActivate.Count > 0)
         {
             ActivateChunks();
         }
-            
+
         if (chunksToDeactivate.Count > 0)
         {
             DeactivateChunks();
         }
     }
 
-    private void ThreadedUpdate_3()
+    private void ThreadedUpdate()
     {
         //  Infinte while loop on seperate thread, very scary :(
         //  Sleeps loop for a second each time cus we dont need to spam it
 
         while (true)
         {
-            if (!hasCheckedRenderDistance)
-            {
-                CheckRenderDistance();
-            }
+            CheckRenderDistance();
 
             Thread.Sleep(1000);
         }
@@ -101,41 +90,49 @@ public class RenderDistance : MonoBehaviour
 
         CheckRenderDistance_Thread?.Abort();
     }
-        
+
     private void CheckRenderDistance()
     {
         //  Makes a copy of active chunks to compare in loop, if we find it, ie in render distance, we remove it,
         //  after loop we deactivate (in main thread later, cus thread cant) any remaining chunks in the copy, cus these arent in render distance
 
-        //  If we find a chunk that doesnt exist, we add it to list of chunks to be server rpcd to creation
+        //  If we find a chunk that doesnt exist, we add it to list of chunks to be sent to world
         //  If not activate, activate (in main thread -||-)
         //  Add all chunks in renderdistance to active chunks
 
         ChunkCoordinate coord = Voxel_Util.GetChunkCoordinateFromVector3(playerPosition);
-
         playerLastChunk = playerChunk;
 
-        List<ChunkCoordinate> previoslyActiveChunks = new List<ChunkCoordinate>(activeChunks);
+        int renderDistance = VoxelData.RenderDistanceInChunks;
 
+        ChunkSweep(coord, renderDistance + sweepDistanceIncrease);
+
+        if (chunksToEnqueue.Count == 0)
+        {
+            sweepDistanceIncrease++;
+        }
+    }
+
+    private void ChunkSweep(ChunkCoordinate coord, int distance)
+    {
+        List<ChunkCoordinate> previoslyActiveChunks = new List<ChunkCoordinate>(activeChunks);
         activeChunks.Clear();
 
-        int r = VoxelData.RenderDistanceInChunks;
-        int rd = r + VoxelData.RenderDistanceLodTwoInChunks;
-
-        for (int x = coord.x - rd; x < coord.x + rd; x++)
+        for (int x = coord.x - distance; x < coord.x + distance; x++)
         {
-            for (int z = coord.z - rd; z < coord.z + rd; z++)
+            for (int z = coord.z - distance; z < coord.z + distance; z++)
             {
                 if (Voxel_Util.IsChunkInWorld(new ChunkCoordinate(x, z)))
                 {
-                    if((coord.x - r < x && x < coord.x + r) && (coord.z - r < z && z < coord.z + r))
+                    if (!world.chunksInWorld[x, z].hasBeenEnqueued)
                     {
-                        if (!world.chunksInWorld[x, z].IsEditable)
-                        {
-                            chunksToCreateLodOne.Enqueue(new ChunkCoordinate(x, z));
-                        }
+                        world.chunksInWorld[x, z].hasBeenEnqueued = true;
+                        chunksToEnqueue.Enqueue(new ChunkCoordinate(x, z));
+                    }
 
-                        else if (!world.chunksInWorld[x, z].IsActive)
+                    if (sweepDistanceIncrease == 0)
+                    {
+                        if (!world.chunksInWorld[x, z].IsActive)
                         {
                             chunksToActivate.Enqueue(world.chunksInWorld[x, z]);
                         }
@@ -150,26 +147,19 @@ public class RenderDistance : MonoBehaviour
                             }
                         }
                     }
-
-                    else
-                    {
-                        if (world.chunksInWorld[x, z] == null)
-                        {
-                            chunksToCreateLodTwo.Enqueue(new ChunkCoordinate(x, z));
-                        }
-                    }
                 }
             }
         }
 
-        foreach (ChunkCoordinate c in previoslyActiveChunks)
+        if (sweepDistanceIncrease == 0)
         {
-            activeChunks.Remove(new ChunkCoordinate(c.x, c.z));
+            foreach (ChunkCoordinate c in previoslyActiveChunks)
+            {
+                activeChunks.Remove(new ChunkCoordinate(c.x, c.z));
 
-            chunksToDeactivate.Enqueue(world.chunksInWorld[c.x, c.z]);
+                chunksToDeactivate.Enqueue(world.chunksInWorld[c.x, c.z]);
+            }
         }
-
-        hasCheckedRenderDistance = true;
     }
 
     private void ActivateChunks()
@@ -177,7 +167,7 @@ public class RenderDistance : MonoBehaviour
         while (chunksToActivate.Count > 0)
         {
             chunksToActivate.Dequeue().IsActive = true;
-        }       
+        }
     }
 
     private void DeactivateChunks()
@@ -190,6 +180,6 @@ public class RenderDistance : MonoBehaviour
 
             if (chunk != null) chunk.IsActive = false;
         }
-            
+
     }
 }
