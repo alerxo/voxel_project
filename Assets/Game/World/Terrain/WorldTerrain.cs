@@ -5,7 +5,7 @@ using UnityEngine;
 
 public static class WorldTerrain
 {
-    public static byte GetVoxelBlockType(World world, Vector3 pos, bool isBlend, int cachedTerrainHeight)
+    public static byte GetVoxelBlockType(World world, Vector3 pos, bool isBlend, int cachedWorldHeight, int cachedBiomeHeight)
     {
         //  Goes through different parameters to determine blocktype
 
@@ -27,7 +27,8 @@ public static class WorldTerrain
 
         //  Gets the biome from biome map
 
-        SubBiome chunkBiome = world.subBiomMap[cc.x + 1, cc.z + 1];
+        SubBiome chunkBiome = world.subBiomeMap[cc.x + 1, cc.z + 1];
+        bool isRiver = world.riverMap[cc.x + 1, cc.z + 1];
 
         #endregion
 
@@ -36,15 +37,23 @@ public static class WorldTerrain
         //  First checks if we have a cached terrainheight
 
         int terrainHeight;
+        int worldHeight;
+        int biomeHeight;
+
         int yPos = Mathf.FloorToInt(pos.y);
 
-        if (!HasCachedTerrainHeight(cachedTerrainHeight))
+        if (!HasCachedTerrainHeight(cachedWorldHeight))
         {
             //  First gets the worlds heightmap, then gets the biomes own height map, and adds them
             //  If any surrounding chunks are of a different biome, start blending
 
-            int worldHeight = Mathf.FloorToInt(128f * Noise.Get2DPerlinHighResoltion(world, world.resolution, new Vector2(pos.x, pos.z), 0f, world.noiseScale, world.octaves, world.persistence, world.lacunarity, world.noiseCutoff) * Noise.GetFallOffMap(new Vector2(pos.x, pos.z)));
-            int biomeHeight = Mathf.FloorToInt(chunkBiome.height * Noise.Get2DPerlinHighResoltion(world, world.resolution, new Vector2(pos.x, pos.z), 0, chunkBiome.noiseScale, chunkBiome.octaves, chunkBiome.persistence, chunkBiome.lacunarity, chunkBiome.noiseCutoff));
+            worldHeight = Mathf.FloorToInt(128f * Noise.Get2DPerlinHighResoltion(world, world.resolution, new Vector2(pos.x, pos.z), 0f, world.noiseScale, world.octaves, world.persistence, world.lacunarity, world.noiseCutoff) * Noise.GetFallOffMap(new Vector2(pos.x, pos.z)));
+            biomeHeight = Mathf.FloorToInt(chunkBiome.height * Noise.Get2DPerlinHighResoltion(world, world.resolution, new Vector2(pos.x, pos.z), 0, chunkBiome.noiseScale, chunkBiome.octaves, chunkBiome.persistence, chunkBiome.lacunarity, chunkBiome.noiseCutoff));
+
+            if (isRiver)
+            {
+                biomeHeight += world.riverReference.height;
+            }
 
             SubBiome[] adjacentBiomes = GetAdjacentBiomes(world, cc);
 
@@ -61,12 +70,15 @@ public static class WorldTerrain
 
             //  Chaching the height
 
-            world.chunksInWorld[cc.x, cc.z].tempTerrainHeight = terrainHeight;
+            world.chunksInWorld[cc.x, cc.z].cachedWorldHeight = worldHeight;
+            world.chunksInWorld[cc.x, cc.z].cachedBiomeHeight = biomeHeight;
         }
 
         else
         {
-            terrainHeight = cachedTerrainHeight;
+            terrainHeight = cachedWorldHeight + cachedBiomeHeight;
+            worldHeight = cachedWorldHeight;
+            biomeHeight = cachedBiomeHeight;
         }
 
         #endregion
@@ -75,10 +87,18 @@ public static class WorldTerrain
 
         //  Determines the blocktype according to parameters
 
+        if(isRiver)
+        {
+            if (biomeHeight + world.riverReference.height > yPos && yPos > biomeHeight) return 8;
+
+            chunkBiome = world.riverReference;
+        }
+
         if (yPos == terrainHeight) return chunkBiome.surfaceBlockId;
         else if (yPos < terrainHeight && yPos > terrainHeight - 4) return chunkBiome.subSurfaceBlockId;
         else if (yPos < terrainHeight) return 3;
         else if (yPos < 64) return 8;
+
         else return 0;
 
         #endregion
@@ -187,15 +207,15 @@ public static class WorldTerrain
 
         SubBiome[] adjacentBiomes = new SubBiome[9]
         {
-            world.subBiomMap[cc.x + 2, cc.z + 2], //  top right 0
-            world.subBiomMap[cc.x + 1, cc.z + 2], //  top 1
-            world.subBiomMap[cc.x, cc.z + 2], //  top left 2
-            world.subBiomMap[cc.x + 2, cc.z + 1], //  right 3
-            world.subBiomMap[cc.x + 1, cc.z + 1], // middle 4
-            world.subBiomMap[cc.x, cc.z + 1], //  left 5
-            world.subBiomMap[cc.x + 2, cc.z], //  bottom right 6
-            world.subBiomMap[cc.x + 1, cc.z], //  bottom 7
-            world.subBiomMap[cc.x, cc.z] //   bottom left 8
+            world.subBiomeMap[cc.x + 2, cc.z + 2], //  top right 0
+            world.subBiomeMap[cc.x + 1, cc.z + 2], //  top 1
+            world.subBiomeMap[cc.x, cc.z + 2], //  top left 2
+            world.subBiomeMap[cc.x + 2, cc.z + 1], //  right 3
+            world.subBiomeMap[cc.x + 1, cc.z + 1], // middle 4
+            world.subBiomeMap[cc.x, cc.z + 1], //  left 5
+            world.subBiomeMap[cc.x + 2, cc.z], //  bottom right 6
+            world.subBiomeMap[cc.x + 1, cc.z], //  bottom 7
+            world.subBiomeMap[cc.x, cc.z] //   bottom left 8
         };
 
         return adjacentBiomes;

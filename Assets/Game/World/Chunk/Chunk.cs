@@ -84,7 +84,8 @@ public class Chunk
 
     //  terrain cache
 
-    public int tempTerrainHeight;
+    public int cachedWorldHeight;
+    public int cachedBiomeHeight;
 
     public float[] bottomRightCornerNoise;
     public float[] topRightCornerNoise;
@@ -131,7 +132,7 @@ public class Chunk
 
         #endregion
 
-        biome = world.subBiomMap[coord.x, coord.z];
+        biome = world.subBiomeMap[coord.x, coord.z];
 
         #region components
 
@@ -261,14 +262,16 @@ public class Chunk
         {
             for (int z = 0; z < VoxelData.chunkWidth; z++)
             {
-                tempTerrainHeight = 0;
+                cachedWorldHeight = 0;
+                cachedBiomeHeight = 0;
 
                 for (int y = 0; y < VoxelData.chunkHeight; y++)
                 {
-                    voxelMap[x, y, z] = WorldTerrain.GetVoxelBlockType(world, new Vector3(x, y, z) + position, true, tempTerrainHeight);
+                    voxelMap[x, y, z] = WorldTerrain.GetVoxelBlockType(world, new Vector3(x, y, z) + position, true, cachedWorldHeight, cachedBiomeHeight);
                 }
 
-                tempTerrainHeight = 0;
+                cachedWorldHeight = 0;
+                cachedBiomeHeight = 0;
             }
         }
 
@@ -290,6 +293,7 @@ public class Chunk
         UpdateLodTwoMeshData();
 
         world.chunksToDrawLodOne.Enqueue(this);
+        world.chunksToDrawWater.Enqueue(this);
         world.chunksToDrawLodTwo.Enqueue(this);
     }
 
@@ -363,17 +367,19 @@ public class Chunk
         {
             for (int z = 0; z < VoxelData.chunkWidth; z++)
             {
-                tempTerrainHeight = 0;
+                cachedWorldHeight = 0;
+                cachedBiomeHeight = 0;
 
                 for (int y = 0; y < VoxelData.chunkHeight; y++)
                 {
                     if (world.blocks[voxelMap[x, y, z]].drawBlock)
                     {
-                        UpdateLodOneVoxelMeshData(new Vector3(x, y, z), tempTerrainHeight);
+                        UpdateLodOneVoxelMeshData(new Vector3(x, y, z), cachedWorldHeight, cachedBiomeHeight);
                     }
                 }
 
-                tempTerrainHeight = 0;
+                cachedWorldHeight = 0;
+                cachedBiomeHeight = 0;
             }
         }
     }
@@ -386,8 +392,9 @@ public class Chunk
 
         int halfChunkWidth = VoxelData.chunkWidth / 2;
 
-        WorldTerrain.GetVoxelBlockType(world, new Vector3(position.x + halfChunkWidth, position.y, position.z + halfChunkWidth), false, 0);
-        int highestY = tempTerrainHeight;
+        WorldTerrain.GetVoxelBlockType(world, new Vector3(position.x + halfChunkWidth, position.y, position.z + halfChunkWidth), false, 0, 0);
+
+        int highestY = cachedWorldHeight + cachedBiomeHeight;
 
         if (highestY < 64)
         {
@@ -499,7 +506,7 @@ public class Chunk
         #endregion
     }
 
-    private void UpdateLodOneVoxelMeshData(Vector3 pos, int _tempTerrainHeight)
+    private void UpdateLodOneVoxelMeshData(Vector3 pos, int cachedWorldHeight, int cachedBiomeHeight)
     {
         //  Goes through each face of voxel
         //  Checking for parameters
@@ -517,13 +524,13 @@ public class Chunk
 
             if (isLiquid) // If we are liquid, check if adjacent also is
             {
-                if (CheckVoxelLiquid(pos + VoxelData.faceChecks[r], _tempTerrainHeight))
+                if (CheckVoxelLiquid(pos + VoxelData.faceChecks[r], cachedWorldHeight, cachedBiomeHeight))
                 {
                     skip = true;
                 }
             }
 
-            if (!skip && CheckVoxelTransparancy(pos + VoxelData.faceChecks[r], _tempTerrainHeight))   //  If we survived the parameters, draw face
+            if (!skip && CheckVoxelTransparancy(pos + VoxelData.faceChecks[r], cachedWorldHeight, cachedBiomeHeight))   //  If we survived the parameters, draw face
             {
                 //  Adding the uvs, the triangles and verticies, depending on mesh type, then incrementing the vertex index
 
@@ -673,7 +680,7 @@ public class Chunk
         return voxelMap[xCheck, yCheck, zCheck];
     }
 
-    private bool CheckVoxelTransparancy(Vector3 pos, int _tempTerrainHeight)
+    private bool CheckVoxelTransparancy(Vector3 pos, int cachedWorldHeight, int cachedBiomeHeight)
     {
         //  Converts into ints
         //  Checks if voxel pos is inside of chunk
@@ -686,13 +693,13 @@ public class Chunk
 
         if (!IsVoxelInChunk(x, y, z))
         {
-            return Voxel_Util.CheckIfVoxelTransparent(world, pos + position, _tempTerrainHeight);
+            return Voxel_Util.CheckIfVoxelTransparent(world, pos + position, cachedWorldHeight, cachedBiomeHeight);
         }
 
         return world.blocks[voxelMap[x, y, z]].isTransparent;
     }
 
-    private bool CheckVoxelLiquid(Vector3 pos, int _tempTerrainHeight)
+    private bool CheckVoxelLiquid(Vector3 pos, int cachedWorldHeight, int cachedBiomeHeight)
     {
         //  Converts into ints
         //  Checks if voxel pos is inside of chunk
@@ -705,7 +712,7 @@ public class Chunk
 
         if (!IsVoxelInChunk(x, y, z))
         {
-            return Voxel_Util.CheckIfVoxelLiquid(world, pos + position, _tempTerrainHeight);
+            return Voxel_Util.CheckIfVoxelLiquid(world, pos + position, cachedWorldHeight, cachedBiomeHeight);
         }
 
         return world.blocks[voxelMap[x, y, z]].isLiquid;

@@ -31,7 +31,7 @@ public static class Voxel_Util
         return world.chunksInWorld[x, z];
     }
 
-    public static bool CheckIfVoxelTransparent(World world, Vector3 pos, int _tempTerrainHeight)
+    public static bool CheckIfVoxelTransparent(World world, Vector3 pos, int cachedWorldHeight, int cachedBiomeHeight)
     {
         //  First looks if the voxel is in world, if not in world, return true,
         //  (face generation scrip doesnt recognize adjacent chunks as in world sometimes and we get into first check when we shoudlnt, so we draw face just in case)
@@ -50,10 +50,10 @@ public static class Voxel_Util
             return world.blocks[world.chunksInWorld[thisChunk.x, thisChunk.z].GetVoxelFromGlobalVector3(pos)].isTransparent;
         }
 
-        return world.blocks[WorldTerrain.GetVoxelBlockType(world, pos, true, _tempTerrainHeight)].isTransparent;
+        return world.blocks[WorldTerrain.GetVoxelBlockType(world, pos, true, cachedWorldHeight, cachedBiomeHeight)].isTransparent;
     }
 
-    public static bool CheckIfVoxelLiquid(World world, Vector3 pos, int _tempTerrainHeight)
+    public static bool CheckIfVoxelLiquid(World world, Vector3 pos, int cachedWorldHeight, int cachedBiomeHeight)
     {
         //  First looks if the voxel is in world, if not in world, return true,
         //  (face generation scrip doesnt recognize adjacent chunks as in world sometimes and we get into first check when we shoudlnt, so we draw face just in case)
@@ -72,6 +72,6 @@ public static class Voxel_Util
             return world.blocks[world.chunksInWorld[thisChunk.x, thisChunk.z].GetVoxelFromGlobalVector3(pos)].isLiquid;
         }
 
-        return world.blocks[WorldTerrain.GetVoxelBlockType(world, pos, true, _tempTerrainHeight)].isLiquid;
+        return world.blocks[WorldTerrain.GetVoxelBlockType(world, pos, true, cachedWorldHeight, cachedBiomeHeight)].isLiquid;
     }
 }

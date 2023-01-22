@@ -20,7 +20,10 @@ public class World : MonoBehaviour
 
     public Biome[] biomes;
 
-    public SubBiome[,] subBiomMap = new SubBiome[VoxelData.worldSizeInChunks + 2, VoxelData.worldSizeInChunks + 2];
+    public SubBiome[,] subBiomeMap = new SubBiome[VoxelData.worldSizeInChunks + 2, VoxelData.worldSizeInChunks + 2];
+    public bool[,] riverMap = new bool[VoxelData.worldSizeInChunks + 2, VoxelData.worldSizeInChunks + 2];
+
+    public SubBiome riverReference;
 
     [Space]
 
@@ -88,7 +91,8 @@ public class World : MonoBehaviour
         Random.InitState(seed);
         randomSeed = Random.Range(0, 1000000);
 
-        subBiomMap = BiomeMap.GetBiomeMap(this);
+        subBiomeMap = BiomeMap.GetBiomeMap(this);
+        riverMap = BiomeMap.GetRiverMap(this);
 
         GenerateWorld();
         GetSpawnPosition();
@@ -134,7 +138,7 @@ public class World : MonoBehaviour
 
         for (int i = VoxelData.chunkHeight; i < 0; i--)
         {
-            if (WorldTerrain.GetVoxelBlockType(this, new Vector3(spawn.transform.position.x, i, spawn.transform.position.z), true, 0) != 0)
+            if (WorldTerrain.GetVoxelBlockType(this, new Vector3(spawn.transform.position.x, i, spawn.transform.position.z), true, 0, 0) != 0)
             {
                 spawn.transform.position = new Vector3(spawn.transform.position.x, i + 2, spawn.transform.position.z);
                 return;

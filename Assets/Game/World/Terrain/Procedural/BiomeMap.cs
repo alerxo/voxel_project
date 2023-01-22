@@ -21,7 +21,7 @@ public static class BiomeMap
         {
             for (int z = 0; z < VoxelData.worldSizeInChunks + 2; z++)
             {
-                subBiomeMap[x, z] = GetBiome(world, world.biomes,x, z);
+                subBiomeMap[x, z] = GetBiome(world, world.biomes, x, z);
             }
         }
 
@@ -179,5 +179,88 @@ public static class BiomeMap
         }
 
         return height;
+    }
+
+
+    public static bool[,] GetRiverMap(World world)
+    {
+        //  Creates a biome map with size of worldsize and also creates a layer around this, so edges of map always have surrounding biomes
+
+        bool[,] riverMap = GetRivers(world);
+
+        return riverMap;
+    }
+
+    private static bool[,] GetRivers(World world)
+    {
+        bool[,] riverMap = new bool[VoxelData.worldSizeInChunks + 2, VoxelData.worldSizeInChunks + 2];
+
+        List<Tuple<int, int>> sourceChunks = new List<Tuple<int, int>>();
+
+        for (int x = 0; x < VoxelData.worldSizeInChunks + 2; x++)
+        {
+            for (int z = 0; z < VoxelData.worldSizeInChunks + 2; z++)
+            {
+                if (GetHeight(world, new Vector2(x * VoxelData.chunkWidth, z * VoxelData.chunkWidth)) > world.riverReference.threshold)
+                {
+                    sourceChunks.Add(Tuple.Create(x, z));
+                }
+            }
+        }
+
+        for(int s = 0; s < sourceChunks.Count; s++)
+        {
+            List<Tuple<int, int>> riverWorm = GetRiverWorm(sourceChunks[s].Item1, sourceChunks[s].Item2);
+
+            for(int w = 0; w < riverWorm.Count; w++)
+            {
+                riverMap[riverWorm[w].Item1, riverWorm[w].Item2] = true;
+            }
+
+            s += UnityEngine.Random.Range(0, (int)world.riverReference.noiseScale);
+        }
+        return riverMap;
+    }
+
+    private static List<Tuple<int, int>> GetRiverWorm(int x, int z)
+    {
+        List<Tuple<int, int>> riverWorm = new List<Tuple<int, int>>();
+
+        int currentX = x;
+        int currentZ = z;
+
+        bool riverEndFound = false;
+
+        int failSafe = 10;
+        int riverLength = 0;
+
+        while (!riverEndFound)
+        {
+            riverWorm.Add(Tuple.Create(currentX, currentZ));
+
+            Tuple<int, int> nextRiverChunk = GetNextRiverChunk(currentX, currentZ);
+
+            if((nextRiverChunk.Item1 == currentX && nextRiverChunk.Item2 == currentZ) || riverLength > failSafe)
+            {
+                riverEndFound = true;
+            }
+
+            currentX = nextRiverChunk.Item1;
+            currentZ = nextRiverChunk.Item2;
+
+            riverLength++;
+        }
+
+        return riverWorm;
+    }
+
+    private static Tuple<int, int> GetNextRiverChunk(int currentX, int currentZ)
+    {
+        int x = currentX;
+        int z = currentZ;
+
+        x += 1;
+
+        return Tuple.Create(x, z);
     }
 }
