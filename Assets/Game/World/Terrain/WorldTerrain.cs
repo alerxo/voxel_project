@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
+using static UnityEngine.UI.GridLayoutGroup;
+using UnityEngine.XR;
 
 public static class WorldTerrain
 {
-    public static byte GetVoxelBlockType(World world, Vector3 pos, bool isBlend, int cachedWorldHeight, int cachedBiomeHeight)
+    public static byte GetVoxelBlockType(World world, Vector3 pos, bool isBlend, int cachedWorldHeight, int cachedBiomeHeight, SubBiome cachedBlendBiome)
     {
         //  Goes through different parameters to determine blocktype
 
@@ -63,15 +66,17 @@ public static class WorldTerrain
                 //  Does this by multiplying biomeheight with a value approaching 0, depending on distance
                 //  So on the chunk border, only the world height applies, giving smooth blend
 
-                biomeHeight = Mathf.FloorToInt((float)biomeHeight * Blend(world, adjacentBiomes, cc, pos));
+                biomeHeight = Mathf.FloorToInt((float)biomeHeight * TerrainBlend(world, adjacentBiomes, cc, pos));
+                chunkBiome = BiomeBlend(world, new Vector2(pos.x, pos.z), adjacentBiomes);
             }
 
             terrainHeight = worldHeight + biomeHeight;
 
-            //  Chaching the height
+            //  Chaching the values
 
             world.chunksInWorld[cc.x, cc.z].cachedWorldHeight = worldHeight;
             world.chunksInWorld[cc.x, cc.z].cachedBiomeHeight = biomeHeight;
+            world.chunksInWorld[cc.x, cc.z].cachedBlendBiome = chunkBiome;
         }
 
         else
@@ -79,6 +84,7 @@ public static class WorldTerrain
             terrainHeight = cachedWorldHeight + cachedBiomeHeight;
             worldHeight = cachedWorldHeight;
             biomeHeight = cachedBiomeHeight;
+            chunkBiome = cachedBlendBiome;
         }
 
         #endregion
@@ -117,7 +123,7 @@ public static class WorldTerrain
         return false;
     }
 
-    private static float Blend(World world, SubBiome[] adjacentBiomes, ChunkCoordinate cc, Vector3 pos)
+    private static float TerrainBlend(World world, SubBiome[] adjacentBiomes, ChunkCoordinate cc, Vector3 pos)
     {
         //  North, east, south, west
 
@@ -198,9 +204,57 @@ public static class WorldTerrain
 
         //  Adds noise as the remove repetetiveness
 
-
-
         return (blendValue + (noise * blendValue)) / 2;
+    }
+
+    private static SubBiome BiomeBlend(World world, Vector2 pos, SubBiome[] adjacentBiomes)
+    {
+        float noise = Noise.Get2DPerlin(world, pos, 0, 5f, 1, 0.5f, 2f, 1f);
+
+        if (noise < 0.05f)
+        {
+            return adjacentBiomes[0];
+        }
+
+        else if (noise < 0.10f)
+        {
+            return adjacentBiomes[1];
+        }
+
+        else if (noise < 0.15f)
+        {
+            return adjacentBiomes[2];
+        }
+
+        else if (noise < 0.20f)
+        {
+            return adjacentBiomes[3];
+        }
+
+        else if (noise < 0.25f)
+        {
+            return adjacentBiomes[5];
+        }
+
+        else if (noise < 0.30f)
+        {
+            return adjacentBiomes[6];
+        }
+
+        else if (noise < 0.35f)
+        {
+            return adjacentBiomes[7];
+        }
+
+        else if (noise < 0.40f)
+        {
+            return adjacentBiomes[8];
+        }
+
+        else
+        {
+            return adjacentBiomes[4];
+        }
     }
 
     private static SubBiome[] GetAdjacentBiomes(World world, ChunkCoordinate cc)
