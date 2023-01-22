@@ -148,53 +148,57 @@ public static class WorldTerrain
             }
         }
 
+        float noise = Noise.Get2DPerlin(world, new Vector2(pos.x, pos.z), 0, 10, 4, 0.5f, 2f, 1);
+
+        float distanceNoise = (1 + noise) / 2;
+
         float blendValue = 1;
 
         if (ab[0])
         {
-            blendValue = Mathf.Min(blendValue, Vector2.Distance(new Vector2(16, 16), new Vector2(x, y)) / chunkWidth);
+            blendValue = Mathf.Min(blendValue, (Vector2.Distance(new Vector2(16, 16), new Vector2(x, y)) / chunkWidth) * distanceNoise);
         } //    top right
 
         if (ab[1])
         {
-            blendValue = Mathf.Min(blendValue, (chunkWidth - y) / chunkWidth);
+            blendValue = Mathf.Min(blendValue, ((chunkWidth - y) / chunkWidth) * distanceNoise);
         } //    top
 
         if (ab[2])
         {
-            blendValue = Mathf.Min(blendValue, Vector2.Distance(new Vector2(0, 16), new Vector2(x, y)) / chunkWidth);
+            blendValue = Mathf.Min(blendValue, (Vector2.Distance(new Vector2(0, 16) * noise, new Vector2(x, y)) / chunkWidth) * distanceNoise);
         } //    top left
 
         if (ab[3])
         {
-            blendValue = Mathf.Min(blendValue, (chunkWidth - x) / chunkWidth);
+            blendValue = Mathf.Min(blendValue, ((chunkWidth - x) / chunkWidth) * distanceNoise);
         } //    right
 
         if (ab[5])
         {
-            blendValue = Mathf.Min(blendValue, (0 + x) / chunkWidth);
-        } //    left
+            blendValue = Mathf.Min(blendValue, ((0 + x) / chunkWidth) * distanceNoise);
+        } //    left    
 
         if (ab[6])
         {
-            blendValue = Mathf.Min(blendValue, Vector2.Distance(new Vector2(16, 0), new Vector2(x, y)) / chunkWidth);
+            blendValue = Mathf.Min(blendValue, (Vector2.Distance(new Vector2(16, 0) * noise, new Vector2(x, y)) / chunkWidth) * distanceNoise);
         } //    bottom right
 
         if (ab[7])
         {
-            blendValue = Mathf.Min(blendValue, (0 + y) / chunkWidth);
+            blendValue = Mathf.Min(blendValue, ((0 + y) / chunkWidth) * distanceNoise);
         } //    bottom
 
         if (ab[8])
         {
-            blendValue = Mathf.Min(blendValue, Vector2.Distance(new Vector2(0, 0), new Vector2(x, y)) / chunkWidth);
+            blendValue = Mathf.Min(blendValue, (Vector2.Distance(new Vector2(0, 0) * noise, new Vector2(x, y)) / chunkWidth) * distanceNoise);
         } //    bottom left
 
         #endregion
 
         //  Adds noise as the remove repetetiveness
 
-        float noise = Noise.Get2DPerlin(world, new Vector2(pos.x, pos.z), 0, 10, 4, 0.5f, 2f, 1);
+
 
         return (blendValue + (noise * blendValue)) / 2;
     }
