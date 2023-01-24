@@ -14,6 +14,7 @@ public static class BiomeMap
         //  Creates a biome map with size of worldsize and also creates a layer around this, so edges of map always have surrounding biomes
 
         SubBiome[,] subBiomeMap = new SubBiome[VoxelData.worldSizeInChunks + 2, VoxelData.worldSizeInChunks + 2];
+        bool[,] riverMap = GetRiverMap(world);
 
         //  Each chunk will be assigen a climate, depedning on temperature, humidity and height
 
@@ -21,7 +22,15 @@ public static class BiomeMap
         {
             for (int z = 0; z < VoxelData.worldSizeInChunks + 2; z++)
             {
-                subBiomeMap[x, z] = GetBiome(world, world.biomes, x, z);
+                if (riverMap[x, z])
+                {
+                    subBiomeMap[x, z] = world.riverReference;
+                }
+
+                else
+                {
+                    subBiomeMap[x, z] = GetBiome(world, world.biomes, x, z);
+                }
             }
         }
 
@@ -182,16 +191,7 @@ public static class BiomeMap
     }
 
 
-    public static bool[,] GetRiverMap(World world)
-    {
-        //  Creates a biome map with size of worldsize and also creates a layer around this, so edges of map always have surrounding biomes
-
-        bool[,] riverMap = GetRivers(world);
-
-        return riverMap;
-    }
-
-    private static bool[,] GetRivers(World world)
+    private static bool[,] GetRiverMap(World world)
     {
         bool[,] riverMap = new bool[VoxelData.worldSizeInChunks + 2, VoxelData.worldSizeInChunks + 2];
 
@@ -222,6 +222,7 @@ public static class BiomeMap
 
             s += UnityEngine.Random.Range(0, (int)world.riverReference.noiseScale);
         }
+
         return riverMap;
     }
 

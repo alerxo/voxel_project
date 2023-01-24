@@ -21,7 +21,6 @@ public class World : MonoBehaviour
     public Biome[] biomes;
 
     public SubBiome[,] subBiomeMap = new SubBiome[VoxelData.worldSizeInChunks + 2, VoxelData.worldSizeInChunks + 2];
-    public bool[,] riverMap = new bool[VoxelData.worldSizeInChunks + 2, VoxelData.worldSizeInChunks + 2];
 
     public SubBiome riverReference;
 
@@ -92,7 +91,6 @@ public class World : MonoBehaviour
         randomSeed = Random.Range(0, 1000000);
 
         subBiomeMap = BiomeMap.GetBiomeMap(this);
-        riverMap = BiomeMap.GetRiverMap(this);
 
         GenerateWorld();
         GetSpawnPosition();

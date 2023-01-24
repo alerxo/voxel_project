@@ -20,6 +20,6 @@ MonoBehaviour:
   persistence: 0.5
   lacunarity: 2
   noiseCutoff: 10
-  surfaceBlockId: 8
+  surfaceBlockId: 6
   subSurfaceBlockId: 6
   lodes: []

@@ -28,7 +28,8 @@ public static class WorldTerrain
         //  Gets the biome from biome map
 
         SubBiome chunkBiome = world.subBiomeMap[cc.x + 1, cc.z + 1];
-        bool isRiver = world.riverMap[cc.x + 1, cc.z + 1];
+
+        bool isRiver = chunkBiome == world.riverReference;
 
         #endregion
 
@@ -40,22 +41,29 @@ public static class WorldTerrain
         if (cachedWorldHeight == 0)
         {
             worldHeight = GetWorldHeight(world, pos);
-            biomeHeight = GetBiomeHeight(world, pos, chunkBiome, isRiver);
+
+            if (isRiver)
+            {
+                biomeHeight = GetRiverHeight(world, cc) - worldHeight + chunkBiome.height;
+            }
+
+            else
+            {
+                biomeHeight = GetBiomeHeight(world, pos, chunkBiome, isRiver);
+            }
+            
 
             //  Blend
 
             SubBiome[] adjacentBiomes = GetAdjacentBiomes(world, cc);
-            bool[] adjacentRivers = GetAdjacentRivers(world, cc);
 
-            if (IsBlend(isBlend, adjacentBiomes, adjacentRivers))
+            if (IsBlend(isBlend, adjacentBiomes))
             {
                 //  Starts blending chunks sides where the adjacent biome is not same as chunk biome
                 //  Does this by multiplying biomeheight with a value approaching 0, depending on distance
                 //  So on the chunk border, only the world height applies, giving smooth blend
 
-
-
-                biomeHeight = Mathf.FloorToInt((float)biomeHeight * TerrainBlend(world, adjacentBiomes, adjacentRivers, cc, pos));
+                biomeHeight = Mathf.FloorToInt((float)biomeHeight * TerrainBlend(world, adjacentBiomes, cc, pos));
 
                 chunkBiome = BiomeBlend(world, new Vector2(pos.x, pos.z), adjacentBiomes);
             }
@@ -72,8 +80,7 @@ public static class WorldTerrain
             chunkBiome = cachedBlendBiome;
         }
 
-        int riverHeight = GetRiverHeight(world, cc, pos, isRiver, chunkBiome);
-        int terrainHeight = GetTerrainHeight(worldHeight, biomeHeight, riverHeight, isRiver);
+        int terrainHeight = GetTerrainHeight(worldHeight, biomeHeight);
 
         int yPos = Mathf.FloorToInt(pos.y);
 
@@ -86,10 +93,13 @@ public static class WorldTerrain
         if (yPos == terrainHeight) return chunkBiome.surfaceBlockId;
         else if (yPos < terrainHeight && yPos > terrainHeight - 4) return chunkBiome.subSurfaceBlockId;
         else if (yPos < terrainHeight) return 3;
-
-        else if (isRiver && yPos <= riverHeight) return 8;
-
         else if (yPos < 64) return 8;
+
+        else if (isRiver && yPos < worldHeight - 1)
+        {
+            return 8;
+        }
+
         else return 0;
 
         #endregion
@@ -118,54 +128,44 @@ public static class WorldTerrain
         return biomeHeight;
     }
 
-    private static int GetTerrainHeight(int worldHeight, int biomeHeight, int riverHeight, bool isRiver)
+    private static int GetTerrainHeight(int worldHeight, int biomeHeight)
     {
-        int terrainHeight = worldHeight + biomeHeight;
+        return worldHeight + biomeHeight; ;
+    }
 
-        if (isRiver && terrainHeight >= riverHeight)
+    private static int GetRiverHeight(World world, ChunkCoordinate cc)
+    {
+        int xPos = cc.x;
+        int zPos = cc.z;
+
+        if (world.chunksInWorld[xPos, zPos].riverWaterHeight != 0)
         {
-            terrainHeight = riverHeight - 1;
+            return world.chunksInWorld[xPos, zPos].riverWaterHeight;
         }
+
+        int chunkWidth = VoxelData.chunkWidth;
+
+        int terrainHeight = VoxelData.chunkHeight;
+
+        for(int x = 0; x < chunkWidth; x++)
+        {
+            for (int z = 0; z < chunkWidth; z++)
+            {
+                terrainHeight = Mathf.Min(terrainHeight, GetWorldHeight(world, new Vector3((xPos * chunkWidth) + x, 0, (zPos * chunkWidth) + z)));
+            }
+        }
+
+        world.chunksInWorld[xPos, zPos].riverWaterHeight = terrainHeight;
 
         return terrainHeight;
     }
 
-    private static int GetRiverHeight(World world, ChunkCoordinate cc, Vector3 pos, bool isRiver, SubBiome subBiome)
-    {
-        if (!isRiver) return 0;
 
-        int riverHeight;
-
-        if (world.chunksInWorld[cc.x, cc.z].riverWaterHeight == 0)
-        {
-            riverHeight = GetTerrainHeight(GetWorldHeight(world, pos), GetBiomeHeight(world, pos, subBiome, true), 0, false);
-
-
-            //  Temp
-            riverHeight = GetWorldHeight(world, pos);
-
-            world.chunksInWorld[cc.x, cc.z].riverWaterHeight = riverHeight;
-        }
-
-        else
-        {
-            riverHeight = world.chunksInWorld[cc.x, cc.z].riverWaterHeight;
-        }
-
-        return riverHeight;
-    }
-
-
-    private static bool IsBlend(bool isBlend, SubBiome[] adjacentBiomes, bool[] adjacentRivers)
+    private static bool IsBlend(bool isBlend, SubBiome[] adjacentBiomes)
     {
         //  We check if there are any adjacent biomes not equal to chunkbiome, or if there are any rivers
 
-        if (isBlend && !adjacentBiomes.All(x => adjacentBiomes[4]))
-        {
-            return true;
-        }
-
-        else if(isBlend && !adjacentRivers.All(x => false))
+        if (isBlend && adjacentBiomes.Distinct().ToArray().Length > 1)
         {
             return true;
         }
@@ -173,7 +173,7 @@ public static class WorldTerrain
         return false;
     }
 
-    private static float TerrainBlend(World world, SubBiome[] adjacentBiomes, bool[] adjacentRivers, ChunkCoordinate cc, Vector3 pos)
+    private static float TerrainBlend(World world, SubBiome[] adjacentBiomes, ChunkCoordinate cc, Vector3 pos)
     {
         //  North, east, south, west
 
@@ -210,42 +210,42 @@ public static class WorldTerrain
 
         float blendValue = 1;
 
-        if (ab[0] || adjacentRivers[0])
+        if (ab[0])
         {
             blendValue = Mathf.Min(blendValue, (Vector2.Distance(new Vector2(16, 16), new Vector2(x, y)) / chunkWidth) * distanceNoise);
         } //    top right
-
-        if (ab[1] || adjacentRivers[1])
+                
+        if (ab[1])
         {
             blendValue = Mathf.Min(blendValue, ((chunkWidth - y) / chunkWidth) * distanceNoise);
         } //    top
 
-        if (ab[2] || adjacentRivers[2])
+        if (ab[2])
         {
             blendValue = Mathf.Min(blendValue, (Vector2.Distance(new Vector2(0, 16) * noise, new Vector2(x, y)) / chunkWidth) * distanceNoise);
         } //    top left
 
-        if (ab[3] || adjacentRivers[3])
+        if (ab[3])
         {
             blendValue = Mathf.Min(blendValue, ((chunkWidth - x) / chunkWidth) * distanceNoise);
         } //    right
 
-        if (ab[5] || adjacentRivers[5])
+        if (ab[5])
         {
             blendValue = Mathf.Min(blendValue, ((0 + x) / chunkWidth) * distanceNoise);
         } //    left    
 
-        if (ab[6] || adjacentRivers[6])
+        if (ab[6])
         {
             blendValue = Mathf.Min(blendValue, (Vector2.Distance(new Vector2(16, 0) * noise, new Vector2(x, y)) / chunkWidth) * distanceNoise);
         } //    bottom right
 
-        if (ab[7] || adjacentRivers[7])
+        if (ab[7])
         {
             blendValue = Mathf.Min(blendValue, ((0 + y) / chunkWidth) * distanceNoise);
         } //    bottom
 
-        if (ab[8] || adjacentRivers[8])
+        if (ab[8])
         {
             blendValue = Mathf.Min(blendValue, (Vector2.Distance(new Vector2(0, 0) * noise, new Vector2(x, y)) / chunkWidth) * distanceNoise);
         } //    bottom left
@@ -307,6 +307,7 @@ public static class WorldTerrain
         }
     }
 
+
     private static SubBiome[] GetAdjacentBiomes(World world, ChunkCoordinate cc)
     {
         //  The coordinates of adjacent chunks according to chunk, all values are 1 bigger than the should,
@@ -327,26 +328,6 @@ public static class WorldTerrain
         };
 
         return adjacentBiomes;
-    }
-
-    private static bool[] GetAdjacentRivers(World world, ChunkCoordinate cc)
-    {
-        //  -||-
-
-        bool[] adjacentRivers = new bool[9]
-        {
-            world.riverMap[cc.x + 2, cc.z + 2], //  top right 0
-            world.riverMap[cc.x + 1, cc.z + 2], //  top 1
-            world.riverMap[cc.x, cc.z + 2], //  top left 2
-            world.riverMap[cc.x + 2, cc.z + 1], //  right 3
-            world.riverMap[cc.x + 1, cc.z + 1], // middle 4
-            world.riverMap[cc.x, cc.z + 1], //  left 5
-            world.riverMap[cc.x + 2, cc.z], //  bottom right 6
-            world.riverMap[cc.x + 1, cc.z], //  bottom 7
-            world.riverMap[cc.x, cc.z] //   bottom left 8
-        };
-
-        return adjacentRivers;
     }
 
     private static Tuple<int, int> GetPositionInChunk(ChunkCoordinate cc, Vector3 pos)
