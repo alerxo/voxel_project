@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   subBiomeName: River
   threshold: 0.7
-  height: -5
+  height: -3
   noiseScale: 60
   octaves: 4
   persistence: 0.5

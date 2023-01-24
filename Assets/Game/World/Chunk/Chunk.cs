@@ -87,6 +87,7 @@ public class Chunk
     public int cachedWorldHeight;
     public int cachedBiomeHeight;
     public SubBiome cachedBlendBiome;
+    public int riverWaterHeight = 0;
 
     public float[] bottomRightCornerNoise;
     public float[] topRightCornerNoise;
@@ -97,7 +98,7 @@ public class Chunk
 
     #endregion
 
-    public SubBiome biome { get; private set; }
+    public SubBiome subBiome { get; private set; }
 
     public Chunk(ChunkCoordinate _coord, World _world)
     {
@@ -133,7 +134,7 @@ public class Chunk
 
         #endregion
 
-        biome = world.subBiomeMap[coord.x, coord.z];
+        subBiome = world.subBiomeMap[coord.x, coord.z];
 
         #region components
 
@@ -389,17 +390,118 @@ public class Chunk
         }
     }
 
+    private void UpdateLodOneVoxelMeshData(Vector3 pos, int cachedWorldHeight, int cachedBiomeHeight, SubBiome cachedBlendBiome)
+    {
+        //  Goes through each face of voxel
+        //  Checking for parameters
+        //  If not, create verticies, uvs and triangles for face
+
+        byte blockID = voxelMap[(int)pos.x, (int)pos.y, (int)pos.z];
+
+        bool isSolid = world.blocks[blockID].isSolid;
+        bool isTransparent = world.blocks[blockID].isTransparent;
+        bool isLiquid = world.blocks[blockID].isLiquid;
+
+        for (int r = 0; r < 6; r++) // Each row (face)
+        {
+            bool skip = false;
+
+            if (isLiquid) // If we are liquid, check if adjacent also is
+            {
+                if (CheckVoxelLiquid(pos + VoxelData.faceChecks[r], cachedWorldHeight, cachedBiomeHeight, cachedBlendBiome))
+                {
+                    skip = true;
+                }
+            }
+
+            if (!skip && CheckVoxelTransparancy(pos + VoxelData.faceChecks[r], cachedWorldHeight, cachedBiomeHeight, cachedBlendBiome))   //  If we survived the parameters, draw face
+            {
+                //  Adding the uvs, the triangles and verticies, depending on mesh type, then incrementing the vertex index
+
+                if (isLiquid)
+                {
+                    lodOneWaterVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 0]]);
+                    lodOneWaterVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 1]]);
+                    lodOneWaterVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 2]]);
+                    lodOneWaterVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 3]]);
+
+                    AddWaterTexture(pos, lodOneWaterUvs);
+
+                    lodOneWaterTriangles.Add(lodOneWaterVertexIndex);
+                    lodOneWaterTriangles.Add(lodOneWaterVertexIndex + 1);
+                    lodOneWaterTriangles.Add(lodOneWaterVertexIndex + 2);
+                    lodOneWaterTriangles.Add(lodOneWaterVertexIndex + 2);
+                    lodOneWaterTriangles.Add(lodOneWaterVertexIndex + 1);
+                    lodOneWaterTriangles.Add(lodOneWaterVertexIndex + 3);
+
+                    lodOneWaterVertexIndex += 4;
+                }
+
+                else if (isTransparent)
+                {
+                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 0]]);
+                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 1]]);
+                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 2]]);
+                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 3]]);
+
+                    AddTexture(world.blocks[blockID].GetTextureID(r), lodOneUvs);
+
+                    lodOneTransparentTriangles.Add(lodOneVertexIndex);
+                    lodOneTransparentTriangles.Add(lodOneVertexIndex + 1);
+                    lodOneTransparentTriangles.Add(lodOneVertexIndex + 2);
+                    lodOneTransparentTriangles.Add(lodOneVertexIndex + 2);
+                    lodOneTransparentTriangles.Add(lodOneVertexIndex + 1);
+                    lodOneTransparentTriangles.Add(lodOneVertexIndex + 3);
+
+                    lodOneVertexIndex += 4;
+                }
+
+                else if (isSolid)
+                {
+                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 0]]);
+                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 1]]);
+                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 2]]);
+                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 3]]);
+
+                    AddTexture(world.blocks[blockID].GetTextureID(r), lodOneUvs);
+
+                    lodOneSolidTriangles.Add(lodOneVertexIndex);
+                    lodOneSolidTriangles.Add(lodOneVertexIndex + 1);
+                    lodOneSolidTriangles.Add(lodOneVertexIndex + 2);
+                    lodOneSolidTriangles.Add(lodOneVertexIndex + 2);
+                    lodOneSolidTriangles.Add(lodOneVertexIndex + 1);
+                    lodOneSolidTriangles.Add(lodOneVertexIndex + 3);
+
+                    lodOneVertexIndex += 4;
+                }
+
+                else
+                {
+                    Debug.Log("Error in Chunk/UpdateMeshData: Did not find mesh type");
+                }
+            }
+        }
+    }
+
     private void UpdateLodTwoMeshData()
     {
         //  Hardcoded square, with top vertices being terrai height at chunk local positon, using cached height value and bottom being 0.
 
-        Block block = world.blocks[biome.surfaceBlockId];
+        Block block = world.blocks[subBiome.surfaceBlockId];
 
         int halfChunkWidth = VoxelData.chunkWidth / 2;
+
+        cachedBiomeHeight = 0;
+        cachedWorldHeight = 0;
+        cachedBlendBiome = null;
 
         WorldTerrain.GetVoxelBlockType(world, new Vector3(position.x + halfChunkWidth, position.y, position.z + halfChunkWidth), false, 0, 0, null);
 
         int highestY = cachedWorldHeight + cachedBiomeHeight;
+
+        cachedBiomeHeight= 0;
+        cachedWorldHeight = 0;
+        cachedBlendBiome = null;
 
         if (highestY < 64)
         {
@@ -509,100 +611,7 @@ public class Chunk
         lodTwoVertexIndex += 4;
 
         #endregion
-    }
-
-    private void UpdateLodOneVoxelMeshData(Vector3 pos, int cachedWorldHeight, int cachedBiomeHeight, SubBiome cachedBlendBiome)
-    {
-        //  Goes through each face of voxel
-        //  Checking for parameters
-        //  If not, create verticies, uvs and triangles for face
-
-        byte blockID = voxelMap[(int)pos.x, (int)pos.y, (int)pos.z];
-
-        bool isSolid = world.blocks[blockID].isSolid;
-        bool isTransparent = world.blocks[blockID].isTransparent;
-        bool isLiquid = world.blocks[blockID].isLiquid;
-
-        for (int r = 0; r < 6; r++) // Each row (face)
-        {
-            bool skip = false;
-
-            if (isLiquid) // If we are liquid, check if adjacent also is
-            {
-                if (CheckVoxelLiquid(pos + VoxelData.faceChecks[r], cachedWorldHeight, cachedBiomeHeight, cachedBlendBiome))
-                {
-                    skip = true;
-                }
-            }
-
-            if (!skip && CheckVoxelTransparancy(pos + VoxelData.faceChecks[r], cachedWorldHeight, cachedBiomeHeight, cachedBlendBiome))   //  If we survived the parameters, draw face
-            {
-                //  Adding the uvs, the triangles and verticies, depending on mesh type, then incrementing the vertex index
-
-                if (isLiquid)
-                {
-                    lodOneWaterVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 0]]);
-                    lodOneWaterVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 1]]);
-                    lodOneWaterVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 2]]);
-                    lodOneWaterVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 3]]);
-
-                    AddWaterTexture(pos, lodOneWaterUvs);
-
-                    lodOneWaterTriangles.Add(lodOneWaterVertexIndex);
-                    lodOneWaterTriangles.Add(lodOneWaterVertexIndex + 1);
-                    lodOneWaterTriangles.Add(lodOneWaterVertexIndex + 2);
-                    lodOneWaterTriangles.Add(lodOneWaterVertexIndex + 2);
-                    lodOneWaterTriangles.Add(lodOneWaterVertexIndex + 1);
-                    lodOneWaterTriangles.Add(lodOneWaterVertexIndex + 3);
-
-                    lodOneWaterVertexIndex += 4;
-                }
-
-                else if (isTransparent)
-                {
-                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 0]]);
-                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 1]]);
-                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 2]]);
-                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 3]]);
-
-                    AddTexture(world.blocks[blockID].GetTextureID(r), lodOneUvs);
-
-                    lodOneTransparentTriangles.Add(lodOneVertexIndex);
-                    lodOneTransparentTriangles.Add(lodOneVertexIndex + 1);
-                    lodOneTransparentTriangles.Add(lodOneVertexIndex + 2);
-                    lodOneTransparentTriangles.Add(lodOneVertexIndex + 2);
-                    lodOneTransparentTriangles.Add(lodOneVertexIndex + 1);
-                    lodOneTransparentTriangles.Add(lodOneVertexIndex + 3);
-
-                    lodOneVertexIndex += 4;
-                }
-
-                else if (isSolid)
-                {
-                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 0]]);
-                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 1]]);
-                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 2]]);
-                    lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 3]]);
-
-                    AddTexture(world.blocks[blockID].GetTextureID(r), lodOneUvs);
-
-                    lodOneSolidTriangles.Add(lodOneVertexIndex);
-                    lodOneSolidTriangles.Add(lodOneVertexIndex + 1);
-                    lodOneSolidTriangles.Add(lodOneVertexIndex + 2);
-                    lodOneSolidTriangles.Add(lodOneVertexIndex + 2);
-                    lodOneSolidTriangles.Add(lodOneVertexIndex + 1);
-                    lodOneSolidTriangles.Add(lodOneVertexIndex + 3);
-
-                    lodOneVertexIndex += 4;
-                }
-
-                else
-                {
-                    Debug.Log("Error in Chunk/UpdateMeshData: Did not find mesh type");
-                }
-            }
-        }
-    }
+    }   
 
     private void ClearMeshDataLodOne()
     {

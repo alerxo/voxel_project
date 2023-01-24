@@ -34,7 +34,7 @@ public static class BiomeMap
         //  Goes through each parameter and removes biomes that don't fit
         //  Only one should be left, and we get a subbiome of that
 
-        Vector2 chunkPos = new Vector3(x * VoxelData.chunkWidth, z * VoxelData.chunkWidth);
+        Vector2 chunkPos = new Vector2(x * VoxelData.chunkWidth, z * VoxelData.chunkWidth);
 
         float height = GetHeight(world, chunkPos);
         float humidity = GetHumidity(world, chunkPos);
@@ -47,7 +47,7 @@ public static class BiomeMap
 
         for (int i = 0; i < tempBiomes.Count; i++)
         {
-            if(temperature >= tempBiomes[i].minTemperature && tempBiomes[i].maxTemperature >= temperature)
+            if (temperature >= tempBiomes[i].minTemperature && tempBiomes[i].maxTemperature >= temperature)
             {
                 biomesPostTemperature.Add(tempBiomes[i]);
             }
@@ -69,7 +69,7 @@ public static class BiomeMap
             }
         }
 
-        if(biomesPostHeight.Count > 1)
+        if (biomesPostHeight.Count > 1)
         {
             Debug.Log("Error in BiomeMap/GetBiome: Too many biomes fit parameter");
             Debug.Log(temperature + " " + humidity + " " + height);
@@ -99,9 +99,9 @@ public static class BiomeMap
 
         float noise = Noise.Get2DPerlin(world, new Vector2(x, z), 2000, 50, 1, 1, 1, 1);
 
-        foreach(SubBiome subBiome in biome.subBiomes)
+        foreach (SubBiome subBiome in biome.subBiomes)
         {
-            if(subBiome.threshold >= noise)
+            if (subBiome.threshold >= noise)
             {
                 return subBiome;
             }
@@ -124,7 +124,7 @@ public static class BiomeMap
 
         float temperature = distance / (VoxelData.WorldSizeInVoxel / 2);
 
-        if(temperature < 0)
+        if (temperature < 0)
         {
             //Debug.Log("Temperature is too low: " + temperature);
             temperature = 0;
@@ -164,11 +164,11 @@ public static class BiomeMap
     {
         //  Terrainheight by perlin noise multiplied by falloff
 
-        float height =  Noise.Get2DPerlinHighResoltion(world, world.resolution, pos, 0, world.noiseScale, world.octaves, world.persistence, world.lacunarity, world.noiseCutoff) * Noise.GetFallOffMap(pos);
+        float height = Noise.Get2DPerlinHighResolution(world, world.resolution, pos, 0, world.noiseScale, world.octaves, world.persistence, world.lacunarity, world.noiseCutoff) * Noise.GetFallOffMap(pos);
 
         if (height < 0)
         {
-           //Debug.Log("Height is too low: " + height);
+            //Debug.Log("Height is too low: " + height);
             height = 0;
         }
 
@@ -208,13 +208,16 @@ public static class BiomeMap
             }
         }
 
-        for(int s = 0; s < sourceChunks.Count; s++)
+        for (int s = 0; s < sourceChunks.Count; s++)
         {
-            List<Tuple<int, int>> riverWorm = GetRiverWorm(sourceChunks[s].Item1, sourceChunks[s].Item2);
+            List<Tuple<int, int>> riverWorm = GetRiverWorm(world, sourceChunks[s].Item1, sourceChunks[s].Item2);
 
-            for(int w = 0; w < riverWorm.Count; w++)
+            for (int w = 0; w < riverWorm.Count; w++)
             {
-                riverMap[riverWorm[w].Item1, riverWorm[w].Item2] = true;
+                if (Voxel_Util.IsChunkInWorld(new ChunkCoordinate(riverWorm[w].Item1, riverWorm[w].Item2)))
+                {
+                    riverMap[riverWorm[w].Item1, riverWorm[w].Item2] = true;
+                }
             }
 
             s += UnityEngine.Random.Range(0, (int)world.riverReference.noiseScale);
@@ -222,7 +225,7 @@ public static class BiomeMap
         return riverMap;
     }
 
-    private static List<Tuple<int, int>> GetRiverWorm(int x, int z)
+    private static List<Tuple<int, int>> GetRiverWorm(World world, int x, int z)
     {
         List<Tuple<int, int>> riverWorm = new List<Tuple<int, int>>();
 
@@ -238,9 +241,9 @@ public static class BiomeMap
         {
             riverWorm.Add(Tuple.Create(currentX, currentZ));
 
-            Tuple<int, int> nextRiverChunk = GetNextRiverChunk(currentX, currentZ);
+            Tuple<int, int> nextRiverChunk = GetNextRiverChunk(world, currentX, currentZ);
 
-            if((nextRiverChunk.Item1 == currentX && nextRiverChunk.Item2 == currentZ) || riverLength > failSafe)
+            if ((nextRiverChunk.Item1 == currentX && nextRiverChunk.Item2 == currentZ) || riverLength > failSafe)
             {
                 riverEndFound = true;
             }
@@ -254,13 +257,54 @@ public static class BiomeMap
         return riverWorm;
     }
 
-    private static Tuple<int, int> GetNextRiverChunk(int currentX, int currentZ)
+    private static Tuple<int, int> GetNextRiverChunk(World world, int currentX, int currentZ)
     {
         int x = currentX;
         int z = currentZ;
 
-        x += 1;
+        Tuple<int, int> lowestAdjacent = GetLowestAdjacent(world, x, z);
+
+        x = lowestAdjacent.Item1;
+        z = lowestAdjacent.Item2;
 
         return Tuple.Create(x, z);
+    }
+
+    private static Tuple<int, int> GetLowestAdjacent(World world, int x, int z)
+    {
+        int cw = VoxelData.chunkWidth;
+        int hcw = VoxelData.chunkWidth / 2;
+
+        List<Vector2> adjacentPos = new List<Vector2>
+        {
+            new Vector2((x * cw) + hcw, ((z + 1) * cw) + hcw),
+            new Vector2(((x + 1) * cw) + hcw, (z * cw) + hcw),
+            new Vector2((x * cw) + hcw, ((z - 1) * cw) + hcw),
+            new Vector2(((x - 1) * cw) + hcw, (z * cw) + hcw),
+            new Vector2((x * cw) + hcw, (z * cw) + hcw)
+        };
+
+        List<float> adjacentsHeight = new List<float>
+        {
+            GetHeight(world, adjacentPos[0]),
+            GetHeight(world, adjacentPos[1]),
+            GetHeight(world, adjacentPos[2]),
+            GetHeight(world, adjacentPos[3]),
+            GetHeight(world, adjacentPos[4])
+        };
+
+        float currentHeight = 1f;
+        int currentAdjacent = 0;
+
+        for (int i = 0; i < 5; i++)
+        {
+            if (adjacentsHeight[i] < currentHeight)
+            {
+                currentHeight = adjacentsHeight[i];
+                currentAdjacent = i;
+            }
+        }
+
+        return Tuple.Create((int)adjacentPos[currentAdjacent].x / cw, (int)adjacentPos[currentAdjacent].y / cw);
     }
 }

@@ -1,10 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
-using static UnityEngine.UI.GridLayoutGroup;
-using UnityEngine.XR;
 
 public static class WorldTerrain
 {
@@ -37,42 +34,31 @@ public static class WorldTerrain
 
         #region Terrain
 
-        //  First checks if we have a cached terrainheight
-
-        int terrainHeight;
         int worldHeight;
         int biomeHeight;
 
-        int yPos = Mathf.FloorToInt(pos.y);
-
-        if (!HasCachedTerrainHeight(cachedWorldHeight))
+        if (cachedWorldHeight == 0)
         {
-            //  First gets the worlds heightmap, then gets the biomes own height map, and adds them
-            //  If any surrounding chunks are of a different biome, start blending
+            worldHeight = GetWorldHeight(world, pos);
+            biomeHeight = GetBiomeHeight(world, pos, chunkBiome, isRiver);
 
-            worldHeight = Mathf.FloorToInt(128f * Noise.Get2DPerlinHighResoltion(world, world.resolution, new Vector2(pos.x, pos.z), 0f, world.noiseScale, world.octaves, world.persistence, world.lacunarity, world.noiseCutoff) * Noise.GetFallOffMap(new Vector2(pos.x, pos.z)));
-            biomeHeight = Mathf.FloorToInt(chunkBiome.height * Noise.Get2DPerlinHighResoltion(world, world.resolution, new Vector2(pos.x, pos.z), 0, chunkBiome.noiseScale, chunkBiome.octaves, chunkBiome.persistence, chunkBiome.lacunarity, chunkBiome.noiseCutoff));
-
-            if (isRiver)
-            {
-                biomeHeight += world.riverReference.height;
-            }
+            //  Blend
 
             SubBiome[] adjacentBiomes = GetAdjacentBiomes(world, cc);
+            bool[] adjacentRivers = GetAdjacentRivers(world, cc);
 
-            if (IsBlend(isBlend, adjacentBiomes))
+            if (IsBlend(isBlend, adjacentBiomes, adjacentRivers))
             {
                 //  Starts blending chunks sides where the adjacent biome is not same as chunk biome
                 //  Does this by multiplying biomeheight with a value approaching 0, depending on distance
                 //  So on the chunk border, only the world height applies, giving smooth blend
 
-                biomeHeight = Mathf.FloorToInt((float)biomeHeight * TerrainBlend(world, adjacentBiomes, cc, pos));
+
+
+                biomeHeight = Mathf.FloorToInt((float)biomeHeight * TerrainBlend(world, adjacentBiomes, adjacentRivers, cc, pos));
+
                 chunkBiome = BiomeBlend(world, new Vector2(pos.x, pos.z), adjacentBiomes);
             }
-
-            terrainHeight = worldHeight + biomeHeight;
-
-            //  Chaching the values
 
             world.chunksInWorld[cc.x, cc.z].cachedWorldHeight = worldHeight;
             world.chunksInWorld[cc.x, cc.z].cachedBiomeHeight = biomeHeight;
@@ -81,11 +67,15 @@ public static class WorldTerrain
 
         else
         {
-            terrainHeight = cachedWorldHeight + cachedBiomeHeight;
             worldHeight = cachedWorldHeight;
             biomeHeight = cachedBiomeHeight;
             chunkBiome = cachedBlendBiome;
         }
+
+        int riverHeight = GetRiverHeight(world, cc, pos, isRiver, chunkBiome);
+        int terrainHeight = GetTerrainHeight(worldHeight, biomeHeight, riverHeight, isRiver);
+
+        int yPos = Mathf.FloorToInt(pos.y);
 
         #endregion
 
@@ -93,29 +83,89 @@ public static class WorldTerrain
 
         //  Determines the blocktype according to parameters
 
-        if(isRiver)
-        {
-            if (biomeHeight + world.riverReference.height > yPos && yPos > biomeHeight) return 8;
-
-            chunkBiome = world.riverReference;
-        }
-
         if (yPos == terrainHeight) return chunkBiome.surfaceBlockId;
         else if (yPos < terrainHeight && yPos > terrainHeight - 4) return chunkBiome.subSurfaceBlockId;
         else if (yPos < terrainHeight) return 3;
-        else if (yPos < 64) return 8;
 
+        else if (isRiver && yPos <= riverHeight) return 8;
+
+        else if (yPos < 64) return 8;
         else return 0;
 
         #endregion
     }
 
-    private static bool IsBlend(bool isBlend, SubBiome[] adjacentBiomes)
+    private static int GetWorldHeight(World world, Vector3 pos)
     {
-        //  We blend if unique adjacent biomes is larger than 1, ie there is one more than chunk biome
-        //  And we if we tell chunk to blend
+        int worldHeight;
 
-        if (isBlend && adjacentBiomes.Distinct().ToArray().Length > 1)
+        worldHeight = Mathf.FloorToInt(128f * Noise.Get2DPerlinHighResolution(world, world.resolution, new Vector2(pos.x, pos.z), 0f, world.noiseScale, world.octaves, world.persistence, world.lacunarity, world.noiseCutoff) * Noise.GetFallOffMap(new Vector2(pos.x, pos.z)));
+
+        return worldHeight;
+    }
+
+    private static int GetBiomeHeight(World world, Vector3 pos, SubBiome chunkBiome, bool isRiver)
+    {
+        int biomeHeight;
+
+        biomeHeight = Mathf.FloorToInt(chunkBiome.height * Noise.Get2DPerlinHighResolution(world, world.resolution, new Vector2(pos.x, pos.z), 0, chunkBiome.noiseScale, chunkBiome.octaves, chunkBiome.persistence, chunkBiome.lacunarity, chunkBiome.noiseCutoff));
+
+        if (isRiver)
+        {
+            biomeHeight += world.riverReference.height;
+        }
+
+        return biomeHeight;
+    }
+
+    private static int GetTerrainHeight(int worldHeight, int biomeHeight, int riverHeight, bool isRiver)
+    {
+        int terrainHeight = worldHeight + biomeHeight;
+
+        if (isRiver && terrainHeight >= riverHeight)
+        {
+            terrainHeight = riverHeight - 1;
+        }
+
+        return terrainHeight;
+    }
+
+    private static int GetRiverHeight(World world, ChunkCoordinate cc, Vector3 pos, bool isRiver, SubBiome subBiome)
+    {
+        if (!isRiver) return 0;
+
+        int riverHeight;
+
+        if (world.chunksInWorld[cc.x, cc.z].riverWaterHeight == 0)
+        {
+            riverHeight = GetTerrainHeight(GetWorldHeight(world, pos), GetBiomeHeight(world, pos, subBiome, true), 0, false);
+
+
+            //  Temp
+            riverHeight = GetWorldHeight(world, pos);
+
+            world.chunksInWorld[cc.x, cc.z].riverWaterHeight = riverHeight;
+        }
+
+        else
+        {
+            riverHeight = world.chunksInWorld[cc.x, cc.z].riverWaterHeight;
+        }
+
+        return riverHeight;
+    }
+
+
+    private static bool IsBlend(bool isBlend, SubBiome[] adjacentBiomes, bool[] adjacentRivers)
+    {
+        //  We check if there are any adjacent biomes not equal to chunkbiome, or if there are any rivers
+
+        if (isBlend && !adjacentBiomes.All(x => adjacentBiomes[4]))
+        {
+            return true;
+        }
+
+        else if(isBlend && !adjacentRivers.All(x => false))
         {
             return true;
         }
@@ -123,7 +173,7 @@ public static class WorldTerrain
         return false;
     }
 
-    private static float TerrainBlend(World world, SubBiome[] adjacentBiomes, ChunkCoordinate cc, Vector3 pos)
+    private static float TerrainBlend(World world, SubBiome[] adjacentBiomes, bool[] adjacentRivers, ChunkCoordinate cc, Vector3 pos)
     {
         //  North, east, south, west
 
@@ -141,9 +191,9 @@ public static class WorldTerrain
         #region math
 
         List<bool> ab = new List<bool>();
-        foreach(SubBiome sb in adjacentBiomes)
+        foreach(SubBiome subBiome in adjacentBiomes)
         {
-            if (sb != adjacentBiomes[4])
+            if (subBiome != adjacentBiomes[4])
             {
                 ab.Add(true);
             }
@@ -160,42 +210,42 @@ public static class WorldTerrain
 
         float blendValue = 1;
 
-        if (ab[0])
+        if (ab[0] || adjacentRivers[0])
         {
             blendValue = Mathf.Min(blendValue, (Vector2.Distance(new Vector2(16, 16), new Vector2(x, y)) / chunkWidth) * distanceNoise);
         } //    top right
 
-        if (ab[1])
+        if (ab[1] || adjacentRivers[1])
         {
             blendValue = Mathf.Min(blendValue, ((chunkWidth - y) / chunkWidth) * distanceNoise);
         } //    top
 
-        if (ab[2])
+        if (ab[2] || adjacentRivers[2])
         {
             blendValue = Mathf.Min(blendValue, (Vector2.Distance(new Vector2(0, 16) * noise, new Vector2(x, y)) / chunkWidth) * distanceNoise);
         } //    top left
 
-        if (ab[3])
+        if (ab[3] || adjacentRivers[3])
         {
             blendValue = Mathf.Min(blendValue, ((chunkWidth - x) / chunkWidth) * distanceNoise);
         } //    right
 
-        if (ab[5])
+        if (ab[5] || adjacentRivers[5])
         {
             blendValue = Mathf.Min(blendValue, ((0 + x) / chunkWidth) * distanceNoise);
         } //    left    
 
-        if (ab[6])
+        if (ab[6] || adjacentRivers[6])
         {
             blendValue = Mathf.Min(blendValue, (Vector2.Distance(new Vector2(16, 0) * noise, new Vector2(x, y)) / chunkWidth) * distanceNoise);
         } //    bottom right
 
-        if (ab[7])
+        if (ab[7] || adjacentRivers[7])
         {
             blendValue = Mathf.Min(blendValue, ((0 + y) / chunkWidth) * distanceNoise);
         } //    bottom
 
-        if (ab[8])
+        if (ab[8] || adjacentRivers[8])
         {
             blendValue = Mathf.Min(blendValue, (Vector2.Distance(new Vector2(0, 0) * noise, new Vector2(x, y)) / chunkWidth) * distanceNoise);
         } //    bottom left
@@ -279,6 +329,26 @@ public static class WorldTerrain
         return adjacentBiomes;
     }
 
+    private static bool[] GetAdjacentRivers(World world, ChunkCoordinate cc)
+    {
+        //  -||-
+
+        bool[] adjacentRivers = new bool[9]
+        {
+            world.riverMap[cc.x + 2, cc.z + 2], //  top right 0
+            world.riverMap[cc.x + 1, cc.z + 2], //  top 1
+            world.riverMap[cc.x, cc.z + 2], //  top left 2
+            world.riverMap[cc.x + 2, cc.z + 1], //  right 3
+            world.riverMap[cc.x + 1, cc.z + 1], // middle 4
+            world.riverMap[cc.x, cc.z + 1], //  left 5
+            world.riverMap[cc.x + 2, cc.z], //  bottom right 6
+            world.riverMap[cc.x + 1, cc.z], //  bottom 7
+            world.riverMap[cc.x, cc.z] //   bottom left 8
+        };
+
+        return adjacentRivers;
+    }
+
     private static Tuple<int, int> GetPositionInChunk(ChunkCoordinate cc, Vector3 pos)
     {
         //  Takes worldposition of voxel minus world postion of chunk
@@ -290,17 +360,6 @@ public static class WorldTerrain
         return Tuple.Create(x + 1, z + 1);
     }
 
-    private static bool HasCachedTerrainHeight(int cachedTerrainheight)
-    {
-        //  cache of 0 means none
-
-        if(cachedTerrainheight == 0)
-        {
-            return false;
-        }
-
-        return true;
-    }
 
     private static bool IsVoxelInWorld(Vector3 pos)
     {
