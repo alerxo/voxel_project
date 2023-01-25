@@ -33,6 +33,12 @@ public class SubBiome : ScriptableObject
     public float noiseCutoff;
 
     [Space]
+    [Tooltip("How much distance affects blend value")]
+    public float blendDistance;
+    [Tooltip("How much noise is added to blend value")]
+    public float blendNoiseImpact;
+
+    [Space]
 
     [Header("Blocks")]
     public byte surfaceBlockId;

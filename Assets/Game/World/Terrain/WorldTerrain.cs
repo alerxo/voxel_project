@@ -37,6 +37,7 @@ public static class WorldTerrain
 
         int worldHeight;
         int biomeHeight;
+        int riverHeight = 0;
 
         if (cachedWorldHeight == 0)
         {
@@ -44,14 +45,16 @@ public static class WorldTerrain
 
             if (isRiver)
             {
-                biomeHeight = GetRiverHeight(world, cc) - worldHeight + chunkBiome.height;
+                riverHeight = GetRiverHeight(world, cc);
+
+                biomeHeight = riverHeight - worldHeight + chunkBiome.height;
             }
 
             else
             {
                 biomeHeight = GetBiomeHeight(world, pos, chunkBiome, isRiver);
             }
-            
+
 
             //  Blend
 
@@ -78,6 +81,7 @@ public static class WorldTerrain
             worldHeight = cachedWorldHeight;
             biomeHeight = cachedBiomeHeight;
             chunkBiome = cachedBlendBiome;
+            riverHeight = GetRiverHeight(world, cc);
         }
 
         int terrainHeight = GetTerrainHeight(worldHeight, biomeHeight);
@@ -95,7 +99,7 @@ public static class WorldTerrain
         else if (yPos < terrainHeight) return 3;
         else if (yPos < 64) return 8;
 
-        else if (isRiver && yPos < worldHeight - 1)
+        else if(isRiver && yPos < riverHeight - world.riverReference.height)
         {
             return 8;
         }
@@ -107,30 +111,17 @@ public static class WorldTerrain
 
     private static int GetWorldHeight(World world, Vector3 pos)
     {
-        int worldHeight;
-
-        worldHeight = Mathf.FloorToInt(128f * Noise.Get2DPerlinHighResolution(world, world.resolution, new Vector2(pos.x, pos.z), 0f, world.noiseScale, world.octaves, world.persistence, world.lacunarity, world.noiseCutoff) * Noise.GetFallOffMap(new Vector2(pos.x, pos.z)));
-
-        return worldHeight;
+        return Mathf.FloorToInt(128f * Noise.Get2DPerlinHighResolution(world, world.resolution, new Vector2(pos.x, pos.z), 0f, world.noiseScale, world.octaves, world.persistence, world.lacunarity, world.noiseCutoff) * Noise.GetFallOffMap(new Vector2(pos.x, pos.z)));
     }
 
     private static int GetBiomeHeight(World world, Vector3 pos, SubBiome chunkBiome, bool isRiver)
     {
-        int biomeHeight;
-
-        biomeHeight = Mathf.FloorToInt(chunkBiome.height * Noise.Get2DPerlinHighResolution(world, world.resolution, new Vector2(pos.x, pos.z), 0, chunkBiome.noiseScale, chunkBiome.octaves, chunkBiome.persistence, chunkBiome.lacunarity, chunkBiome.noiseCutoff));
-
-        if (isRiver)
-        {
-            biomeHeight += world.riverReference.height;
-        }
-
-        return biomeHeight;
+        return Mathf.FloorToInt(chunkBiome.height * Noise.Get2DPerlinHighResolution(world, world.resolution, new Vector2(pos.x, pos.z), 0, chunkBiome.noiseScale, chunkBiome.octaves, chunkBiome.persistence, chunkBiome.lacunarity, chunkBiome.noiseCutoff));
     }
 
     private static int GetTerrainHeight(int worldHeight, int biomeHeight)
     {
-        return worldHeight + biomeHeight; ;
+        return worldHeight + biomeHeight;
     }
 
     private static int GetRiverHeight(World world, ChunkCoordinate cc)
@@ -147,7 +138,7 @@ public static class WorldTerrain
 
         int terrainHeight = VoxelData.chunkHeight;
 
-        for(int x = 0; x < chunkWidth; x++)
+        for (int x = 0; x < chunkWidth; x++)
         {
             for (int z = 0; z < chunkWidth; z++)
             {
@@ -184,14 +175,11 @@ public static class WorldTerrain
         float chunkWidth = VoxelData.chunkWidth;
 
         Tuple<int, int> positionInChunk = GetPositionInChunk(cc, pos);
-        
         float x = positionInChunk.Item1;
         float y = positionInChunk.Item2;
 
-        #region math
-
         List<bool> ab = new List<bool>();
-        foreach(SubBiome subBiome in adjacentBiomes)
+        foreach (SubBiome subBiome in adjacentBiomes)
         {
             if (subBiome != adjacentBiomes[4])
             {
@@ -205,56 +193,69 @@ public static class WorldTerrain
         }
 
         float noise = Noise.Get2DPerlin(world, new Vector2(pos.x, pos.z), 0, 10, 4, 0.5f, 2f, 1);
-
-        float distanceNoise = (1 + noise) / 2;
-
+        float noiseImpact = adjacentBiomes[4].blendNoiseImpact;
+        float blendDistance = adjacentBiomes[4].blendDistance;
         float blendValue = 1;
+
+        #region math
 
         if (ab[0])
         {
-            blendValue = Mathf.Min(blendValue, (Vector2.Distance(new Vector2(16, 16), new Vector2(x, y)) / chunkWidth) * distanceNoise);
+            blendValue = Mathf.Min(blendValue, (Vector2.Distance(new Vector2(chunkWidth, chunkWidth), new Vector2(x, y)) / chunkWidth));
         } //    top right
-                
+
         if (ab[1])
         {
-            blendValue = Mathf.Min(blendValue, ((chunkWidth - y) / chunkWidth) * distanceNoise);
+            blendValue = Mathf.Min(blendValue, ((chunkWidth - y) / chunkWidth));
         } //    top
 
         if (ab[2])
         {
-            blendValue = Mathf.Min(blendValue, (Vector2.Distance(new Vector2(0, 16) * noise, new Vector2(x, y)) / chunkWidth) * distanceNoise);
+            blendValue = Mathf.Min(blendValue, (Vector2.Distance(new Vector2(0, chunkWidth), new Vector2(x, y)) / chunkWidth));
         } //    top left
 
         if (ab[3])
         {
-            blendValue = Mathf.Min(blendValue, ((chunkWidth - x) / chunkWidth) * distanceNoise);
+            blendValue = Mathf.Min(blendValue, ((chunkWidth - x) / chunkWidth));
         } //    right
 
         if (ab[5])
         {
-            blendValue = Mathf.Min(blendValue, ((0 + x) / chunkWidth) * distanceNoise);
-        } //    left    
+            blendValue = Mathf.Min(blendValue, (x / chunkWidth));
+        } //    left        
 
         if (ab[6])
         {
-            blendValue = Mathf.Min(blendValue, (Vector2.Distance(new Vector2(16, 0) * noise, new Vector2(x, y)) / chunkWidth) * distanceNoise);
+            blendValue = Mathf.Min(blendValue, (Vector2.Distance(new Vector2(chunkWidth, 0), new Vector2(x, y)) / chunkWidth));
         } //    bottom right
 
         if (ab[7])
         {
-            blendValue = Mathf.Min(blendValue, ((0 + y) / chunkWidth) * distanceNoise);
+            blendValue = Mathf.Min(blendValue, (y / chunkWidth));
         } //    bottom
 
         if (ab[8])
         {
-            blendValue = Mathf.Min(blendValue, (Vector2.Distance(new Vector2(0, 0) * noise, new Vector2(x, y)) / chunkWidth) * distanceNoise);
-        } //    bottom left
+            blendValue = Mathf.Min(blendValue, (Vector2.Distance(new Vector2(0, 0), new Vector2(x, y)) / chunkWidth));
+        } //    bottom left 
 
         #endregion
 
         //  Adds noise as the remove repetetiveness
 
-        return (blendValue + (noise * blendValue)) / 2;
+        if(blendValue >= blendDistance)
+        {
+            return 1;
+        }
+
+        else
+        {
+            blendValue /= blendDistance;
+
+            blendValue = (blendValue * (1 - noiseImpact)) + (noise * noiseImpact);
+
+            return blendValue;
+        }
     }
 
     private static SubBiome BiomeBlend(World world, Vector2 pos, SubBiome[] adjacentBiomes)
