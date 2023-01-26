@@ -17,8 +17,8 @@ MonoBehaviour:
   minTemperature: 0.66
   maxHumidity: 1
   minHumidity: 0
-  maxHeight: 0.66
-  minHeight: 0.33
+  maxHeight: 128
+  minHeight: 64
   arrayPosition: 0
   subBiomes:
   - {fileID: 11400000, guid: 5b3b8d09ecc37f947ae57e6c7e0b9fa4, type: 2}

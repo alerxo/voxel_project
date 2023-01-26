@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   subBiomeName: Plains
   threshold: 1
-  height: 5
+  height: 0
   noiseScale: 50
   octaves: 4
   persistence: 0.5

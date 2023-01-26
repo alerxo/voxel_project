@@ -16,6 +16,7 @@ public class World : MonoBehaviour
     //  Terrain and climate
 
     [SerializeField] private int seed;
+
     public int randomSeed { get; private set; }
 
     public Biome[] biomes;
@@ -26,8 +27,9 @@ public class World : MonoBehaviour
 
     [Space]
 
-    [Tooltip("How much detail between sample points")]
-    public int resolution;
+    [Tooltip("Height used in world height")]
+    public int worldHeight;
+
     [Tooltip("Distance between samplepoints, bigger lumps")]
     public float noiseScale;
     [Tooltip("Each octave adds another layer of noise")]
@@ -37,8 +39,6 @@ public class World : MonoBehaviour
     public float persistence;
     [Tooltip("Controls increase in frequence of octaves, small features on the curve")]
     public float lacunarity;
-    [Tooltip("Noise can not get higher than this")]
-    public float noiseCutoff;
 
     [Space]
 

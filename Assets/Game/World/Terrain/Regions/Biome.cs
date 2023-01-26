@@ -19,8 +19,8 @@ public class Biome : ScriptableObject
 
     [Space]
 
-    public float maxHeight;
-    public float minHeight;
+    public int maxHeight;
+    public int minHeight;
 
     [Space]
 

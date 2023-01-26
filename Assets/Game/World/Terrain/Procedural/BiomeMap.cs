@@ -45,7 +45,7 @@ public static class BiomeMap
 
         Vector2 chunkPos = new Vector2(x * VoxelData.chunkWidth, z * VoxelData.chunkWidth);
 
-        float height = GetHeight(world, chunkPos);
+        int height = GetHeight(world, chunkPos);
         float humidity = GetHumidity(world, chunkPos);
         float temperature = GetTemperature(chunkPos);
 
@@ -124,72 +124,22 @@ public static class BiomeMap
 
     private static float GetTemperature(Vector2 pos)
     {
-        //  Gets the distance from equator
-        //  Then assign temperature depending on distance
-
-        float longitude = pos.y;
-
-        float distance = Mathf.Abs((VoxelData.WorldSizeInVoxel / 2) - longitude);
-
-        float temperature = distance / (VoxelData.WorldSizeInVoxel / 2);
-
-        if (temperature < 0)
-        {
-            //Debug.Log("Temperature is too low: " + temperature);
-            temperature = 0;
-        }
-
-        else if (temperature > 1)
-        {
-            //Debug.Log("Temperature is too big: " + temperature);
-            temperature = 1;
-        }
-
-        return 1 - temperature;
+        return Noise.GetTemperature(pos);
     }
 
     private static float GetHumidity(World world, Vector2 pos)
     {
         //  Humidity is random noise, multiplied by falloff, so closer to edge of world, which should be ocean is more humid
 
-        float humidity = Noise.Get2DPerlin(world, pos, 1000, VoxelData.worldSizeInChunks, 1, 1, 1, 1) * (1 - Noise.GetFallOffMap(pos));
-
-        if (humidity < 0)
-        {
-            //Debug.Log("Humidity is too low: " + humidity);
-            humidity = 0;
-        }
-
-        else if (humidity > 1)
-        {
-            //ebug.Log("Humidity is too big: " + humidity);
-            humidity = 1;
-        }
-
-        return humidity;
+        return Noise.Get2DPerlinHumidity(world, pos, 1000, VoxelData.worldSizeInChunks, 1, 1, 1, 1);
     }
 
-    private static float GetHeight(World world, Vector2 pos)
+    private static int GetHeight(World world, Vector2 pos)
     {
         //  Terrainheight by perlin noise multiplied by falloff
 
-        float height = Noise.Get2DPerlinHighResolution(world, world.resolution, pos, 0, world.noiseScale, world.octaves, world.persistence, world.lacunarity, world.noiseCutoff) * Noise.GetFallOffMap(pos);
-
-        if (height < 0)
-        {
-            //Debug.Log("Height is too low: " + height);
-            height = 0;
-        }
-
-        else if (height > 1)
-        {
-            //Debug.Log("Height is too big: " + height);
-            height = 1;
-        }
-
-        return height;
+        return Noise.Get2DPerlinWorld(world, pos, 0, world.noiseScale, world.octaves, world.persistence, world.lacunarity);
     }
-
 
     private static bool[,] GetRiverMap(World world)
     {
@@ -285,7 +235,7 @@ public static class BiomeMap
             new Vector2((x * cw) + hcw, (z * cw) + hcw)
         };
 
-        List<float> adjacentsHeight = new List<float>
+        List<int> adjacentsHeight = new List<int>
         {
             GetHeight(world, adjacentPos[0]),
             GetHeight(world, adjacentPos[1]),
@@ -294,7 +244,7 @@ public static class BiomeMap
             GetHeight(world, adjacentPos[4])
         };
 
-        float currentHeight = 1f;
+        int currentHeight = world.worldHeight;
         int currentAdjacent = 0;
 
         for (int i = 0; i < 5; i++)

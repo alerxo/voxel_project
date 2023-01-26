@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   subBiomeName: Mountains
   threshold: 1
-  height: 50
+  height: 32
   noiseScale: 50
   octaves: 4
   persistence: 0.5

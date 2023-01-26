@@ -52,7 +52,7 @@ public static class WorldTerrain
 
             else
             {
-                biomeHeight = GetBiomeHeight(world, pos, chunkBiome, isRiver);
+                biomeHeight = GetBiomeHeight(world, pos, chunkBiome);
             }
 
 
@@ -111,12 +111,12 @@ public static class WorldTerrain
 
     private static int GetWorldHeight(World world, Vector3 pos)
     {
-        return Mathf.FloorToInt(128f * Noise.Get2DPerlinHighResolution(world, world.resolution, new Vector2(pos.x, pos.z), 0f, world.noiseScale, world.octaves, world.persistence, world.lacunarity, world.noiseCutoff) * Noise.GetFallOffMap(new Vector2(pos.x, pos.z)));
+        return Noise.Get2DPerlinWorld(world, new Vector2(pos.x, pos.z), 0, world.noiseScale, world.octaves, world.persistence, world.lacunarity);
     }
 
-    private static int GetBiomeHeight(World world, Vector3 pos, SubBiome chunkBiome, bool isRiver)
+    private static int GetBiomeHeight(World world, Vector3 pos, SubBiome chunkBiome)
     {
-        return Mathf.FloorToInt(chunkBiome.height * Noise.Get2DPerlinHighResolution(world, world.resolution, new Vector2(pos.x, pos.z), 0, chunkBiome.noiseScale, chunkBiome.octaves, chunkBiome.persistence, chunkBiome.lacunarity, chunkBiome.noiseCutoff));
+        return Mathf.FloorToInt(chunkBiome.height * Noise.Get2DPerlin(world, new Vector2(pos.x, pos.z), 0, chunkBiome.noiseScale, chunkBiome.octaves, chunkBiome.persistence, chunkBiome.lacunarity, chunkBiome.noiseCutoff));
     }
 
     private static int GetTerrainHeight(int worldHeight, int biomeHeight)

@@ -4,46 +4,122 @@ using UnityEngine;
 
 public static class Noise
 {
-    public static float Get2DPerlinHighResolution(World world, int resolution, Vector2 pos, float _offset, float scale, int octaves, float persistence, float lacunarity, float noiseCutoff)
+    #region world
+
+    public static int Get2DPerlinWorld(World world, Vector2 pos, float _offset, float scale, int octaves, float persistence, float lacunarity)
     {
-        //  Sample perlin noise, gets layered through octaves,
-        //  persistance changes amplitude through each octave
-        //  lacunarity changes frequency through each octave
+        float noise = GetWorldBaseHeight(world, pos, _offset, scale, octaves, persistence, lacunarity);
 
-        //  creates a curve where amplitude is x and frequency is y
+        noise *= GetWorldHeightMultiplier(world, pos, _offset, scale);
 
-        //  Does this x amount of times, and changes the offset, as to get more detailed results
-        //  Because the perlin noise has too few asmple points, so when passed very small numbers, 
-        //  A lot of coodrinates get the same result
+        float noiseHeight = (VoxelData.waterHeight + (world.worldHeight * noise)) * GetFallOffMap(pos);
 
+        noiseHeight = Mathf.Clamp(noiseHeight, 0, VoxelData.chunkHeight);
+
+        return Mathf.FloorToInt(noiseHeight);
+    }
+
+    public static float GetWorldBaseHeight(World world, Vector2 pos, float _offset, float scale, int octaves, float persistence, float lacunarity)
+    {
+        float amplituide = 1f;
+        float frequency = 1f;
         float noiseHeight = 0f;
+
         float offset = _offset + world.randomSeed + 0.1f;
 
-        for (int i = 0; i < resolution; i++)
+        for (int i = 0; i < octaves; i++)
         {
-            float noise = 0f;
-            offset += i;
-            float amplituide = 1f;
-            float frequency = 1f;
+            float sampleX = pos.x / scale * frequency;
+            float sampleY = pos.y / scale * frequency;
 
-            for (int n = 0; n < octaves; n++)
-            {
-                float sampleX = pos.x / scale * frequency;
-                float sampleY = pos.y / scale * frequency;
+            offset += scale * frequency;
 
-                float perlinValue = Mathf.PerlinNoise(sampleX + offset, sampleY + offset);
+            float perlinValue = Mathf.PerlinNoise(sampleX + offset, sampleY + offset);
 
-                noise += perlinValue * amplituide;
-                amplituide *= persistence;
-                frequency *= lacunarity;
-            }
-
-            if (noise > noiseCutoff) noise = noiseCutoff;
-
-            noiseHeight += noise;
+            noiseHeight += perlinValue;
+            amplituide *= persistence;
+            frequency *= lacunarity;
         }
 
-        return noiseHeight / (float)resolution;
+        return noiseHeight;
+    }
+
+    public static float GetWorldHeightMultiplier(World world, Vector2 pos, float _offset, float scale)
+    {
+        float offset = _offset + world.randomSeed + 0.1f;
+
+        scale *= 2;
+
+        float sampleX = pos.x / scale;
+        float sampleY = pos.y / scale;
+
+        float heightMultiplier = Mathf.PerlinNoise(sampleX + offset, sampleY + offset);
+
+        heightMultiplier = 0.4f + (Mathf.Clamp(heightMultiplier, 0, 1) * 2f);
+
+        heightMultiplier = Mathf.Pow(heightMultiplier, heightMultiplier);
+
+        return heightMultiplier;
+    }
+
+    #endregion
+
+    #region humidity
+
+    public static float Get2DPerlinHumidity(World world, Vector2 pos, float _offset, float scale, int octaves, float persistence, float lacunarity, float noiseCutoff)
+    {
+        float humidity = Get2DPerlin(world, pos, _offset, scale, octaves, persistence, lacunarity, noiseCutoff);
+
+        humidity *= 1 - GetFallOffMap(pos);
+
+        humidity = Mathf.Clamp01(humidity);
+
+        return humidity;
+    }
+
+    #endregion
+
+    #region temperature
+
+    public static float GetTemperature(Vector2 pos)
+    {
+        //  Gets the distance from equator
+        //  Then assign temperature depending on distance
+
+        float longitude = pos.y;
+
+        float distance = Mathf.Abs((VoxelData.WorldSizeInVoxel / 2) - longitude);
+
+        float temperature = distance / (VoxelData.WorldSizeInVoxel / 2);
+
+        temperature = Mathf.Clamp01(temperature);   
+
+        return 1 - temperature;
+    }
+
+    #endregion
+
+    #region util    
+
+    public static float GetFallOffMap(Vector2 pos)
+    {
+        //  Value approaching 0 from when we cross the map edge value
+
+        float halfWorldSizeInVoxel = (float)VoxelData.WorldSizeInVoxel / 2;
+        float mapEdge = halfWorldSizeInVoxel - (VoxelData.mapEdgeSizeInChunks * VoxelData.chunkWidth);
+
+        float x = Mathf.Abs(Mathf.FloorToInt(pos.x) - halfWorldSizeInVoxel);
+        float y = Mathf.Abs(Mathf.FloorToInt(pos.y) - halfWorldSizeInVoxel);
+
+        float distance = Mathf.Max(x, y);
+
+        if (distance > mapEdge)
+        {
+            float fallOffValue = (distance - mapEdge) / (halfWorldSizeInVoxel - mapEdge);
+
+            return 1 - fallOffValue;
+        }
+        return 1;
     }
 
     public static float Get2DPerlin(World world, Vector2 pos, float _offset, float scale, int octaves, float persistence, float lacunarity, float noiseCutoff)
@@ -66,37 +142,15 @@ public static class Noise
             float sampleY = pos.y / scale * frequency;
 
             float perlinValue = Mathf.PerlinNoise(sampleX + offset, sampleY + offset);
-            
+
             noiseHeight += perlinValue * amplituide;
             amplituide *= persistence;
             frequency *= lacunarity;
         }
 
-        if(noiseHeight > noiseCutoff) noiseHeight = 1f;
+        if (noiseHeight > noiseCutoff) noiseHeight = 1f;
 
         return noiseHeight;
-    }
-
-    public static float GetFallOffMap(Vector2 pos)
-    {
-        //  Value approaching 0 from when we cross the map edge value
-
-        float halfWorldSizeInVoxel = (float)VoxelData.WorldSizeInVoxel / 2;
-        float mapEdge = halfWorldSizeInVoxel - (VoxelData.mapEdgeSizeInChunks * VoxelData.chunkWidth);
-
-        float x = Mathf.Abs(Mathf.FloorToInt(pos.x) - halfWorldSizeInVoxel);
-        float y = Mathf.Abs(Mathf.FloorToInt(pos.y) - halfWorldSizeInVoxel);
-
-        float distance = Mathf.Max(x, y);
-
-        if(distance > mapEdge)
-        {
-            float fallOffValue = (distance - mapEdge) / (halfWorldSizeInVoxel - mapEdge);
-
-            return 1 - fallOffValue;
-        }
-
-        return 1;
     }
 
     public static bool Get3DPerlin(Vector3 position, float offset, float scale, float threshold)
@@ -114,9 +168,11 @@ public static class Noise
         float CB = Mathf.PerlinNoise(z, y);
         float CA = Mathf.PerlinNoise(z, x);
 
-        if((AB + BC + AC + CA + BA + CB + CA) / 6f > threshold)
+        if ((AB + BC + AC + CA + BA + CB + CA) / 6f > threshold)
             return true;
         else
             return false;
     }
+
+    #endregion
 }
