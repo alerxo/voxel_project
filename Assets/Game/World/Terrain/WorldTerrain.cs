@@ -111,7 +111,7 @@ public static class WorldTerrain
 
     private static int GetWorldHeight(World world, Vector3 pos)
     {
-        return Noise.Get2DPerlinWorld(world, new Vector2(pos.x, pos.z), 0, world.noiseScale, world.octaves, world.persistence, world.lacunarity);
+        return Noise.Get2DPerlinWorld(world, new Vector2(pos.x, pos.z));
     }
 
     private static int GetBiomeHeight(World world, Vector3 pos, SubBiome chunkBiome)

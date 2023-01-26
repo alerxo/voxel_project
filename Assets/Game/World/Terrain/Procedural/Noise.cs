@@ -6,11 +6,11 @@ public static class Noise
 {
     #region world
 
-    public static int Get2DPerlinWorld(World world, Vector2 pos, float _offset, float scale, int octaves, float persistence, float lacunarity)
+    public static int Get2DPerlinWorld(World world, Vector2 pos)
     {
-        float noise = GetWorldBaseHeight(world, pos, _offset, scale, octaves, persistence, lacunarity);
+        float noise = GetWorldBaseHeight(world, pos, world.noiseScale, world.octaves, world.persistence, world.lacunarity);
 
-        noise *= GetWorldHeightMultiplier(world, pos, _offset, scale);
+        noise *= GetWorldHeightMultiplier(world, pos, world.multiplierNoiseScale);
 
         float noiseHeight = (VoxelData.waterHeight + (world.worldHeight * noise)) * GetFallOffMap(pos);
 
@@ -19,20 +19,20 @@ public static class Noise
         return Mathf.FloorToInt(noiseHeight);
     }
 
-    public static float GetWorldBaseHeight(World world, Vector2 pos, float _offset, float scale, int octaves, float persistence, float lacunarity)
+    public static float GetWorldBaseHeight(World world, Vector2 pos, float scale, int octaves, float persistence, float lacunarity)
     {
         float amplituide = 1f;
         float frequency = 1f;
         float noiseHeight = 0f;
 
-        float offset = _offset + world.randomSeed + 0.1f;
+        float offset = world.randomSeed + 0.1f;
 
         for (int i = 0; i < octaves; i++)
         {
-            float sampleX = pos.x / scale * frequency;
-            float sampleY = pos.y / scale * frequency;
+            float sampleX = (pos.x + 1) / scale * frequency;
+            float sampleY = (pos.y + 1) / scale * frequency;
 
-            offset += scale * frequency;
+            offset += 1;
 
             float perlinValue = Mathf.PerlinNoise(sampleX + offset, sampleY + offset);
 
@@ -44,22 +44,30 @@ public static class Noise
         return noiseHeight;
     }
 
-    public static float GetWorldHeightMultiplier(World world, Vector2 pos, float _offset, float scale)
+    public static float GetWorldHeightMultiplier(World world, Vector2 pos, float scale)
     {
-        float offset = _offset + world.randomSeed + 0.1f;
+        float offset = world.randomSeed + 0.1f;
 
-        scale *= 2;
+        float sampleX = ((pos.x + 1) / scale);
+        float sampleY = ((pos.y + 1) / scale);
 
-        float sampleX = pos.x / scale;
-        float sampleY = pos.y / scale;
+        float amplituide = 1f;
+        float heightMultiplier = 0;
 
-        float heightMultiplier = Mathf.PerlinNoise(sampleX + offset, sampleY + offset);
+        for (int i = 0; i < 4; i++)
+        {
+            offset += sampleX / sampleY;
 
-        heightMultiplier = 0.4f + (Mathf.Clamp(heightMultiplier, 0, 1) * 2f);
+            float perlinValue = Mathf.Clamp01(Mathf.PerlinNoise(sampleX + offset, sampleY + offset));
+
+            heightMultiplier += perlinValue * amplituide;
+
+            amplituide *= perlinValue;
+        }
 
         heightMultiplier = Mathf.Pow(heightMultiplier, heightMultiplier);
 
-        return heightMultiplier;
+        return heightMultiplier * Mathf.Clamp01(Mathf.PerlinNoise(sampleX, sampleY));
     }
 
     #endregion
@@ -138,8 +146,8 @@ public static class Noise
 
         for (int i = 0; i < octaves; i++)
         {
-            float sampleX = pos.x / scale * frequency;
-            float sampleY = pos.y / scale * frequency;
+            float sampleX = (pos.x + 1) / scale * frequency;
+            float sampleY = (pos.y + 1) / scale * frequency;
 
             float perlinValue = Mathf.PerlinNoise(sampleX + offset, sampleY + offset);
 

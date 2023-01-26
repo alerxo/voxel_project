@@ -93,6 +93,7 @@ public static class BiomeMap
         {
             Debug.Log("Error in BiomeMap/GetBiome: No biomes fit parameters");
             Debug.Log(temperature + " " + humidity + " " + height);
+            Debug.Log("At: " + x + ", " + z);
 
             return biomes[4].subBiomes[0];
         }
@@ -138,7 +139,7 @@ public static class BiomeMap
     {
         //  Terrainheight by perlin noise multiplied by falloff
 
-        return Noise.Get2DPerlinWorld(world, pos, 0, world.noiseScale, world.octaves, world.persistence, world.lacunarity);
+        return Noise.Get2DPerlinWorld(world, pos);
     }
 
     private static bool[,] GetRiverMap(World world)

@@ -32,6 +32,10 @@ public class World : MonoBehaviour
 
     [Tooltip("Distance between samplepoints, bigger lumps")]
     public float noiseScale;
+
+    [Tooltip("Distance between samplepoints, bigger lumps")]
+    public float multiplierNoiseScale;
+
     [Tooltip("Each octave adds another layer of noise")]
     public int octaves;
     [Tooltip("Controls decrease in amplitude of octaves, how much the small features made from lacunarity influence the curve")]
