@@ -78,8 +78,6 @@ public static class Noise
     {
         float humidity = Get2DPerlin(world, pos, _offset, scale, octaves, persistence, lacunarity, noiseCutoff);
 
-        humidity *= 1 - GetFallOffMap(pos);
-
         humidity = Mathf.Clamp01(humidity);
 
         return humidity;

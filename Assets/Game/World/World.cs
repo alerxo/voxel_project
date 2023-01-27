@@ -24,6 +24,8 @@ public class World : MonoBehaviour
     public SubBiome[,] subBiomeMap = new SubBiome[VoxelData.worldSizeInChunks + 2, VoxelData.worldSizeInChunks + 2];
 
     public SubBiome riverReference;
+    public int riverSourceHeightLimit;
+    public float riverSourceHumidityLimit;
 
     [Space]
 

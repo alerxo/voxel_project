@@ -152,7 +152,9 @@ public static class BiomeMap
         {
             for (int z = 0; z < VoxelData.worldSizeInChunks + 2; z++)
             {
-                if (GetHeight(world, new Vector2(x * VoxelData.chunkWidth, z * VoxelData.chunkWidth)) > world.riverReference.threshold)
+                Vector2 pos = new((x * VoxelData.chunkWidth) + VoxelData.chunkWidth / 2, (z * VoxelData.chunkWidth) + VoxelData.chunkWidth / 2);
+
+                if (GetHeight(world, pos) > world.riverSourceHeightLimit && GetHumidity(world, pos) > 0.8f)
                 {
                     sourceChunks.Add(Tuple.Create(x, z));
                 }
@@ -227,22 +229,23 @@ public static class BiomeMap
         int cw = VoxelData.chunkWidth;
         int hcw = VoxelData.chunkWidth / 2;
 
-        List<Vector2> adjacentPos = new List<Vector2>
+        List<ChunkCoordinate> adjacentPos = new List<ChunkCoordinate>
         {
-            new Vector2((x * cw) + hcw, ((z + 1) * cw) + hcw),
-            new Vector2(((x + 1) * cw) + hcw, (z * cw) + hcw),
-            new Vector2((x * cw) + hcw, ((z - 1) * cw) + hcw),
-            new Vector2(((x - 1) * cw) + hcw, (z * cw) + hcw),
-            new Vector2((x * cw) + hcw, (z * cw) + hcw)
+            new ChunkCoordinate(x, z),
+            new ChunkCoordinate(x, z + 1),
+            new ChunkCoordinate(x + 1, z),
+            new ChunkCoordinate(x - 1, z),
+            new ChunkCoordinate(x, z - 1)
+
         };
 
         List<int> adjacentsHeight = new List<int>
         {
-            GetHeight(world, adjacentPos[0]),
-            GetHeight(world, adjacentPos[1]),
-            GetHeight(world, adjacentPos[2]),
-            GetHeight(world, adjacentPos[3]),
-            GetHeight(world, adjacentPos[4])
+            WorldTerrain.GetRiverHeight(world, adjacentPos[0]),
+            WorldTerrain.GetRiverHeight(world, adjacentPos[1]),
+            WorldTerrain.GetRiverHeight(world, adjacentPos[2]),
+            WorldTerrain.GetRiverHeight(world, adjacentPos[3]),
+            WorldTerrain.GetRiverHeight(world, adjacentPos[4])
         };
 
         int currentHeight = world.worldHeight;
@@ -257,6 +260,6 @@ public static class BiomeMap
             }
         }
 
-        return Tuple.Create((int)adjacentPos[currentAdjacent].x / cw, (int)adjacentPos[currentAdjacent].y / cw);
+        return Tuple.Create(adjacentPos[currentAdjacent].x, adjacentPos[currentAdjacent].z);
     }
 }

@@ -20,8 +20,6 @@ public class RenderDistance : MonoBehaviour
     private Queue<Chunk> chunksToDeactivate = new Queue<Chunk>();
     private Queue<ChunkCoordinate> chunksToEnqueue = new Queue<ChunkCoordinate>();
 
-    private int sweepDistanceIncrease;
-
     private void Start()
     {
         world = GameObject.FindGameObjectWithTag("WorldObj").GetComponent<World>();
@@ -42,7 +40,6 @@ public class RenderDistance : MonoBehaviour
         {
             //  If in new chunk, reset sweep distance
             playerPosition = transform.position;
-            sweepDistanceIncrease = 0;
         }
 
         if (chunksToEnqueue.Count > 0)
@@ -105,12 +102,7 @@ public class RenderDistance : MonoBehaviour
 
         int renderDistance = VoxelData.RenderDistanceInChunks;
 
-        ChunkSweep(coord, renderDistance + sweepDistanceIncrease);
-
-        if (chunksToEnqueue.Count == 0)
-        {
-            sweepDistanceIncrease++;
-        }
+        ChunkSweep(coord, renderDistance);
     }
 
     private void ChunkSweep(ChunkCoordinate coord, int distance)
@@ -130,35 +122,29 @@ public class RenderDistance : MonoBehaviour
                         chunksToEnqueue.Enqueue(new ChunkCoordinate(x, z));
                     }
 
-                    if (sweepDistanceIncrease == 0)
+                    if (!world.chunksInWorld[x, z].IsActive)
                     {
-                        if (!world.chunksInWorld[x, z].IsActive)
-                        {
-                            chunksToActivate.Enqueue(world.chunksInWorld[x, z]);
-                        }
+                        chunksToActivate.Enqueue(world.chunksInWorld[x, z]);
+                    }
 
-                        activeChunks.Add(new ChunkCoordinate(x, z));
+                    activeChunks.Add(new ChunkCoordinate(x, z));
 
-                        for (int i = 0; i < previoslyActiveChunks.Count; i++)
+                    for (int i = 0; i < previoslyActiveChunks.Count; i++)
+                    {
+                        if (previoslyActiveChunks[i].Equals(new ChunkCoordinate(x, z)))
                         {
-                            if (previoslyActiveChunks[i].Equals(new ChunkCoordinate(x, z)))
-                            {
-                                previoslyActiveChunks.RemoveAt(i);
-                            }
+                            previoslyActiveChunks.RemoveAt(i);
                         }
                     }
                 }
             }
         }
 
-        if (sweepDistanceIncrease == 0)
+        foreach (ChunkCoordinate c in previoslyActiveChunks)
         {
-            foreach (ChunkCoordinate c in previoslyActiveChunks)
-            {
-                activeChunks.Remove(new ChunkCoordinate(c.x, c.z));
+            activeChunks.Remove(new ChunkCoordinate(c.x, c.z));
 
-                chunksToDeactivate.Enqueue(world.chunksInWorld[c.x, c.z]);
-            }
+            chunksToDeactivate.Enqueue(world.chunksInWorld[c.x, c.z]);
         }
     }
 

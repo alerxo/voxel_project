@@ -33,7 +33,7 @@ public static class WorldTerrain
 
         #endregion
 
-        #region Terrain
+        #region TerrainHeight
 
         int worldHeight;
         int biomeHeight;
@@ -43,9 +43,11 @@ public static class WorldTerrain
         {
             worldHeight = GetWorldHeight(world, pos);
 
+            SubBiome[] adjacentBiomes = GetAdjacentBiomes(world, cc);
+
             if (isRiver)
             {
-                riverHeight = GetRiverHeight(world, cc);
+                riverHeight = RiverBlend(world, cc, pos, adjacentBiomes);
 
                 biomeHeight = riverHeight - worldHeight + chunkBiome.height;
             }
@@ -55,10 +57,7 @@ public static class WorldTerrain
                 biomeHeight = GetBiomeHeight(world, pos, chunkBiome);
             }
 
-
             //  Blend
-
-            SubBiome[] adjacentBiomes = GetAdjacentBiomes(world, cc);
 
             if (IsBlend(isBlend, adjacentBiomes))
             {
@@ -124,12 +123,14 @@ public static class WorldTerrain
         return worldHeight + biomeHeight;
     }
 
-    private static int GetRiverHeight(World world, ChunkCoordinate cc)
+    public static int GetRiverHeight(World world, ChunkCoordinate cc)
     {
         int xPos = cc.x;
         int zPos = cc.z;
 
-        if (world.chunksInWorld[xPos, zPos].riverWaterHeight != 0)
+        Chunk chunk = world.chunksInWorld[xPos, zPos];
+
+        if (chunk != null && chunk.riverWaterHeight != 0)
         {
             return world.chunksInWorld[xPos, zPos].riverWaterHeight;
         }
@@ -146,7 +147,12 @@ public static class WorldTerrain
             }
         }
 
-        world.chunksInWorld[xPos, zPos].riverWaterHeight = terrainHeight;
+        if(chunk != null)
+        {
+            chunk.riverWaterHeight = terrainHeight;
+        }
+
+        
 
         return terrainHeight;
     }
@@ -308,6 +314,59 @@ public static class WorldTerrain
         }
     }
 
+    private static int RiverBlend(World world, ChunkCoordinate cc, Vector3 pos, SubBiome[] adjacentBiomes)
+    {
+        int riverHeight = GetRiverHeight(world, cc);
+
+        int blendRiver = VoxelData.chunkHeight;
+
+        bool[] adjacentRivers = GetAdjacentRivers(adjacentBiomes);
+
+        Tuple<int, int> pic = GetPositionInChunk(cc, pos);
+
+        for (int i = 0; i < 4; i++)
+        {
+            Tuple<int, int> rpic = GetRightPosInChunk(i);   
+
+            if ((pic.Item1 == rpic.Item1 || pic.Item2 == rpic.Item2) && adjacentRivers[i])
+            {
+                Tuple<int, int> arp = GetAdjacentRiverPos(i);
+
+                blendRiver = Mathf.Min(blendRiver, GetRiverHeight(world, new ChunkCoordinate(cc.x + arp.Item1, cc.z + arp.Item2)));
+            }
+        }
+
+        return Mathf.Min(riverHeight, blendRiver);
+    }
+
+    public static Tuple<int, int> GetRightPosInChunk(int i)
+    {
+        int cw = VoxelData.chunkWidth;
+
+        Tuple<int, int>[] rightPosInChunk = new Tuple<int, int>[4]
+        {
+            Tuple.Create(-1, cw),
+            Tuple.Create(cw, -1),
+            Tuple.Create(1, -1),
+            Tuple.Create(-1, 1),
+        };
+
+        return rightPosInChunk[i];
+    }
+
+    public static Tuple<int, int> GetAdjacentRiverPos(int i)
+    {
+        Tuple<int, int>[] adjacentRiverPos = new Tuple<int, int>[4]
+        {
+            Tuple.Create(0, 1),
+            Tuple.Create(1, 0),
+            Tuple.Create(-1, 0),
+            Tuple.Create(0, -1),
+        };
+
+        return adjacentRiverPos[i];
+    }
+
 
     private static SubBiome[] GetAdjacentBiomes(World world, ChunkCoordinate cc)
     {
@@ -340,6 +399,34 @@ public static class WorldTerrain
         int z = Mathf.FloorToInt(pos.z) - (cc.z * VoxelData.chunkWidth);
 
         return Tuple.Create(x + 1, z + 1);
+    }
+
+    private static bool[] GetAdjacentRivers(SubBiome[] adjacentBiomes)
+    {
+        bool[] adjacentRivers = new bool[4];
+
+        if (adjacentBiomes[1] == adjacentBiomes[4])
+        {
+            adjacentRivers[0] = true;
+        }
+
+        else if (adjacentBiomes[3] == adjacentBiomes[4])
+        {
+            adjacentRivers[1] = true;
+        }
+
+        else if (adjacentBiomes[5] == adjacentBiomes[4])
+        {
+            adjacentRivers[2] = true;
+        }
+
+        else if (adjacentBiomes[7] == adjacentBiomes[4])
+        {
+            adjacentRivers[3] = true;
+        }
+
+
+        return adjacentRivers;
     }
 
 

@@ -528,7 +528,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8945734804422624707, guid: ea8d7bff1037d394ba37e2b3858b5dbf, type: 3}
       propertyPath: worldHeight
-      value: 16
+      value: 32
       objectReference: {fileID: 0}
     - target: {fileID: 8945734804422624707, guid: ea8d7bff1037d394ba37e2b3858b5dbf, type: 3}
       propertyPath: riverReference
@@ -560,11 +560,19 @@ PrefabInstance:
       objectReference: {fileID: 11400000, guid: 8ae4e8a5a1c79de47b3ac5a63b34e561, type: 2}
     - target: {fileID: 8945734804422624707, guid: ea8d7bff1037d394ba37e2b3858b5dbf, type: 3}
       propertyPath: multiplierNoiseScale
-      value: 256
+      value: 128
       objectReference: {fileID: 0}
     - target: {fileID: 8945734804422624707, guid: ea8d7bff1037d394ba37e2b3858b5dbf, type: 3}
       propertyPath: initializeChunkActive
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8945734804422624707, guid: ea8d7bff1037d394ba37e2b3858b5dbf, type: 3}
+      propertyPath: riverSourceHeightLimit
+      value: 128
+      objectReference: {fileID: 0}
+    - target: {fileID: 8945734804422624707, guid: ea8d7bff1037d394ba37e2b3858b5dbf, type: 3}
+      propertyPath: riverSourceHumidityLimit
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 8945734804422624732, guid: ea8d7bff1037d394ba37e2b3858b5dbf, type: 3}
       propertyPath: m_RootOrder

@@ -13,14 +13,14 @@ MonoBehaviour:
   m_Name: River
   m_EditorClassIdentifier: 
   subBiomeName: River
-  threshold: 200
+  threshold: 1
   height: -3
   noiseScale: 75
   octaves: 4
   persistence: 0.5
   lacunarity: 2
   noiseCutoff: 10
-  blendDistance: 0.5
+  blendDistance: 0.4
   blendNoiseImpact: 0
   surfaceBlockId: 6
   subSurfaceBlockId: 6
