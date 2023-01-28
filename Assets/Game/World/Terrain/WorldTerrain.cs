@@ -81,12 +81,16 @@ public static class WorldTerrain
             worldHeight = cachedWorldHeight;
             biomeHeight = cachedBiomeHeight;
             chunkBiome = cachedBlendBiome;
-            riverHeight = GetRiverHeight(world, cc);
+
+            if(isRiver)
+            {
+                riverHeight = GetRiverHeight(world, cc);
+            } 
         }
 
         int terrainHeight = GetTerrainHeight(worldHeight, biomeHeight);
 
-        isCave = IsCave(terrainHeight, pos, 0, 0.01f, 0.7f);
+        isCave = IsCave(terrainHeight, pos);
 
         int yPos = Mathf.FloorToInt(pos.y);
 
@@ -163,16 +167,14 @@ public static class WorldTerrain
         return terrainHeight;
     }
 
-    public static bool IsCave(int terrainHeight, Vector3 position, float offset, float scale, float _threshold)
+    public static bool IsCave(int terrainHeight, Vector3 position)
     {
         if(position.y > terrainHeight || position.y <= 1)
         {
             return false;
         }
 
-        float threshold = (terrainHeight / VoxelData.chunkHeight) + _threshold;
-
-        return Noise.Get3DPerlinCave(position, offset, scale, threshold);
+        return Noise.Get3DPerlinCave(terrainHeight, position);
     }
 
 

@@ -20,6 +20,8 @@ public class RenderDistance : MonoBehaviour
     private Queue<Chunk> chunksToDeactivate = new Queue<Chunk>();
     private Queue<ChunkCoordinate> chunksToEnqueue = new Queue<ChunkCoordinate>();
 
+    private bool checkRenderDistance = false;
+
     private void Start()
     {
         world = GameObject.FindGameObjectWithTag("WorldObj").GetComponent<World>();
@@ -36,18 +38,12 @@ public class RenderDistance : MonoBehaviour
     {
         playerChunk = Voxel_Util.GetChunkCoordinateFromVector3(transform.position);
 
-        if (!playerChunk.Equals(playerLastChunk) || !gameObject.GetComponent<PlayerMovement>().CanMove())
+        if (!playerChunk.Equals(playerLastChunk))
         {
             //  If in new chunk, reset sweep distance
             playerPosition = transform.position;
-        }
 
-        if (chunksToEnqueue.Count > 0)
-        {
-            //  Sends chunks that should be activate to world
-
-            ChunkCoordinate cc = chunksToEnqueue.Dequeue();
-            world.EnqueueNewChunk(cc.x, cc.z);
+            checkRenderDistance = true;
         }
 
         if (chunksToActivate.Count > 0)
@@ -68,9 +64,23 @@ public class RenderDistance : MonoBehaviour
 
         while (true)
         {
-            CheckRenderDistance();
+            if (chunksToEnqueue.Count > 0)
+            {
+                //  Sends chunks that should be activate to world
 
-            Thread.Sleep(1000);
+                ChunkCoordinate cc = chunksToEnqueue.Dequeue();
+                world.EnqueueNewChunk(cc.x, cc.z);
+            }
+
+            else
+            {
+                if (checkRenderDistance)
+                {
+                    CheckRenderDistance();
+                }
+
+                Thread.Sleep(1000);
+            }  
         }
     }
 
