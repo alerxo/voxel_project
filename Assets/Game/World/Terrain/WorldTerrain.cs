@@ -28,8 +28,8 @@ public static class WorldTerrain
         //  Gets the biome from biome map
 
         SubBiome chunkBiome = world.subBiomeMap[cc.x + 1, cc.z + 1];
-
         bool isRiver = chunkBiome == world.riverReference;
+        bool isCave;
 
         #endregion
 
@@ -48,7 +48,6 @@ public static class WorldTerrain
             if (isRiver)
             {
                 riverHeight = RiverBlend(world, cc, pos, adjacentBiomes);
-
                 biomeHeight = riverHeight - worldHeight + chunkBiome.height;
             }
 
@@ -70,6 +69,8 @@ public static class WorldTerrain
                 chunkBiome = BiomeBlend(world, new Vector2(pos.x, pos.z), adjacentBiomes);
             }
 
+            //  Cache
+
             world.chunksInWorld[cc.x, cc.z].cachedWorldHeight = worldHeight;
             world.chunksInWorld[cc.x, cc.z].cachedBiomeHeight = biomeHeight;
             world.chunksInWorld[cc.x, cc.z].cachedBlendBiome = chunkBiome;
@@ -85,6 +86,8 @@ public static class WorldTerrain
 
         int terrainHeight = GetTerrainHeight(worldHeight, biomeHeight);
 
+        isCave = IsCave(terrainHeight, pos, 0, 0.01f, 0.7f);
+
         int yPos = Mathf.FloorToInt(pos.y);
 
         #endregion
@@ -93,7 +96,12 @@ public static class WorldTerrain
 
         //  Determines the blocktype according to parameters
 
-        if (yPos == terrainHeight) return chunkBiome.surfaceBlockId;
+        if (isCave)
+        {
+            return 0;
+        }
+
+        else if (yPos == terrainHeight) return chunkBiome.surfaceBlockId;
         else if (yPos < terrainHeight && yPos > terrainHeight - 4) return chunkBiome.subSurfaceBlockId;
         else if (yPos < terrainHeight) return 3;
         else if (yPos < 64) return 8;
@@ -152,9 +160,19 @@ public static class WorldTerrain
             chunk.riverWaterHeight = terrainHeight;
         }
 
-        
-
         return terrainHeight;
+    }
+
+    public static bool IsCave(int terrainHeight, Vector3 position, float offset, float scale, float _threshold)
+    {
+        if(position.y > terrainHeight || position.y <= 1)
+        {
+            return false;
+        }
+
+        float threshold = (terrainHeight / VoxelData.chunkHeight) + _threshold;
+
+        return Noise.Get3DPerlinCave(position, offset, scale, threshold);
     }
 
 
