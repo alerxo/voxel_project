@@ -226,9 +226,6 @@ public static class BiomeMap
 
     private static Tuple<int, int> GetLowestAdjacent(World world, int x, int z)
     {
-        int cw = VoxelData.chunkWidth;
-        int hcw = VoxelData.chunkWidth / 2;
-
         List<ChunkCoordinate> adjacentPos = new List<ChunkCoordinate>
         {
             new ChunkCoordinate(x, z),
@@ -248,7 +245,7 @@ public static class BiomeMap
             WorldTerrain.GetRiverHeight(world, adjacentPos[4])
         };
 
-        int currentHeight = world.worldHeight;
+        int currentHeight = VoxelData.chunkHeight;
         int currentAdjacent = 0;
 
         for (int i = 0; i < 5; i++)
