@@ -568,7 +568,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8945734804422624707, guid: ea8d7bff1037d394ba37e2b3858b5dbf, type: 3}
       propertyPath: riverSourceHeightLimit
-      value: 128
+      value: 384
       objectReference: {fileID: 0}
     - target: {fileID: 8945734804422624707, guid: ea8d7bff1037d394ba37e2b3858b5dbf, type: 3}
       propertyPath: riverSourceHumidityLimit
