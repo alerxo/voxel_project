@@ -90,7 +90,7 @@ public static class WorldTerrain
 
         int terrainHeight = GetTerrainHeight(worldHeight, biomeHeight);
 
-        isCave = IsCave(terrainHeight, pos);
+        isCave = IsCave(world, terrainHeight, pos);
 
         int yPos = Mathf.FloorToInt(pos.y);
 
@@ -167,14 +167,14 @@ public static class WorldTerrain
         return terrainHeight;
     }
 
-    public static bool IsCave(int terrainHeight, Vector3 position)
+    public static bool IsCave(World world, int terrainHeight, Vector3 position)
     {
         if(position.y > terrainHeight || position.y <= 1)
         {
             return false;
         }
 
-        return Noise.Get3DPerlinCave(terrainHeight, position);
+        return Noise.Get3DPerlinCave(world, terrainHeight, position);
     }
 
 

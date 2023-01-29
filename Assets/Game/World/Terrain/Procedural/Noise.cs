@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using Unity.Mathematics;
 using UnityEngine;
 
 public static class Noise
@@ -75,100 +74,81 @@ public static class Noise
 
     #region cave
 
-    public static bool Get3DPerlinCave(int terrainHieght, Vector3 position)
+    public static bool Get3DPerlinCave(World world, int terrainHieght, Vector3 position)
     {
+        if (Get3DPerlinNoodle(world, position, 0.48f, 0.52f))
+        {
+            return true;
+        }
+
+        else if (Get3DPerlinBigCave(world, position, 0.9f))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static bool Get3DPerlinBigCave(World world, Vector3 position, float _treshold)
+    {
+        //  Returns 3d noise base of mathimatichal mathimeaticds
         float yPos = position.y;
+        if (yPos > 128f) return false;
 
-        float treshold = (yPos / VoxelData.chunkHeight) + 1f;
-
-        float level = yPos / VoxelData.waterHeight;
+        float noise = Get3DPerlin(world, position, 0, 100f, 3, 0.5f, 2f);
+        float treshold = yPos / VoxelData.chunkHeight;
 
         if (yPos <= 32)
         {
             treshold += 1f - (yPos / 32f);
         }
 
-        if (Get3DPerlinCaveLevelTwo(position, 200f, 0.49f, 0.51f))
+        else if (yPos >= 96)
         {
+            treshold += (yPos - 96f) / 32f;
+        }
+
+        if (treshold + _treshold < noise)
             return true;
-        }
 
-        else if(level < 0.5f)
-        {
-            if(yPos >= 96)
-            {
-                treshold += (yPos - 96f) / 32f;
-            }
-
-            if (Get3DPerlinCaveLevelOne(position, 100f, 4, 0.5f, 2f, treshold))
-            {
-                return true;
-            }
-        }
-
-
-
-        return false;
-    }
-
-    public static bool Get3DPerlinCaveLevelOne(Vector3 position, float scale, int octaves, float persistence, float lacunarity, float threshold)
-    {
-        //  Returns 3d noise base of mathimatichal mathimeaticds
-
-        float amplituide = 1f;
-        float frequency = 1f;
-
-        float noise = 0;
-        float offset = 100;
-
-        for (int i = 0; i < octaves; i++)
-        {
-            float x = (position.x + offset + 0.1f) / scale * frequency;
-            float y = (position.y + offset + 0.1f) / scale * frequency;
-            float z = (position.z + offset + 0.1f) / scale * frequency;
-
-            float AB = Mathf.PerlinNoise(x, y);
-            float BC = Mathf.PerlinNoise(y, z);
-            float AC = Mathf.PerlinNoise(x, z);
-            float BA = Mathf.PerlinNoise(y, x);
-            float CB = Mathf.PerlinNoise(z, y);
-            float CA = Mathf.PerlinNoise(z, x);
-
-            noise += ((AB + BC + AC + CA + BA + CB + CA) / 6f) * amplituide;
-
-            amplituide *= persistence;
-            frequency *= lacunarity;
-        }
-
-        if (noise > threshold)
-            return true;
         else
             return false;
     }
 
-    public static bool Get3DPerlinCaveLevelTwo(Vector3 position, float scale, float threshold1, float threshold2)
+    public static bool Get3DPerlinNoodle(World world, Vector3 position, float threshold1, float threshold2)
     {
         //  Returns 3d noise base of mathimatichal mathimeaticds
 
-        float offset = 200;
+        bool ringOne = false;
+        bool ringTwo = false;
 
-        float x = (position.x + offset + 0.1f) / scale;
-        float y = (position.y + offset + 0.1f) / scale;
-        float z = (position.z + offset + 0.1f) / scale;
+        float yPos = position.y;
 
-        float AB = Mathf.PerlinNoise(x, y);
-        float BC = Mathf.PerlinNoise(y, z);
-        float AC = Mathf.PerlinNoise(x, z);
-        float BA = Mathf.PerlinNoise(y, x);
-        float CB = Mathf.PerlinNoise(z, y);
-        float CA = Mathf.PerlinNoise(z, x);
+        //  Ring one
 
-        float noise = (AB + BC + AC + CA + BA + CB + CA) / 6f;
+        float noise1 = Get3DPerlin(world, position, 200f, 100f, 1, 0.5f, 2f);
 
-        if (threshold1 < noise && noise < threshold2)
+        if (threshold1 < noise1 && noise1 < threshold2)
+        {
+            ringOne = true;
+        }
+
+        //  Ring two
+
+        float noise2 = Get3DPerlin(world, position, 1000f, 100f, 1, 0.5f, 2f);
+
+        if (threshold1 < noise2 && noise2 < threshold2)
+        {
+            ringTwo = true;
+        }
+
+        //  If overlap, return true
+
+        if (ringOne && ringTwo)
             return true;
         else
             return false;
+
     }
 
     #endregion
@@ -260,7 +240,36 @@ public static class Noise
         return noiseHeight;
     }
 
+    public static float Get3DPerlin(World world, Vector3 position, float _offset, float scale, int octaves, float persistence, float lacunarity)
+    {
+        float amplituide = 1f;
+        float frequency = 1f;
+        float noise = 0f;
 
+        float offset = _offset + world.randomSeed + 0.1f;
+
+        for (int i = 0; i < octaves; i++)
+        {
+            float x = (position.x + offset + 0.1f) / scale * frequency;
+            float y = (position.y + offset + 0.1f) / scale * frequency;
+            float z = (position.z + offset + 0.1f) / scale * frequency;
+
+            float AB = Mathf.PerlinNoise(x, y);
+            float BC = Mathf.PerlinNoise(y, z);
+            float AC = Mathf.PerlinNoise(x, z);
+            float BA = Mathf.PerlinNoise(y, x);
+            float CB = Mathf.PerlinNoise(z, y);
+            float CA = Mathf.PerlinNoise(z, x);
+
+            float perlinValue = (AB + BC + AC + CA + BA + CB + CA) / 6f;
+
+            noise += perlinValue * amplituide;
+            amplituide *= persistence;
+            frequency *= lacunarity;
+        }
+
+        return noise;
+    }
 
     #endregion
 }
