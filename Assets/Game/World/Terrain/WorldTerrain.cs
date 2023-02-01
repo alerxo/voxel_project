@@ -29,7 +29,7 @@ public static class WorldTerrain
 
         SubBiome chunkBiome = world.subBiomeMap[cc.x + 1, cc.z + 1];
         bool isRiver = chunkBiome == world.riverReference;
-        bool isCave;
+        bool isCave = false;
 
         #endregion
 
@@ -90,9 +90,12 @@ public static class WorldTerrain
 
         int terrainHeight = GetTerrainHeight(worldHeight, biomeHeight);
 
-        isCave = IsCave(world, terrainHeight, pos);
-
         int yPos = Mathf.FloorToInt(pos.y);
+
+        if (yPos <= terrainHeight)
+        {
+            isCave = IsCave(world, terrainHeight, pos);
+        }
 
         #endregion
 

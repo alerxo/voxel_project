@@ -76,24 +76,30 @@ public static class Noise
 
     public static bool Get3DPerlinCave(World world, int terrainHieght, Vector3 position)
     {
-        if (position.y > terrainHieght) return false;
+        float yPos = position.y;
 
-        else if (Get3DPerlinBottom(world, position, 0.9f))
+        if (yPos > terrainHieght) return false;
+
+        else if (Get3DPerlinBottom(world, position, yPos, 0.75f))
         {
             return true;
         }
 
-        else if (Get3DPerlinMiddleToBottomPassages(world, position, 0.8f))
+        if (yPos < 48f) return false;
+
+        else if (Get3DPerlinMiddleToBottomPassages(world, position, yPos, 0.7f))
         {
             return true;
         }
 
-        else if(Get3DPerlinMiddle(world, position, 0.45f))
+        if (yPos < 144f) return false;
+
+        else if (Get3DPerlinMiddle(world, position, yPos, 0.5f))
         {
             return true;
         }
 
-        else if (Get3DPerlinSurfaceToMiddlePassages(world, position, terrainHieght, 0.48f, 0.52f))
+        else if (Get3DPerlinSurfaceToMiddlePassages(world, position, yPos, terrainHieght, 0.48f, 0.52f))
         {
             return true;
         }
@@ -101,56 +107,50 @@ public static class Noise
         return false;
     }
 
-    public static bool Get3DPerlinSurfaceToMiddlePassages(World world, Vector3 position, int terrainHeight, float threshold1, float threshold2)
+    public static bool Get3DPerlinSurfaceToMiddlePassages(World world, Vector3 position, float yPos, int terrainHeight, float threshold1, float threshold2)
     {
         //  Returns 3d noise base of mathimatichal mathimeaticds
+        float threshold = (1f - (yPos / terrainHeight)) / 2;
 
-        bool ringOne = false;
-        bool ringTwo = false;
-
-        float yPos = position.y;
-
-        float threshold = 1 - (yPos / terrainHeight);
-
-        threshold1 += threshold / 2;
-        threshold2 += threshold / 2;
+        threshold1 += threshold;
 
         //  Ring one
 
-        float noise1 = Get3DPerlin(world, position, 3000f, 200f, 1, 0.5f, 2f);
+        float noise1 = Get3DPerlin(world, position, 3000f, 200f, 1, 0.2f, 2f);
 
         if (threshold1 < noise1 && noise1 < threshold2)
         {
-            ringOne = true;
+            //  Ring two
+
+            threshold2 += threshold;
+
+            float noise2 = Get3DPerlin(world, position, 4000f, 200f, 1, 0.2f, 2f);
+
+            if (threshold1 < noise2 && noise2 < threshold2)
+            {
+                return true;
+            }
+
+            else
+            {
+                return false;
+            }
         }
 
-        //  Ring two
-
-        float noise2 = Get3DPerlin(world, position, 4000f, 200f, 1, 0.2f, 2f);
-
-        if (threshold1 < noise2 && noise2 < threshold2)
-        {
-            ringTwo = true;
-        }
-
-        //  If overlap, return true
-
-        if (ringOne && ringTwo)
-            return true;
         else
+        {
             return false;
-
+        }
     }
 
-    public static bool Get3DPerlinMiddle(World world, Vector3 position, float _treshold)
+    public static bool Get3DPerlinMiddle(World world, Vector3 position, float yPos, float _treshold)
     {
         //  Returns 3d noise base of mathimatichal mathimeaticds
-        float yPos = position.y;
-        yPos += 16f * (1 - (Get2DPerlin(world, new Vector2(position.x, position.z), 500f, 100f, 2, 0.4f, 2f, 10f) * 2f));
+        yPos += 16f * (1 - (Get2DPerlin(world, new Vector2(position.x, position.z), 500f, 100f, 1, 0.4f, 2f, 10f) * 2f));
 
         if (yPos > 256f) return false;
 
-        float noise = Get3DPerlin(world, position, 2000f, 50f, 4, 0.3f, 1.5f);
+        float noise = Get3DPerlin(world, position, 2000f, 50f, 3, 0.4f, 1.7f);
         float treshold = yPos / VoxelData.chunkHeight;
 
         if (yPos <= 160f)
@@ -163,20 +163,20 @@ public static class Noise
             treshold += (yPos - 240f) / 16f;
         }
 
-        if (treshold + _treshold < noise)
-            return true;
+        if (treshold + _treshold < noise) return true;
 
-        else
-            return false;
+        return false;
+
     }
 
-    public static bool Get3DPerlinMiddleToBottomPassages(World world, Vector3 position, float _treshold)
+    public static bool Get3DPerlinMiddleToBottomPassages(World world, Vector3 position, float yPos, float _treshold)
     {
         //  Returns 3d noise base of mathimatichal mathimeaticds
-        float yPos = position.y;
-        yPos += 64f * (1 - (Get2DPerlin(world, new Vector2(position.x, position.z), 500f, 150f, 3, 0.3f, 1.5f, 10f) * 2f));
+        yPos += 64f * (1 - (Get2DPerlin(world, new Vector2(position.x, position.z), 500f, 150f, 2, 0.5f, 1.7f, 10f) * 2f));
 
-        float noise = Get3DPerlin(world, new Vector3(position.x, yPos, position.z), 1000f, 100f, 4, 0.3f, 3f);
+        if (yPos > 192f) return false;
+
+        float noise = Get3DPerlin(world, new Vector3(position.x, yPos, position.z), 1000f, 100f, 3, 0.4f, 3f);
         float treshold = (yPos - 128f) / VoxelData.chunkHeight;
 
         if (yPos <= 112f)
@@ -189,18 +189,15 @@ public static class Noise
             treshold += (yPos - 160f) / 32f;
         }
 
-        if (treshold + _treshold < noise)
-            return true;
+        if (treshold + _treshold < noise) return true;
 
-        else
-            return false;
+        return false;
     }
 
-    public static bool Get3DPerlinBottom(World world, Vector3 position, float _treshold)
+    public static bool Get3DPerlinBottom(World world, Vector3 position, float yPos, float _treshold)
     {
         //  Returns 3d noise base of mathimatichal mathimeaticds
-        float yPos = position.y;
-        yPos += 16f * (1 - (Get2DPerlin(world, new Vector2(position.x, position.z), 500f, 150f, 3, 0.4f, 2f, 10f) * 2f));
+        yPos += 16f * (1 - (Get2DPerlin(world, new Vector2(position.x, position.z), 500f, 150f, 2, 0.6f, 2.2f, 10f) * 2f));
 
         if (yPos > 128f) return false;
 
@@ -212,16 +209,15 @@ public static class Noise
             treshold += 1f - (yPos / 16f);
         }
 
-        else if (yPos >= 128f)
+        else if (yPos >= 112f)
         {
-            treshold += (yPos - 128f) / 16f;
+            treshold += (yPos - 112f) / 16f;
         }
 
-        if (treshold + _treshold < noise)
-            return true;
+        if (treshold + _treshold < noise) return true;
 
-        else
-            return false;
+        return false;
+
     }
 
     #endregion
@@ -334,7 +330,7 @@ public static class Noise
             float CB = Mathf.PerlinNoise(z, y);
             float CA = Mathf.PerlinNoise(z, x);
 
-            float perlinValue = (AB + BC + AC + CA + BA + CB + CA) / 6f;
+            float perlinValue = (AB + BC + AC + CA + BA + CB) / 6f;
 
             noise += perlinValue * amplituide;
             amplituide *= persistence;
