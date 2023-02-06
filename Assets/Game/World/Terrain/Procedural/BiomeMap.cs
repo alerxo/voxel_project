@@ -12,11 +12,13 @@ public static class BiomeMap
     public static SubBiome[,] GetBiomeMap(World world)
     {
         //  Creates a biome map with size of worldsize and also creates a layer around this, so edges of map always have surrounding biomes
+        //  Also creates a map for rivers, as these are generated seperatly
 
         SubBiome[,] subBiomeMap = new SubBiome[VoxelData.worldSizeInChunks + 2, VoxelData.worldSizeInChunks + 2];
         bool[,] riverMap = GetRiverMap(world);
 
-        //  Each chunk will be assigen a climate, depedning on temperature, humidity and height
+        //  Each chunk will be assigen a biome, depedning on temperature, humidity and height
+        //  If its a river, disregard above
 
         for (int x = 0; x < VoxelData.worldSizeInChunks + 2; x++)
         {
@@ -125,6 +127,8 @@ public static class BiomeMap
 
     private static float GetTemperature(Vector2 pos)
     {
+        //  Tmperature by perlin noise multiplied
+
         return Noise.GetTemperature(pos);
     }
 
@@ -144,7 +148,12 @@ public static class BiomeMap
 
     private static bool[,] GetRiverMap(World world)
     {
+        //  Creates a map of rivers using source chunks and creating worm from that chunk
+
         bool[,] riverMap = new bool[VoxelData.worldSizeInChunks + 2, VoxelData.worldSizeInChunks + 2];
+
+        //  Creating the source chunks
+        //  Go trough each chunk, if the height and humidity are high enough, add it to the list
 
         List<Tuple<int, int>> sourceChunks = new List<Tuple<int, int>>();
 
@@ -160,6 +169,10 @@ public static class BiomeMap
                 }
             }
         }
+
+        //  Goes thorugh the source block list, grabs first in list, then creates a worm
+        //  Adds a random number to "s" as to not grab source chunks that are next to each other,
+        //  as in source chunk list, entire mountains can be added, and we only want one chunk
 
         for (int s = 0; s < sourceChunks.Count; s++)
         {
@@ -181,6 +194,9 @@ public static class BiomeMap
 
     private static List<Tuple<int, int>> GetRiverWorm(World world, int x, int z)
     {
+        //  Starts from a souce chunk and gets adjacent chunk with lowest height, as to simulate rver flowing downwards,
+        //  If current chunk is the highest out of adjacent chunks, end worm
+
         List<Tuple<int, int>> riverWorm = new List<Tuple<int, int>>();
 
         int currentX = x;
@@ -188,7 +204,9 @@ public static class BiomeMap
 
         bool riverEndFound = false;
 
-        int failSafe = 10;
+        //  Fail safe so we dont accidentally create infinite loop
+
+        int failSafe = 50;
         int riverLength = 0;
 
         while (!riverEndFound)
@@ -213,6 +231,8 @@ public static class BiomeMap
 
     private static Tuple<int, int> GetNextRiverChunk(World world, int currentX, int currentZ)
     {
+        //  Gets the lowest adjacent chunk
+
         int x = currentX;
         int z = currentZ;
 
@@ -226,6 +246,8 @@ public static class BiomeMap
 
     private static Tuple<int, int> GetLowestAdjacent(World world, int x, int z)
     {
+        //  Creates a list of adjacent chunk and their heights, loops through and gets lowest
+
         List<ChunkCoordinate> adjacentPos = new List<ChunkCoordinate>
         {
             new ChunkCoordinate(x, z),

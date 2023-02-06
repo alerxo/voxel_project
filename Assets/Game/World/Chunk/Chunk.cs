@@ -183,7 +183,7 @@ public class Chunk
 
     private void UpdateAdjacentVoxels(int x, int y, int z)
     {
-        //  Uses face list i voxel data to loop through faces and adds to chunks to update list
+        //  Uses face list in voxeldata to loop through faces and adds to chunks to update list
 
         Vector3 thisVoxel = new Vector3(x, y, z);
 
@@ -222,7 +222,7 @@ public class Chunk
 
     public bool IsActive
     {
-        //  If changing the activate statem, if active, lod one, if inactive, lod two, will update child objects, ie entities in chunk,
+        //  If changing the activate state, if active, lod one, if inactive, lod two, will update child objects, ie entities in chunk,
         //  related to render distance we want to render entities in chunk with chunk
 
         get { return _isActive; }
@@ -246,6 +246,8 @@ public class Chunk
 
     public bool IsEditable
     {
+        //  If we have data of chunk voxels
+
         get
         {
             if (!isVoxelMapPopulated)
@@ -257,8 +259,7 @@ public class Chunk
 
     public void PopulateVoxelMap()
     {
-        //  Fills the chunk with voxel data
-        //  Locks the chunksupdate list and adds itself, as to avoid confusion between threads
+        //  Fills the chunk with voxel data, ie, block types, then updates itself
 
         for (int x = 0; x < VoxelData.chunkWidth; x++)
         {
@@ -286,9 +287,7 @@ public class Chunk
 
     public void UpdateChunk()
     {
-        //  Adds all the modifications to the chunk, ie changing block id
-        //  Adding voxel mesh data at each spot in the chunk if its a solid
-        //  Adds itself to draw queue, threading -||-
+        //  Clears all mesh data and then updates it, then tells world, ie main thread, to create the meshes
 
         ClearMeshDataLodOne();
         ClearMeshDataLodTwo();
@@ -309,7 +308,7 @@ public class Chunk
         Mesh lodOneMesh = new Mesh();
         lodOneMesh.vertices = lodOneVerticies.ToArray();
 
-        if (lodOneMesh.vertices.Length > 65535) Debug.Log("Error in Chunk/CreateMeshLodOne: Verticie count larger than 65535");
+        if (lodOneMesh.vertices.Length > 65535) Debug.Log("Error in Chunk/CreateMeshLodOne: Verticie count larger than 65535 (" + lodOneMesh.vertices.Length + ")");
 
         lodOneMesh.subMeshCount = 2;
 
@@ -361,6 +360,9 @@ public class Chunk
 
     private void UpdateLodOneMeshData()
     {
+        //  Applies all existing modifications to voxel data
+        //  Loops through entire chunk and adds meshes where needed
+
         while (modifications.Count > 0)
         {
             VoxelMod vm = modifications.Dequeue();
@@ -487,7 +489,7 @@ public class Chunk
 
     private void UpdateLodTwoMeshData()
     {
-        //  Hardcoded square, with top vertices being terrai height at chunk local positon, using cached height value and bottom being 0.
+        //  Hardcoded rectangle, with top vertices being terrai height at chunk local positon, using cached height value and bottom being 0.
 
         Block block = world.blocks[subBiome.surfaceBlockId];
 
@@ -617,6 +619,8 @@ public class Chunk
 
     private void ClearMeshDataLodOne()
     {
+        //  Resets all mesh data
+
         lodOneVertexIndex = 0;
         lodOneVerticies.Clear();
 
@@ -636,6 +640,8 @@ public class Chunk
 
     private void ClearMeshDataLodTwo()
     {
+        //  -||-
+
         lodTwoVertexIndex = 0;
 
         lodTwoVerticies.Clear();
@@ -666,6 +672,8 @@ public class Chunk
 
     private void AddWaterTexture(Vector3 pos, List<Vector2> uvs)
     {
+        //  Gets world cords of texture, where voxel is supposed to be, so all shaders match with adjacent voxels
+
         float step = 1f / (float)VoxelData.WorldSizeInVoxel;
 
         float x = ((VoxelData.chunkWidth * coord.x) + pos.x) * step;
@@ -681,7 +689,7 @@ public class Chunk
 
     public byte GetVoxelFromGlobalVector3(Vector3 pos)
     {
-        //  -||-
+        //  Converts global coordinates to local chunk coorinates
 
         int xCheck = Mathf.FloorToInt(pos.x);
         int yCheck = Mathf.FloorToInt(pos.y);
@@ -698,7 +706,7 @@ public class Chunk
 
     private bool CheckVoxelTransparancy(Vector3 pos, int cachedWorldHeight, int cachedBiomeHeight, SubBiome cachedBlendBiome)
     {
-        //  Converts into ints
+        //  Converts into intergers
         //  Checks if voxel pos is inside of chunk
         //  Checks the position of given coordinates for voxel
         //  Returns true if voxel is there and the voxel is not transparent
@@ -717,7 +725,7 @@ public class Chunk
 
     private bool CheckVoxelLiquid(Vector3 pos, int cachedWorldHeight, int cachedBiomeHeight, SubBiome cachedBlendBiome)
     {
-        //  Converts into ints
+        //  Converts into intergers
         //  Checks if voxel pos is inside of chunk
         //  Checks the position of given coordinates for voxel
         //  Returns true if voxel is there and the voxel is not liquid

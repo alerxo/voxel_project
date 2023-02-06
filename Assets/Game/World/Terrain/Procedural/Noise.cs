@@ -8,6 +8,12 @@ public static class Noise
 
     public static int Get2DPerlinWorld(World world, Vector2 pos)
     {
+        //  Gets base worldheight as an interger, by layering different types of noise
+        //  First gets an value from a perlin noise,
+        //  Then amplifies that value depending on a different perlin noise
+        //  Then adds water height to this value, as its the base height
+        //  Then multiples this by a fall off value, which approaches 0 from the start of the world edge, resulting in large bodies of water surrounding the continent
+
         float noise = GetWorldBaseHeight(world, pos, world.noiseScale, world.octaves, world.persistence, world.lacunarity);
 
         noise *= GetWorldHeightMultiplier(world, pos, world.multiplierNoiseScale);
@@ -21,6 +27,9 @@ public static class Noise
 
     public static float GetWorldBaseHeight(World world, Vector2 pos, float scale, int octaves, float persistence, float lacunarity)
     {
+        //  Very similar to the util 2d perlin noise, 
+        //  Difference is we change the offset, to try and combat the lack of detail when dealing with large worlds
+
         float amplituide = 1f;
         float frequency = 1f;
         float noiseHeight = 0f;
@@ -46,6 +55,10 @@ public static class Noise
 
     public static float GetWorldHeightMultiplier(World world, Vector2 pos, float scale)
     {
+        //  Gets a value thorugh layered perlin noise
+        //  Then takes that value to the power of itself, resulting in a sharp acending value, ie, steep mountains
+        //  Then multiples this by another perlin noise, for more randomness
+
         float offset = world.randomSeed + 0.1f;
 
         float sampleX = ((pos.x + 1) / scale);
@@ -76,6 +89,12 @@ public static class Noise
 
     public static bool Get3DPerlinCave(World world, int terrainHieght, Vector3 position, int yPos)
     {
+        //  The cave system consists of 4 different layers
+        //  The passage from surface (or top) to middle
+        //  The middle layer
+        //  The passage from middle to bottom
+        //  The bottom
+
         if (Get3DPerlinBottom(world, position, yPos, 0.75f))
         {
             return true;
@@ -107,7 +126,14 @@ public static class Noise
 
     public static bool Get3DPerlinSurfaceToMiddlePassages(World world, Vector3 position, float yPos, int terrainHeight, float _treshold)
     {
-        //  Returns 3d noise base of mathimatichal mathimeaticds
+        //  The surface to middle passage, should be noodle like caves connecting the surface to lower cave systems
+
+        //  Take the y position and adds perlin to it, as to make the caves go up and down, changes are drastic as to make caves steep
+        //  Then grabs the 3d perlin noise, using the changed y position, giving shape to cave walls
+
+        //  Then gets a threshold value, this is 2d perlin, which is the main noise in this case, the higher ends of the perlin maps are made into caves
+        //  Checks if cave is within the the right y positions, so it doesnt go too high or too low
+
         yPos += 50f * (1 - (Get2DPerlin(world, new Vector2(position.x, position.z), 1000f, 75f, 1, 0.5f, 1.7f, 10f) * 2f));
 
         float noise = Get3DPerlin(world, new Vector3(position.x, yPos, position.z), 2000f, 85f, 1, 0.4f, 3f);
@@ -132,7 +158,11 @@ public static class Noise
 
     public static bool Get3DPerlinMiddle(World world, Vector3 position, float yPos, float _treshold)
     {
-        //  Returns 3d noise base of mathimatichal mathimeaticds
+        //  Takes the y positon and adds some perlin to it, as to make caves go up and down a bit
+        //  Gets the main 3d noise, where caves are air
+        //  Creates a threshold with increases with hieght, so cave walls lean inwards
+        //  Checks if cave is within the right y position
+
         yPos += 20f * (1 - (Get2DPerlin(world, new Vector2(position.x, position.z), 500f, 150f, 2, 0.5f, 1.7f, 10f) * 2f));
 
         if (yPos > 220f) return false;
@@ -158,7 +188,8 @@ public static class Noise
 
     public static bool Get3DPerlinMiddleToBottomPassages(World world, Vector3 position, float yPos, float _treshold)
     {
-        //  Returns 3d noise base of mathimatichal mathimeaticds
+        //  Same as surface to middle passage, with differnt values, but same theory  
+
         yPos += 50f * (1 - (Get2DPerlin(world, new Vector2(position.x, position.z), 500f, 85f, 1, 0.5f, 1.7f, 10f) * 2f));
 
         if (yPos > 205f) return false;
@@ -185,7 +216,8 @@ public static class Noise
 
     public static bool Get3DPerlinBottom(World world, Vector3 position, float yPos, float _treshold)
     {
-        //  Returns 3d noise base of mathimatichal mathimeaticds
+        //  Same as middle, with differnt values, but same theory  
+
         yPos += 20f * (1 - (Get2DPerlin(world, new Vector2(position.x, position.z), 500f, 150f, 2, 0.6f, 2.2f, 10f) * 2f));
 
         if (yPos > 120f) return false;
@@ -215,6 +247,10 @@ public static class Noise
 
     public static float Get2DPerlinHumidity(World world, Vector2 pos, float _offset, float scale, int octaves, float persistence, float lacunarity, float noiseCutoff)
     {
+        //  Just perlin noise
+
+        //  Needs work
+
         float humidity = Get2DPerlin(world, pos, _offset, scale, octaves, persistence, lacunarity, noiseCutoff);
 
         humidity = Mathf.Clamp01(humidity);
@@ -230,6 +266,8 @@ public static class Noise
     {
         //  Gets the distance from equator
         //  Then assign temperature depending on distance
+
+        //  Needs work
 
         float longitude = pos.y;
 
@@ -300,6 +338,8 @@ public static class Noise
 
     public static float Get3DPerlin(World world, Vector3 position, float _offset, float scale, int octaves, float persistence, float lacunarity)
     {
+        //  Scary mathemathics
+
         float amplituide = 1f;
         float frequency = 1f;
         float noise = 0f;
