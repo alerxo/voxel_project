@@ -309,6 +309,8 @@ public class Chunk
         Mesh lodOneMesh = new Mesh();
         lodOneMesh.vertices = lodOneVerticies.ToArray();
 
+        if (lodOneMesh.vertices.Length > 65535) Debug.Log("Error in Chunk/CreateMeshLodOne: Verticie count larger than 65535");
+
         lodOneMesh.subMeshCount = 2;
 
         lodOneMesh.SetTriangles(lodOneSolidTriangles.ToArray(), 0);

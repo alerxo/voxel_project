@@ -111,14 +111,14 @@ public static class WorldTerrain
         else if (yPos == terrainHeight) return chunkBiome.surfaceBlockId;
         else if (yPos < terrainHeight && yPos > terrainHeight - 4) return chunkBiome.subSurfaceBlockId;
         else if (yPos < terrainHeight) return 3;
-        else if (yPos < 64) return 8;
+        else if (yPos < VoxelData.waterHeight) return 8;
 
         else if(isRiver && yPos < riverHeight - world.riverReference.height)
         {
             return 8;
         }
 
-        else return 0;
+        return 0;
 
         #endregion
     }
