@@ -282,6 +282,30 @@ public static class Noise
 
     #endregion
 
+    #region Structure
+
+    public static float Get2DPerlinStructure(Vector2 pos, float offset)
+    {
+        //  First grabs some perlin to act as the noise
+        //  Then does some mathematical maths on with that perlin,
+        //  So that small changes in position, equal large changes in numbers
+        //  Then gets the modulo of the value, divided by the modulo as to always return a value between 0 and 1
+
+        float perlin = Mathf.PerlinNoise((pos.x * 1111f) + offset + 0.1f, (pos.y * 1111f) + offset + 0.1f);
+
+        float value = (pos.x * 1111f) + (pos.y * 1111f) + perlin;
+        value *= perlin;
+        value *= value;
+
+        value %= 1000000f;
+
+        value /= 1000000f;
+
+        return value;
+    }
+
+    #endregion
+
     #region util    
 
     public static float GetFallOffMap(Vector2 pos)

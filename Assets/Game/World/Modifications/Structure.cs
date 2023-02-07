@@ -7,9 +7,6 @@ public class Structure : ScriptableObject
 {
     public VoxelModification[] voxels;
 
-    public float scale;
     public float threshold;
     public float offset;
-
-    public bool isSurfaceStructure;
 }

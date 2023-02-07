@@ -23,7 +23,5 @@ MonoBehaviour:
     id: 5
   - position: {x: 0, y: 4, z: 0}
     id: 7
-  scale: 100
-  threshold: 0.8
-  offset: 10
-  isSurfaceStructure: 1
+  threshold: 0.98
+  offset: 0

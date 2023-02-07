@@ -105,11 +105,11 @@ public static class WorldTerrain
 
         #region Structures
 
-        foreach(Structure structure in chunkBiome.structures)
+        if(yPos == terrainHeight)
         {
-            if(structure.isSurfaceStructure && yPos == terrainHeight)
+            foreach (Structure structure in chunkBiome.structures)
             {
-                if (Noise.Get2DPerlin(world, pos2d, structure.offset, structure.scale, 1, 0.5f, 2f, 10f) > structure.threshold)
+                if (Noise.Get2DPerlinStructure(pos2d, structure.offset) >= structure.threshold)
                 {
                     Queue<VoxelModification> queue = new Queue<VoxelModification>();
 
@@ -119,27 +119,12 @@ public static class WorldTerrain
                     }
 
                     world.modifications.Enqueue(queue);
+
                     return structure.voxels[0].id;
                 }
             }
-
-            else if(!structure.isSurfaceStructure)
-            {
-                if (Noise.Get2DPerlin(world, pos2d, structure.offset, structure.scale, 1, 0.5f, 2f, 10f) > structure.threshold)
-                {
-                    Queue<VoxelModification> queue = new Queue<VoxelModification>();
-
-                    foreach (VoxelModification vm in structure.voxels)
-                    {
-                        queue.Enqueue(new VoxelModification(vm.position + pos, vm.id));
-                    }
-
-                    world.modifications.Enqueue(queue);
-                    return structure.voxels[0].id;
-                }
-            }
-
         }
+
 
         #endregion
 
