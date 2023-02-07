@@ -95,7 +95,7 @@ public static class Noise
         //  The passage from middle to bottom
         //  The bottom
 
-        if (Get3DPerlinBottom(world, position, yPos, 0.75f))
+        if (Get3DPerlinBottom(world, position, yPos, 0.65f))
         {
             return true;
         }
@@ -223,7 +223,7 @@ public static class Noise
         if (yPos > 120f) return false;
 
         float noise = Get3DPerlin(world, position, 2000f, 200f, 3, 0.5f, 2f);
-        float treshold = yPos / VoxelData.chunkHeight;
+        float treshold = (yPos) / VoxelData.chunkHeight;
 
         if (yPos <= 20f)
         {
@@ -232,7 +232,7 @@ public static class Noise
 
         else if (yPos >= 100f)
         {
-            treshold += (yPos - 100) / 20f;
+            treshold += (yPos - 100f) / 20f;
         }
 
         if (treshold + _treshold < noise) return true;

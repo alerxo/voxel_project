@@ -11,6 +11,8 @@ public static class WorldTerrain
 
         ChunkCoordinate cc = Voxel_Util.GetChunkCoordinateFromVector3(pos);
 
+        Vector2 pos2d = new Vector2(pos.x, pos.z);
+
         #region Constants
 
         //  If outside of world, block is air
@@ -97,6 +99,46 @@ public static class WorldTerrain
             //  We dont check if we are lowest voxel or we are in the sky
 
             isCave = IsCave(world, terrainHeight, pos, yPos);
+        }
+
+        #endregion
+
+        #region Structures
+
+        foreach(Structure structure in chunkBiome.structures)
+        {
+            if(structure.isSurfaceStructure && yPos == terrainHeight)
+            {
+                if (Noise.Get2DPerlin(world, pos2d, structure.offset, structure.scale, 1, 0.5f, 2f, 10f) > structure.threshold)
+                {
+                    Queue<VoxelModification> queue = new Queue<VoxelModification>();
+
+                    foreach (VoxelModification vm in structure.voxels)
+                    {
+                        queue.Enqueue(new VoxelModification(vm.position + pos, vm.id));
+                    }
+
+                    world.modifications.Enqueue(queue);
+                    return structure.voxels[0].id;
+                }
+            }
+
+            else if(!structure.isSurfaceStructure)
+            {
+                if (Noise.Get2DPerlin(world, pos2d, structure.offset, structure.scale, 1, 0.5f, 2f, 10f) > structure.threshold)
+                {
+                    Queue<VoxelModification> queue = new Queue<VoxelModification>();
+
+                    foreach (VoxelModification vm in structure.voxels)
+                    {
+                        queue.Enqueue(new VoxelModification(vm.position + pos, vm.id));
+                    }
+
+                    world.modifications.Enqueue(queue);
+                    return structure.voxels[0].id;
+                }
+            }
+
         }
 
         #endregion

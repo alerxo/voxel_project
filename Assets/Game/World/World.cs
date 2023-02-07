@@ -70,10 +70,10 @@ public class World : MonoBehaviour
 
     //  Threading related
 
-    public Queue<Queue<VoxelMod>> modifications = new Queue<Queue<VoxelMod>>();
+    public Queue<Queue<VoxelModification>> modifications = new Queue<Queue<VoxelModification>>();
 
-    public List<Chunk> chunksToCreateChunkData = new List<Chunk>();
-    public List<Chunk> chunksToUpdateLodTwo = new List<Chunk>();
+    public List<Chunk> chunksToPopulateVoxelMap = new List<Chunk>();
+    public List<Chunk> chunksToUpdateMesh = new List<Chunk>();
 
     public Queue<Chunk> chunksToDrawLodOne = new Queue<Chunk>();
     public Queue<Chunk> chunksToDrawWater = new Queue<Chunk>();
@@ -175,7 +175,7 @@ public class World : MonoBehaviour
         {
             lock (ThreadedUpdate_Lock)
             {
-                chunksToCreateChunkData.Add(chunksInWorld[x, z]);
+                chunksToPopulateVoxelMap.Add(chunksInWorld[x, z]);
             }
         }
     }
@@ -204,19 +204,24 @@ public class World : MonoBehaviour
 
         while (true)
         {
+            if (chunksToPopulateVoxelMap.Count > 0)
+            {
+                PopulateVoxelMap();
+            }
+
             if (!applyingModifications)
             {
                 ApplyModifications();
             }
 
-            if (chunksToCreateChunkData.Count > 0)
+            if (chunksToUpdateMesh.Count > 0)
             {
-                CreateChunkData();
+                UpdateChunkMesh();
             }
         }
     }
 
-    private void CreateChunkData()
+    private void PopulateVoxelMap()
     {
         //  Starts a new round of chunk populating when it can
         //  Looks for the first chunk thats not populated, ie not editable
@@ -226,12 +231,12 @@ public class World : MonoBehaviour
 
         lock (ThreadedUpdate_Lock)
         {
-            while (!updated && index < chunksToCreateChunkData.Count - 1)
+            while (!updated && index < chunksToPopulateVoxelMap.Count - 1)
             {
-                if (chunksToCreateChunkData[index].IsEditable == false)
+                if (!chunksToPopulateVoxelMap[index].IsEditable)
                 {
-                    chunksToCreateChunkData[index].PopulateVoxelMap();
-                    chunksToCreateChunkData.RemoveAt(index);
+                    chunksToPopulateVoxelMap[index].PopulateVoxelMap();
+                    chunksToPopulateVoxelMap.RemoveAt(index);
                     updated = true;
                 }
                 else
@@ -251,11 +256,11 @@ public class World : MonoBehaviour
 
         while (modifications.Count > 0)
         {
-            Queue<VoxelMod> modQueue = modifications.Dequeue();
+            Queue<VoxelModification> modQueue = modifications.Dequeue();
 
             while (modQueue.Count > 0)
             {
-                VoxelMod vm = modQueue.Dequeue();
+                VoxelModification vm = modQueue.Dequeue();
 
                 ChunkCoordinate cc = Voxel_Util.GetChunkCoordinateFromVector3(vm.position);
 
@@ -266,12 +271,46 @@ public class World : MonoBehaviour
                         Debug.Log("Error in World/ApplyModifications: Chunk doesn't exist");
                     }
 
-                    chunksInWorld[cc.x, cc.z].modifications.Enqueue(vm);
+                    else
+                    {
+                        chunksInWorld[cc.x, cc.z].modifications.Enqueue(vm);
+
+                        if (!chunksToUpdateMesh.Contains(chunksInWorld[cc.x, cc.z]))
+                        {
+                            chunksToUpdateMesh.Add(chunksInWorld[cc.x, cc.z]);
+                        }
+                    }
                 }
             }
         }
 
         applyingModifications = false;
+    }
+
+    private void UpdateChunkMesh()
+    {
+        //  Starts a new round of chunk populating when it can
+        //  Looks for the first chunk thats not populated, ie not editable
+
+        bool updated = false;
+        int index = 0;
+
+        lock (ThreadedUpdate_Lock)
+        {
+            while (!updated && index < chunksToUpdateMesh.Count - 1)
+            {   
+                if (chunksToUpdateMesh[index].IsEditable)
+                {
+                    chunksToUpdateMesh[index].UpdateChunkLodOne();
+                    chunksToUpdateMesh.RemoveAt(index);
+                    updated = true;
+                }
+                else
+                {
+                    index++;
+                }
+            }
+        }
     }
 
     private void OnDisable()

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Data.Common;
 using UnityEngine;
 
 public class Chunk
@@ -71,7 +72,7 @@ public class Chunk
 
     public byte[,,] voxelMap = new byte[VoxelData.chunkWidth, VoxelData.chunkHeight, VoxelData.chunkWidth];
 
-    public Queue<VoxelMod> modifications = new Queue<VoxelMod>();
+    public Queue<VoxelModification> modifications = new Queue<VoxelModification>();
 
     private World world;
 
@@ -193,7 +194,7 @@ public class Chunk
 
             if(!IsVoxelInChunk((int)currentVoxel.x, (int)currentVoxel.y, (int)currentVoxel.z))
             {
-                world.chunksToCreateChunkData.Insert(0, Voxel_Util.GetChunkFromVector3(world, currentVoxel + position));
+                world.chunksToPopulateVoxelMap.Insert(0, Voxel_Util.GetChunkFromVector3(world, currentVoxel + position));
             }
         }
     }
@@ -215,7 +216,7 @@ public class Chunk
 
         lock (world.ThreadedUpdate_Lock)
         {
-            world.chunksToCreateChunkData.Insert(0, this);
+            world.chunksToPopulateVoxelMap.Insert(0, this);
             UpdateAdjacentVoxels(xCheck, yCheck, zCheck);
         }
     }
@@ -282,80 +283,35 @@ public class Chunk
 
         isVoxelMapPopulated = true;
 
-        UpdateChunk();
+        UpdateChunkLodTwo();
+
+        lock (world.ThreadedUpdate_Lock)
+        {
+            world.chunksToUpdateMesh.Add(this);
+        }
     }
 
-    public void UpdateChunk()
+    public void UpdateChunkLodOne()
     {
         //  Clears all mesh data and then updates it, then tells world, ie main thread, to create the meshes
 
         ClearMeshDataLodOne();
-        ClearMeshDataLodTwo();
 
         UpdateLodOneMeshData();
-        UpdateLodTwoMeshData();
 
         world.chunksToDrawLodOne.Enqueue(this);
         world.chunksToDrawWater.Enqueue(this);
+    }
+
+    public void UpdateChunkLodTwo()
+    {
+        //  Clears all mesh data and then updates it, then tells world, ie main thread, to create the meshes
+
+        ClearMeshDataLodTwo();
+
+        UpdateLodTwoMeshData();
+
         world.chunksToDrawLodTwo.Enqueue(this);
-    }
-
-    public void CreateMeshLodOne()
-    {
-        //  Adding the info to a mesh
-        //  recalculating normals as to make sure all verticies face the right way
-
-        Mesh lodOneMesh = new Mesh();
-        lodOneMesh.vertices = lodOneVerticies.ToArray();
-
-        if (lodOneMesh.vertices.Length > 65535) Debug.Log("Error in Chunk/CreateMeshLodOne: Verticie count larger than 65535 (" + lodOneMesh.vertices.Length + ")");
-
-        lodOneMesh.subMeshCount = 2;
-
-        lodOneMesh.SetTriangles(lodOneSolidTriangles.ToArray(), 0);
-        lodOneMesh.SetTriangles(lodOneTransparentTriangles.ToArray(), 1);
-
-        lodOneMesh.uv = lodOneUvs.ToArray();
-
-        lodOneMesh.RecalculateNormals();
-
-        lodOneObjectMeshFilter.mesh = lodOneMesh;
-        lodOneObjectMeshCollider.sharedMesh = lodOneObjectMeshFilter.mesh;
-    }
-
-    public void CreateMeshWater()
-    {
-        //  -||-
-
-        Mesh lodOneWaterMesh = new Mesh();
-        lodOneWaterMesh.vertices = lodOneWaterVerticies.ToArray();
-
-        lodOneWaterMesh.subMeshCount = 1;
-        lodOneWaterMesh.SetTriangles(lodOneWaterTriangles.ToArray(), 0);
-
-        lodOneWaterMesh.uv = lodOneWaterUvs.ToArray();
-
-        lodOneWaterMesh.RecalculateNormals();
-
-        lodOneWaterObjectMeshFilter.mesh = lodOneWaterMesh;
-        lodOneWaterObjectMeshCollider.sharedMesh = lodOneWaterObjectMeshFilter.mesh;
-    }
-
-    public void CreateMeshLodTwo()
-    {
-        //  -||-
-
-        Mesh lodTwoMesh = new Mesh();
-        lodTwoMesh.vertices = lodTwoVerticies.ToArray();
-
-        lodTwoMesh.subMeshCount = 1;
-        lodTwoMesh.SetTriangles(lodTwoTriangles.ToArray(), 0);
-
-        lodTwoMesh.uv = lodTwoUvs.ToArray();
-
-        lodTwoMesh.RecalculateNormals();
-
-        lodTwoObjectMeshFilter.mesh = lodTwoMesh;
     }
 
     private void UpdateLodOneMeshData()
@@ -365,7 +321,7 @@ public class Chunk
 
         while (modifications.Count > 0)
         {
-            VoxelMod vm = modifications.Dequeue();
+            VoxelModification vm = modifications.Dequeue();
 
             Vector3 pos = vm.position -= position;
             voxelMap[(int)pos.x, (int)pos.y, (int)pos.z] = vm.id;
@@ -615,7 +571,65 @@ public class Chunk
         lodTwoVertexIndex += 4;
 
         #endregion
-    }   
+    }
+
+    public void CreateMeshLodOne()
+    {
+        //  Adding the info to a mesh
+        //  recalculating normals as to make sure all verticies face the right way
+
+        Mesh lodOneMesh = new Mesh();
+        lodOneMesh.vertices = lodOneVerticies.ToArray();
+
+        if (lodOneMesh.vertices.Length > 65535) Debug.Log("Error in Chunk/CreateMeshLodOne: Verticie count larger than 65535 (" + lodOneMesh.vertices.Length + ")");
+
+        lodOneMesh.subMeshCount = 2;
+
+        lodOneMesh.SetTriangles(lodOneSolidTriangles.ToArray(), 0);
+        lodOneMesh.SetTriangles(lodOneTransparentTriangles.ToArray(), 1);
+
+        lodOneMesh.uv = lodOneUvs.ToArray();
+
+        lodOneMesh.RecalculateNormals();
+
+        lodOneObjectMeshFilter.mesh = lodOneMesh;
+        lodOneObjectMeshCollider.sharedMesh = lodOneObjectMeshFilter.mesh;
+    }
+
+    public void CreateMeshWater()
+    {
+        //  -||-
+
+        Mesh lodOneWaterMesh = new Mesh();
+        lodOneWaterMesh.vertices = lodOneWaterVerticies.ToArray();
+
+        lodOneWaterMesh.subMeshCount = 1;
+        lodOneWaterMesh.SetTriangles(lodOneWaterTriangles.ToArray(), 0);
+
+        lodOneWaterMesh.uv = lodOneWaterUvs.ToArray();
+
+        lodOneWaterMesh.RecalculateNormals();
+
+        lodOneWaterObjectMeshFilter.mesh = lodOneWaterMesh;
+        lodOneWaterObjectMeshCollider.sharedMesh = lodOneWaterObjectMeshFilter.mesh;
+    }
+
+    public void CreateMeshLodTwo()
+    {
+        //  -||-
+
+        Mesh lodTwoMesh = new Mesh();
+        lodTwoMesh.vertices = lodTwoVerticies.ToArray();
+
+        lodTwoMesh.subMeshCount = 1;
+        lodTwoMesh.SetTriangles(lodTwoTriangles.ToArray(), 0);
+
+        lodTwoMesh.uv = lodTwoUvs.ToArray();
+
+        lodTwoMesh.RecalculateNormals();
+
+        lodTwoObjectMeshFilter.mesh = lodTwoMesh;
+    }
 
     private void ClearMeshDataLodOne()
     {

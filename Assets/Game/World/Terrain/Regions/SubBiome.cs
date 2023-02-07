@@ -47,4 +47,8 @@ public class SubBiome : ScriptableObject
     [Header("Lodes")]
 
     public Lode[] lodes;
+
+    [Header("Structures")]
+
+    public Structure[] structures;
 }
