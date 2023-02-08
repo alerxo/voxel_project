@@ -284,7 +284,7 @@ public static class Noise
 
     #region Structure
 
-    public static float Get2DPerlinStructure(Vector2 pos, float offset)
+    public static float Get2DPerlinStructureThreshold(Vector2 pos, float offset)
     {
         //  First grabs some perlin to act as the noise
         //  Then does some mathematical maths on with that perlin,
