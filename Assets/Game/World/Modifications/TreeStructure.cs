@@ -25,29 +25,41 @@ public class TreeStructure : ScriptableObject
     public float branchGrowRangeToPoints;
 
     public float branchRadius;
+    public int leafRadius;
 
-    public float branchLength;
+    public float branchParentFalloff;
+
+    private List<Vector3> points = new List<Vector3>();
+    private int longestBranch = 1;
 
 
     public VoxelModification[] GetVoxels(Vector3 pos)
     {
         List<VoxelModification> voxels = new List<VoxelModification>();
 
-        List<Tuple<Vector3, Vector3>> branches = GetBranches(new Vector2(pos.x, pos.z));
+        List<Tuple<Vector3, Vector3, int>> branches = GetBranches(new Vector2(pos.x, pos.z));
 
-        for(int x = 0; x < colonialisationRadius * 2; x++)
+        for(int x = Mathf.FloorToInt(-colonialisationRadius); x < colonialisationRadius; x++)
         {
-            for (int y = 0; y < colonialisationHeight; y++)
+            for (int y = 0; y < colonialisationHeight + colonialisationStartHeight; y++)
             {
-                for (int z = 0; z < colonialisationRadius * 2; z++)
+                for (int z = Mathf.FloorToInt(-colonialisationRadius); z < colonialisationRadius * 2; z++)
                 {
                     Vector3 voxelPos = new Vector3(x, y, z);
 
-                    foreach (Tuple<Vector3, Vector3> branch in branches)
+                    foreach (Tuple<Vector3, Vector3, int> branch in branches)
                     {
-                        if(DistanceToBranch(branch, voxelPos) < branchRadius)
+                        float distance = DistanceToBranch(branch, voxelPos);
+
+                        if (branch.Item1 != branch.Item2 && distance < branchRadius - (branch.Item3 * branchParentFalloff))
                         {
                             voxels.Add(new VoxelModification(voxelPos, woodId));
+                        }
+
+                        else if(branch.Item1 == branch.Item2 && Vector3.Distance(voxelPos, branch.Item1) < leafRadius * 
+                            (1f - (Vector3.Distance(voxelPos, new Vector3(0, colonialisationStartHeight + colonialisationHeight / 2, 0)) / ((colonialisationHeight + colonialisationRadius) / 2))))
+                        {
+                            voxels.Add(new VoxelModification(voxelPos, leafId));
                         }
                     }
                 }
@@ -57,42 +69,64 @@ public class TreeStructure : ScriptableObject
         return voxels.ToArray();
     }
 
-    private float DistanceToBranch(Tuple<Vector3, Vector3> branch, Vector3 voxelPos)
+    private float DistanceToBranch(Tuple<Vector3, Vector3, int> branch, Vector3 voxelPos)
     {
-        return Vector3.Cross((branch.Item2 - branch.Item1).normalized, voxelPos - branch.Item1).magnitude;
+        //return Vector3.Cross((branch.Item2 - branch.Item1).normalized, voxelPos - branch.Item1).magnitude;
+
+        Vector3 intersection = new Vector3();
+
+        Vector3 start = branch.Item1;
+        Vector3 end = branch.Item2;
+
+        float distance = Vector3.Distance(start, end);
+
+        float t = (((voxelPos.x - end.x) * (start.x - end.x)) + ((voxelPos.y - end.y) * (start.y - end.y)) + ((voxelPos.z - end.z) * (start.z - end.z))) / (distance * distance);
+
+        t = Mathf.Clamp01(t);
+
+        intersection.x = end.x + (t * (start.x - end.x));
+        intersection.y = end.y + (t * (start.y - end.y));
+        intersection.z = end.z + (t * (start.z - end.z));
+
+        return Vector3.Distance(voxelPos, intersection);
     }
 
 
-    private List<Tuple<Vector3, Vector3>> GetBranches(Vector2 pos2d)
+    private List<Tuple<Vector3, Vector3, int>> GetBranches(Vector2 pos2d)
     {
-        List<Vector3> points = GetPoints(pos2d);
+        points = GetPoints(pos2d);
 
-        List<Tuple<Vector3, Vector3>> branches = new List<Tuple<Vector3, Vector3>>();
+        List<Tuple<Vector3, Vector3, int>> branches = new List<Tuple<Vector3, Vector3, int>>();
+        
+        Queue<Tuple<Vector3, int>> growingBranches = new Queue<Tuple<Vector3, int>>();
 
-        branches.Add(Tuple.Create(points[0], points[1]));
-        branches.Add(Tuple.Create(points[2], points[3]));
-        branches.Add(Tuple.Create(points[3], points[4]));
-        branches.Add(Tuple.Create(points[5], points[6]));
-
-        return branches;
-
-
-        Queue<Vector3> growingBranches = new Queue<Vector3>();
-
-        growingBranches.Enqueue(new Vector3(0, 0, 0));
+        growingBranches.Enqueue(Tuple.Create(new Vector3(0, 0, 0), 0));
 
         int failsafe = 0;
+        bool trunkDone = false;
 
-        while (growingBranches.Peek().y < colonialisationStartHeight)
+        while (!trunkDone && failsafe < 1000)
         {
-            Vector3 branch = growingBranches.Dequeue();
+            Tuple<Vector3, int> branch = growingBranches.Dequeue();
 
-            Vector3 newBranch = GrowTrunk(branch);
+            Vector3 start = branch.Item1;
 
-            branches.Add(Tuple.Create(branch, newBranch));
+            Vector3 end = GrowTrunk(start);
 
-            growingBranches.Enqueue(newBranch);
+            growingBranches.Enqueue(Tuple.Create(end, 0));
 
+            if (growingBranches.Peek().Item1.y >= colonialisationStartHeight)
+            {
+                trunkDone = true;
+                branches.Add(Tuple.Create(start, end, 1));
+            }
+
+            else
+            {
+                branches.Add(Tuple.Create(start, end, 0));
+            }
+
+       
             failsafe++;
 
             if (failsafe > 999)
@@ -103,22 +137,28 @@ public class TreeStructure : ScriptableObject
 
         while (growingBranches.Count > 0 && failsafe < 1000)
         {
-            Vector3 branch = growingBranches.Dequeue();
+            Tuple<Vector3, int> branch = growingBranches.Dequeue();
 
-            Vector3 newBranch = GrowBranch(branch, points);
+            Vector3 start = branch.Item1;
 
-            branches.Add(Tuple.Create(branch, newBranch));
+            Vector3 end = GrowBranch(start, points);
 
-            if (CanGrow(newBranch, points))
+            if(end != Vector3.zero)
             {
-                growingBranches.Enqueue(newBranch);
-
-                for (int i = 0; i < points.Count; i++)
+                if (CanGrow(start, branch.Item2, points))
                 {
-                    if (Vector3.Distance(newBranch, points[i]) < branchLength)
-                    {
-                        points.Remove(points[i]);
-                    }
+                    branches.Add(Tuple.Create(start, end, branch.Item2 + 1));
+                    growingBranches.Enqueue(Tuple.Create(start, branch.Item2 + 1));
+                }
+
+                else
+                {
+                    branches.Add(Tuple.Create(start, start, branch.Item2 + 1));
+                }
+
+                if (CanGrow(end, branch.Item2, points))
+                {
+                    growingBranches.Enqueue(Tuple.Create(end, branch.Item2 + 1));
                 }
             }
 
@@ -144,28 +184,43 @@ public class TreeStructure : ScriptableObject
         
         List<Vector3> closePoints = new List<Vector3>();
 
-        foreach(Vector3 point in points)
+        for (int i = 0; i < points.Count; i++)
         {
-            if(Vector3.Distance(branch, point) < branchGrowRangeToPoints)
+            if(Vector3.Distance(branch, points[i]) < branchGrowRangeToPoints)
             {
-                closePoints.Add(point);
+                closePoints.Add(points[i]);
+
+                if(Vector3.Distance(branch, points[i]) < branchGrowRangeToPoints)
+                {
+                    points.Remove(points[i]);
+                }
             }
         }
 
-        Vector3 direction = Vector3.zero;
+        points.TrimExcess();
 
-        foreach(Vector3 point in closePoints)
+        Vector3 position = Vector3.zero;
+
+        foreach (Vector3 point in closePoints)
         {
-            direction += (point - branch).normalized;
+            position += point;
         }
 
-        direction = Vector3.Normalize(direction);
+        if(closePoints.Count > 1)
+        {
+            position /= closePoints.Count;
+        }
 
-        return branch + (direction * branchLength);
+        return position;
     }
 
-    private bool CanGrow(Vector3 branch, List<Vector3> points)
+    private bool CanGrow(Vector3 branch, int parents, List<Vector3> points)
     {
+        if(branchRadius - (parents * branchParentFalloff) <= 0)
+        {
+            return false;
+        }
+
         if(branch.y > colonialisationStartHeight + colonialisationHeight)
         {
             return false;
@@ -203,9 +258,9 @@ public class TreeStructure : ScriptableObject
 
     private Vector3 GetPoint(Vector2 pos, float index)
     {
-        float x = GetRandomValue(pos, index, colonialisationRadius * 2f);
+        float x = GetRandomValue(pos, index, colonialisationRadius * 2f) - colonialisationRadius;
         float y = GetRandomValue(pos, index + 3, colonialisationHeight) + colonialisationStartHeight;
-        float z = GetRandomValue(pos, index + 7, colonialisationRadius * 2f);
+        float z = GetRandomValue(pos, index + 7, colonialisationRadius * 2f) - colonialisationRadius;
 
         return new Vector3(x, y, z);
     }

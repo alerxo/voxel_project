@@ -12,14 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5ce31a99a78857a46af9b323ac890934, type: 3}
   m_Name: TreeTest
   m_EditorClassIdentifier: 
-  threshold: 0.999
+  threshold: 0.996
   offset: 0
   woodId: 4
   leafId: 5
-  colonialisationRadius: 20
+  colonialisationRadius: 10
   colonialisationHeight: 20
-  colonialisationPointAmount: 1000
+  colonialisationPointAmount: 4000
   colonialisationStartHeight: 10
-  branchGrowRangeToPoints: 2
+  branchGrowRangeToPoints: 5
   branchRadius: 2
-  branchLength: 4
+  leafRadius: 10
+  branchParentFalloff: 0.2
