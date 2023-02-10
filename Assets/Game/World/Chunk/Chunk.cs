@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Data.Common;
 using UnityEngine;
 
 public class Chunk
@@ -76,7 +75,7 @@ public class Chunk
 
     private World world;
 
-    private bool _isActive;
+    private bool _isActive = false;
     private bool isVoxelMapPopulated = false;
 
     // child objects
@@ -123,8 +122,6 @@ public class Chunk
         lodTwoObject = new GameObject();
 
         #endregion
-
-        IsActive = world.initializeChunkActive;
 
         #region layers
 

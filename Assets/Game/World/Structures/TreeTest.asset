@@ -21,6 +21,13 @@ MonoBehaviour:
   colonialisationPointAmount: 200
   colonialisationStartHeight: 15
   branchGrowRangeToPoints: 10
+  branchKillRange: 8
   branchRadius: 2
-  leafRadius: 10
-  branchParentFalloff: 0.1
+  leafRadius: 12
+  branchParentFalloff: 0.05
+  rootAmount: 5
+  rootRadius: 5
+  rootDepth: 2
+  rootHeight: 3
+  rootSlimness: 3
+  trunkLean: 0.5

@@ -20,6 +20,29 @@ public static class BiomeMap
         //  Each chunk will be assigen a biome, depedning on temperature, humidity and height
         //  If its a river, disregard above
 
+        #region Test scene
+
+        GameObject biomeTestObj = GameObject.FindGameObjectWithTag("Biometest");
+
+        if (biomeTestObj != null){
+
+            SubBiome testBiome = biomeTestObj.GetComponent<BiomeTest>().testBiome;
+
+            Debug.Log(testBiome.name);
+
+            for (int x = 0; x < VoxelData.worldSizeInChunks + 2; x++)
+            {
+                for (int z = 0; z < VoxelData.worldSizeInChunks + 2; z++)
+                {
+                    subBiomeMap[x, z] = testBiome;
+                }
+            }
+
+            return subBiomeMap;
+        }
+
+        #endregion
+
         for (int x = 0; x < VoxelData.worldSizeInChunks + 2; x++)
         {
             for (int z = 0; z < VoxelData.worldSizeInChunks + 2; z++)

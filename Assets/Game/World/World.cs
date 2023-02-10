@@ -7,10 +7,6 @@ public class World : MonoBehaviour
 {
     #region oof
 
-    //  Test values
-
-    public bool initializeChunkActive;
-
     [Space]
 
     //  Terrain and climate
