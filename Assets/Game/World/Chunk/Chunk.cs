@@ -267,6 +267,15 @@ public class Chunk
                 cachedBiomeHeight = 0;
                 cachedBlendBiome = null;
 
+                #region Test scene
+
+                if(subBiome.subBiomeName == "Void")
+                {
+                    cachedBlendBiome = subBiome;
+                }
+
+                #endregion
+
                 for (int y = 0; y < VoxelData.chunkHeight; y++)
                 {
                     voxelMap[x, y, z] = WorldTerrain.GetVoxelBlockType(world, new Vector3(x, y, z) + position, true, cachedWorldHeight, cachedBiomeHeight, cachedBlendBiome);

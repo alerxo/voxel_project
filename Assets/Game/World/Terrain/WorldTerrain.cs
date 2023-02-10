@@ -7,6 +7,15 @@ public static class WorldTerrain
 {
     public static byte GetVoxelBlockType(World world, Vector3 pos, bool isBlend, int cachedWorldHeight, int cachedBiomeHeight, SubBiome cachedBlendBiome)
     {
+        #region Test scene
+
+        if(cachedBlendBiome != null && cachedBlendBiome.subBiomeName == "Void")
+        {
+            return 0;
+        }
+
+        #endregion
+
         //  Goes through different parameters to determine blocktype
 
         ChunkCoordinate cc = Voxel_Util.GetChunkCoordinateFromVector3(pos);

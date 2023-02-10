@@ -11,6 +11,7 @@ TagManager:
   - SpawnObj
   - WorldObj
   - Biometest
+  - Structuretest
   layers:
   - Default
   - TransparentFX
