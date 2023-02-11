@@ -12,16 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 31e6426776407704ea9ba8c8b5aaf7ce, type: 3}
   m_Name: Test
   m_EditorClassIdentifier: 
-  voxels:
-  - position: {x: 0, y: 0, z: 0}
-    id: 5
-  - position: {x: 0, y: 1, z: 0}
-    id: 5
-  - position: {x: 0, y: 2, z: 0}
-    id: 5
-  - position: {x: 0, y: 3, z: 0}
-    id: 5
-  - position: {x: 0, y: 4, z: 0}
-    id: 7
+  structureName: test
   threshold: 0.98
   offset: 0

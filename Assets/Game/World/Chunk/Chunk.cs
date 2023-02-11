@@ -179,28 +179,9 @@ public class Chunk
         #endregion
     }
 
-    private void UpdateAdjacentVoxels(int x, int y, int z)
-    {
-        //  Uses face list in voxeldata to loop through faces and adds to chunks to update list
-
-        Vector3 thisVoxel = new Vector3(x, y, z);
-
-        for (int r = 0; r < 6; r++)
-        {
-            Vector3 currentVoxel = thisVoxel + VoxelData.faceChecks[r];
-
-            if(!IsVoxelInChunk((int)currentVoxel.x, (int)currentVoxel.y, (int)currentVoxel.z))
-            {
-                world.chunksToPopulateVoxelMap.Insert(0, Voxel_Util.GetChunkFromVector3(world, currentVoxel + position));
-            }
-        }
-    }
-
     public void EditVoxel(Vector3 pos, byte newID)
     {
         //  Changes the ID of voxel and updates itself, and adjacent voxels
-
-        //  Not used rn but can be if block placing should be a thing
 
         int xCheck = Mathf.FloorToInt(pos.x);
         int yCheck = Mathf.FloorToInt(pos.y);
@@ -213,8 +194,25 @@ public class Chunk
 
         lock (world.ThreadedUpdate_Lock)
         {
-            world.chunksToPopulateVoxelMap.Insert(0, this);
+            world.chunksToUpdateMesh.Insert(0, this);
             UpdateAdjacentVoxels(xCheck, yCheck, zCheck);
+        }
+    }
+
+    private void UpdateAdjacentVoxels(int x, int y, int z)
+    {
+        //  Uses face list in voxeldata to loop through faces and adds to chunks to update list
+
+        Vector3 thisVoxel = new Vector3(x, y, z);
+
+        for (int r = 0; r < 6; r++)
+        {
+            Vector3 currentVoxel = thisVoxel + VoxelData.faceChecks[r];
+
+            if (!IsVoxelInChunk((int)currentVoxel.x, (int)currentVoxel.y, (int)currentVoxel.z))
+            {
+                world.chunksToUpdateMesh.Insert(0, Voxel_Util.GetChunkFromVector3(world, currentVoxel + position));
+            }
         }
     }
 
