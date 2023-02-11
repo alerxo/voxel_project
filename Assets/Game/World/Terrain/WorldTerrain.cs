@@ -122,18 +122,15 @@ public static class WorldTerrain
                 {
                     Queue<VoxelModification> queue = new Queue<VoxelModification>();
 
-                    foreach (VoxelModification vm in structure.voxels)
+                    foreach (VoxelModification vm in structure.GetVoxels())
                     {
                         queue.Enqueue(new VoxelModification(vm.position + pos, vm.id));
                     }
 
                     world.modifications.Enqueue(queue);
-
-                    return structure.voxels[0].id;
                 }
             }
         }
-
 
         #endregion
 
