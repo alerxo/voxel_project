@@ -40,24 +40,11 @@ public class StructureEdit : MonoBehaviour
 
         if(Physics.Raycast(ray, out raycastHit, 10f))
         {
-            Vector3 position = new Vector3(Mathf.FloorToInt(raycastHit.point.x), Mathf.FloorToInt(raycastHit.point.y), Mathf.FloorToInt(raycastHit.point.z));
-            position = GetBuildVoxel(position, raycastHit.point);
+            Vector3 position = new Vector3(Mathf.FloorToInt(raycastHit.point.x + raycastHit.normal.x / 2), Mathf.FloorToInt(raycastHit.point.y + raycastHit.normal.y / 2), Mathf.FloorToInt(raycastHit.point.z + raycastHit.normal.z / 2));
 
             Chunk chunk = Voxel_Util.GetChunkFromVector3(world, position);
             chunk.EditVoxel(position, 3);
-
-            Debug.Log("build: " + position);
         }
-    }
-
-    private Vector3 GetBuildVoxel(Vector3 position, Vector3 hit)
-    {
-        position += (hit - position).normalized;
-
-        position = new Vector3(Mathf.FloorToInt(position.x), Mathf.FloorToInt(position.y), Mathf.FloorToInt(position.z));
-
-
-        return position;
     }
 
     private void RemoveVoxel()
@@ -67,28 +54,15 @@ public class StructureEdit : MonoBehaviour
 
         if (Physics.Raycast(ray, out raycastHit, 10f))
         {
-            Vector3 position = new Vector3(Mathf.FloorToInt(raycastHit.point.x), Mathf.FloorToInt(raycastHit.point.y), Mathf.FloorToInt(raycastHit.point.z));
-            position = GetRemoveVoxel(position, raycastHit.point);
-
+            Vector3 position = new Vector3(Mathf.FloorToInt(raycastHit.point.x - raycastHit.normal.x / 2), Mathf.FloorToInt(raycastHit.point.y - raycastHit.normal.y / 2), Mathf.FloorToInt(raycastHit.point.z - raycastHit.normal.z / 2)); ;
+            
             Chunk chunk = Voxel_Util.GetChunkFromVector3(world, position);
             chunk.EditVoxel(position, 0);
-
-            Debug.Log("remove: " + position);
         }
-    }
-
-    private Vector3 GetRemoveVoxel(Vector3 position, Vector3 hit)
-    {
-        //position += (hit - position).normalized;
-
-        position = new Vector3(Mathf.FloorToInt(position.x), Mathf.FloorToInt(position.y), Mathf.FloorToInt(position.z));
-
-
-        return position;
     }
 
     private void ChangeCurrentVoxelID()
     {
-        
+
     }
 }
