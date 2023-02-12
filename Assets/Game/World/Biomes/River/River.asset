@@ -25,3 +25,7 @@ MonoBehaviour:
   surfaceBlockId: 6
   subSurfaceBlockId: 6
   lodes: []
+  structures:
+  - {fileID: 11400000, guid: 6001845be14fb254aba00c73eed215e7, type: 2}
+  treeStructures:
+  - {fileID: 11400000, guid: 56b244e4c561a16498cc1f35d56653aa, type: 2}

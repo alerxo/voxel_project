@@ -401,7 +401,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   testBiome: {fileID: 11400000, guid: ecae73180b7945f438fc678ec14cd8c5, type: 2}
-  chunkAmount: 4
+  chunkAmount: 8
 --- !u!1 &1768581056
 GameObject:
   m_ObjectHideFlags: 0

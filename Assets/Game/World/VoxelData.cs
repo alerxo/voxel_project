@@ -4,6 +4,9 @@ using UnityEngine;
 
 public static class VoxelData
 {
+    //  Structure path
+    public static string structureFilePath;
+
     //  World settings
 
     public static readonly int chunkWidth = 16;

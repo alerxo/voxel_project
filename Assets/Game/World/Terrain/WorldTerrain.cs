@@ -128,6 +128,8 @@ public static class WorldTerrain
                     }
 
                     world.modifications.Enqueue(queue);
+
+                    Debug.Log(structure.structureName);
                 }
             }
         }

@@ -84,6 +84,9 @@ public class World : MonoBehaviour
 
     private void Start()
     {
+        //  Structure file path
+        VoxelData.structureFilePath = Application.dataPath;
+
         //  Starts a new threads for chunk updating, renderdistance checks and voxelmap populating
 
         RenderSettings.fogStartDistance = (VoxelData.RenderDistanceInChunks * VoxelData.chunkWidth) - VoxelData.chunkWidth * 6;
