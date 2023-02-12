@@ -6,7 +6,7 @@ public class StructureEdit : MonoBehaviour
 {
     private World world;
 
-    private byte currentVoxelID;
+    [SerializeField] private byte currentVoxelID;
 
     [SerializeField] private Transform player;
 
@@ -26,11 +26,6 @@ public class StructureEdit : MonoBehaviour
         {
             BuildVoxel();
         }
-
-        if(Input.GetKeyDown(KeyCode.E))
-        {
-            ChangeCurrentVoxelID();
-        }
     }
 
     private void BuildVoxel()
@@ -40,10 +35,16 @@ public class StructureEdit : MonoBehaviour
 
         if(Physics.Raycast(ray, out raycastHit, 10f))
         {
+            if(currentVoxelID >= world.blocks.Length)
+            {
+                Debug.LogError("CurrentVoxelID out of bounds");
+                return;
+            }
+
             Vector3 position = new Vector3(Mathf.FloorToInt(raycastHit.point.x + raycastHit.normal.x / 2), Mathf.FloorToInt(raycastHit.point.y + raycastHit.normal.y / 2), Mathf.FloorToInt(raycastHit.point.z + raycastHit.normal.z / 2));
 
             Chunk chunk = Voxel_Util.GetChunkFromVector3(world, position);
-            chunk.EditVoxel(position, 3);
+            chunk.EditVoxel(position, currentVoxelID);
         }
     }
 
@@ -59,10 +60,5 @@ public class StructureEdit : MonoBehaviour
             Chunk chunk = Voxel_Util.GetChunkFromVector3(world, position);
             chunk.EditVoxel(position, 0);
         }
-    }
-
-    private void ChangeCurrentVoxelID()
-    {
-
     }
 }
