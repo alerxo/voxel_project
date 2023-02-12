@@ -77,8 +77,17 @@ public class StructureTest : MonoBehaviour
 
                                 if(id != 0)
                                 {
-                                    Vector3 position = new Vector3((x * chunkWidth) + cx, cy, (z * chunkWidth) + cz);
-                                    vm.Add(new VoxelModification(position - pos, id));
+                                    if(id == 10)
+                                    {
+                                        Vector3 position = new Vector3((x * chunkWidth) + cx, cy, (z * chunkWidth) + cz);
+                                        vm.Add(new VoxelModification(position - pos, 0));
+                                    }
+
+                                    else
+                                    {
+                                        Vector3 position = new Vector3((x * chunkWidth) + cx, cy, (z * chunkWidth) + cz);
+                                        vm.Add(new VoxelModification(position - pos, id));
+                                    }
                                 }
                             }
                         }

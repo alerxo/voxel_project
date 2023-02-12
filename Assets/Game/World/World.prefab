@@ -207,3 +207,14 @@ MonoBehaviour:
     bottomFaceTexture: 12
     leftFaceTexture: 12
     rightFaceTexture: 12
+  - name: 010-SolidAirBlock
+    drawBlock: 1
+    isSolid: 1
+    isLiquid: 0
+    isTransparent: 0
+    backFaceTexture: 0
+    frontFaceTexture: 0
+    topFaceTexture: 0
+    bottomFaceTexture: 0
+    leftFaceTexture: 0
+    rightFaceTexture: 0
