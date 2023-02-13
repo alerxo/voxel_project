@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Desert
   m_EditorClassIdentifier: 
   subBiomeName: Desert
+  parentBiome: {fileID: 11400000, guid: e17ab4a8c663333489e9076f6c981840, type: 2}
   threshold: 1
   height: 0
   noiseScale: 50

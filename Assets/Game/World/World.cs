@@ -141,7 +141,7 @@ public class World : MonoBehaviour
 
         for (int i = VoxelData.chunkHeight; i < 0; i--)
         {
-            if (WorldTerrain.GetVoxelBlockType(this, new Vector3(spawn.transform.position.x, i, spawn.transform.position.z), true, 0, 0, null) != 0)
+            if (WorldTerrain.GetVoxelBlockType(this, new Vector3(spawn.transform.position.x, i, spawn.transform.position.z), true, 0, 0, 0, null) != 0)
             {
                 spawn.transform.position = new Vector3(spawn.transform.position.x, i + 2, spawn.transform.position.z);
                 return;

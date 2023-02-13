@@ -26,5 +26,30 @@ public class Biome : ScriptableObject
 
     public int arrayPosition;
 
+    [Space]
+
+    [Tooltip("Additional height")]
+    public int height;
+
+    [Header("Noise values\nfreqency = x, less means smaller detail\namplitude = y, more means steeper curves")]
+
+    [Tooltip("Distance between samplepoints, bigger lumps")]
+    public float noiseScale;
+    [Tooltip("Each octave adds another layer of noise")]
+    public int octaves;
+    [Tooltip("Controls decrease in amplitude of octaves, how much the small features made from lacunarity influence the curve")]
+    [Range(0f, 1f)]
+    public float persistence;
+    [Tooltip("Controls increase in frequence of octaves, small features on the curve")]
+    public float lacunarity;
+    [Tooltip("Noise can not get higher than this")]
+    public float noiseCutoff;
+
+    [Space]
+    [Tooltip("How much distance affects blend value")]
+    public float blendDistance;
+
+    [Space]
+
     public SubBiome[] subBiomes;
 }

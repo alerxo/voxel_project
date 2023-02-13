@@ -20,5 +20,13 @@ MonoBehaviour:
   maxHeight: 256
   minHeight: 0
   arrayPosition: 4
+  height: 10
+  noiseScale: 100
+  octaves: 1
+  persistence: 0.5
+  lacunarity: 2
+  noiseCutoff: 1
+  blendDistance: 0.5
+  blendNoiseImpact: 0.5
   subBiomes:
   - {fileID: 11400000, guid: 1a5ee8fd81dd15147960dca9409acb7e, type: 2}

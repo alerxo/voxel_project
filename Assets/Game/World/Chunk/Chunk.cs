@@ -86,6 +86,7 @@ public class Chunk
 
     public int cachedWorldHeight;
     public int cachedBiomeHeight;
+    public int cachedSubBiomeHeight;
     public SubBiome cachedBlendBiome;
     public int riverWaterHeight = 0;
 
@@ -261,13 +262,11 @@ public class Chunk
         {
             for (int z = 0; z < VoxelData.chunkWidth; z++)
             {
-                cachedWorldHeight = 0;
-                cachedBiomeHeight = 0;
-                cachedBlendBiome = null;
+                ResetCache();
 
                 #region Test scene
 
-                if(subBiome.subBiomeName == "Void")
+                if (subBiome.subBiomeName == "Void")
                 {
                     cachedBlendBiome = subBiome;
                 }
@@ -276,12 +275,10 @@ public class Chunk
 
                 for (int y = 0; y < VoxelData.chunkHeight; y++)
                 {
-                    voxelMap[x, y, z] = WorldTerrain.GetVoxelBlockType(world, new Vector3(x, y, z) + position, true, cachedWorldHeight, cachedBiomeHeight, cachedBlendBiome);
+                    voxelMap[x, y, z] = WorldTerrain.GetVoxelBlockType(world, new Vector3(x, y, z) + position, true, cachedWorldHeight, cachedBiomeHeight, cachedSubBiomeHeight, cachedBlendBiome);
                 }
 
-                cachedWorldHeight = 0;
-                cachedBiomeHeight = 0;
-                cachedBlendBiome = null;
+                ResetCache();
             }
         }
 
@@ -335,26 +332,22 @@ public class Chunk
         {
             for (int z = 0; z < VoxelData.chunkWidth; z++)
             {
-                cachedWorldHeight = 0;
-                cachedBiomeHeight = 0;
-                cachedBlendBiome = null;
+                ResetCache();
 
                 for (int y = 0; y < VoxelData.chunkHeight; y++)
                 {
                     if (world.blocks[voxelMap[x, y, z]].drawBlock)
                     {
-                        UpdateLodOneVoxelMeshData(new Vector3(x, y, z), cachedWorldHeight, cachedBiomeHeight, cachedBlendBiome);
+                        UpdateLodOneVoxelMeshData(new Vector3(x, y, z), cachedWorldHeight, cachedBiomeHeight, cachedSubBiomeHeight, cachedBlendBiome);
                     }
                 }
 
-                cachedWorldHeight = 0;
-                cachedBiomeHeight = 0;
-                cachedBlendBiome = null;
+                ResetCache();
             }
         }
     }
 
-    private void UpdateLodOneVoxelMeshData(Vector3 pos, int cachedWorldHeight, int cachedBiomeHeight, SubBiome cachedBlendBiome)
+    private void UpdateLodOneVoxelMeshData(Vector3 pos, int cachedWorldHeight, int cachedBiomeHeight, int cachedSubBiomeHeight, SubBiome cachedBlendBiome)
     {
         //  Goes through each face of voxel
         //  Checking for parameters
@@ -372,13 +365,13 @@ public class Chunk
 
             if (isLiquid) // If we are liquid, check if adjacent also is
             {
-                if (CheckVoxelLiquid(pos + VoxelData.faceChecks[r], cachedWorldHeight, cachedBiomeHeight, cachedBlendBiome))
+                if (CheckVoxelLiquid(pos + VoxelData.faceChecks[r], cachedWorldHeight, cachedBiomeHeight, cachedSubBiomeHeight, cachedBlendBiome))
                 {
                     skip = true;
                 }
             }
 
-            if (!skip && CheckVoxelTransparancy(pos + VoxelData.faceChecks[r], cachedWorldHeight, cachedBiomeHeight, cachedBlendBiome))   //  If we survived the parameters, draw face
+            if (!skip && CheckVoxelTransparancy(pos + VoxelData.faceChecks[r], cachedWorldHeight, cachedBiomeHeight, cachedSubBiomeHeight, cachedBlendBiome))   //  If we survived the parameters, draw face
             {
                 //  Adding the uvs, the triangles and verticies, depending on mesh type, then incrementing the vertex index
 
@@ -455,17 +448,13 @@ public class Chunk
 
         int halfChunkWidth = VoxelData.chunkWidth / 2;
 
-        cachedBiomeHeight = 0;
-        cachedWorldHeight = 0;
-        cachedBlendBiome = null;
+        ResetCache();
 
-        WorldTerrain.GetVoxelBlockType(world, new Vector3(position.x + halfChunkWidth, position.y, position.z + halfChunkWidth), false, 0, 0, null);
+        WorldTerrain.GetVoxelBlockType(world, new Vector3(position.x + halfChunkWidth, position.y, position.z + halfChunkWidth), false, 0, 0, 0, null);
 
-        int highestY = cachedWorldHeight + cachedBiomeHeight;
+        int highestY = cachedWorldHeight + cachedSubBiomeHeight;
 
-        cachedBiomeHeight= 0;
-        cachedWorldHeight = 0;
-        cachedBlendBiome = null;
+        ResetCache();
 
         if (highestY < 64)
         {
@@ -722,7 +711,7 @@ public class Chunk
         return voxelMap[xCheck, yCheck, zCheck];
     }
 
-    private bool CheckVoxelTransparancy(Vector3 pos, int cachedWorldHeight, int cachedBiomeHeight, SubBiome cachedBlendBiome)
+    private bool CheckVoxelTransparancy(Vector3 pos, int cachedWorldHeight, int cachedBiomeHeight, int cachedSubBiomeHeight, SubBiome cachedBlendBiome)
     {
         //  Converts into intergers
         //  Checks if voxel pos is inside of chunk
@@ -735,13 +724,13 @@ public class Chunk
 
         if (!IsVoxelInChunk(x, y, z))
         {
-            return Voxel_Util.CheckIfVoxelTransparent(world, pos + position, cachedWorldHeight, cachedBiomeHeight, cachedBlendBiome);
+            return Voxel_Util.CheckIfVoxelTransparent(world, pos + position, cachedWorldHeight, cachedBiomeHeight, cachedSubBiomeHeight, cachedBlendBiome);
         }
 
         return world.blocks[voxelMap[x, y, z]].isTransparent;
     }
 
-    private bool CheckVoxelLiquid(Vector3 pos, int cachedWorldHeight, int cachedBiomeHeight, SubBiome cachedBlendBiome)
+    private bool CheckVoxelLiquid(Vector3 pos, int cachedWorldHeight, int cachedBiomeHeight, int cachedSubBiomeHeight, SubBiome cachedBlendBiome)
     {
         //  Converts into intergers
         //  Checks if voxel pos is inside of chunk
@@ -754,7 +743,7 @@ public class Chunk
 
         if (!IsVoxelInChunk(x, y, z))
         {
-            return Voxel_Util.CheckIfVoxelLiquid(world, pos + position, cachedWorldHeight, cachedBiomeHeight, cachedBlendBiome);
+            return Voxel_Util.CheckIfVoxelLiquid(world, pos + position, cachedWorldHeight, cachedBiomeHeight, cachedSubBiomeHeight, cachedBlendBiome);
         }
 
         return world.blocks[voxelMap[x, y, z]].isLiquid;
@@ -768,6 +757,14 @@ public class Chunk
             return false;
         else
             return true;
+    }
+
+    private void ResetCache()
+    {
+        cachedWorldHeight = 0;
+        cachedSubBiomeHeight = 0;
+        cachedBiomeHeight = 0;
+        cachedBlendBiome = null;
     }
 
     #endregion

@@ -5,7 +5,7 @@ using UnityEngine;
 
 public static class WorldTerrain
 {
-    public static byte GetVoxelBlockType(World world, Vector3 pos, bool isBlend, int cachedWorldHeight, int cachedBiomeHeight, SubBiome cachedBlendBiome)
+    public static byte GetVoxelBlockType(World world, Vector3 pos, bool isBlend, int cachedWorldHeight, int cachedBiomeHeight ,int cachedSubBiomeHeight, SubBiome cachedBlendBiome)
     {
         #region Test scene
 
@@ -38,8 +38,8 @@ public static class WorldTerrain
 
         //  Gets the biome from biome map
 
-        SubBiome chunkBiome = world.subBiomeMap[cc.x + 1, cc.z + 1];
-        bool isRiver = chunkBiome == world.riverReference;
+        SubBiome subBiome = world.subBiomeMap[cc.x + 1, cc.z + 1];
+        bool isRiver = subBiome == world.riverReference;
         bool isCave = false;
 
         #endregion
@@ -48,6 +48,7 @@ public static class WorldTerrain
 
         int worldHeight;
         int biomeHeight;
+        int subBiomeHeight;
         int riverHeight = 0;
 
         if (cachedWorldHeight == 0)
@@ -59,12 +60,14 @@ public static class WorldTerrain
             if (isRiver)
             {
                 riverHeight = RiverWaterfallBlend(world, cc, pos, adjacentBiomes);
-                biomeHeight = riverHeight - worldHeight + chunkBiome.height;
+                biomeHeight = 0;
+                subBiomeHeight = riverHeight - worldHeight + subBiome.height;
             }
 
             else
             {
-                biomeHeight = GetBiomeHeight(world, pos, chunkBiome);
+                biomeHeight = GetBiomeHeight(world, pos, subBiome.parentBiome);
+                subBiomeHeight = GetSubBiomeHeight(world, pos, subBiome);
             }
 
             //  Blend
@@ -75,23 +78,26 @@ public static class WorldTerrain
                 //  Does this by multiplying biomeheight with a value approaching 0, depending on distance
                 //  So on the chunk border, only the world height applies, giving smooth blend
 
-                biomeHeight = Mathf.FloorToInt((float)biomeHeight * TerrainBlend(world, adjacentBiomes, cc, pos));
+                biomeHeight = Mathf.FloorToInt((float)subBiomeHeight * BiomeBlend(world, adjacentBiomes, cc, pos));
+                subBiomeHeight = Mathf.FloorToInt((float)subBiomeHeight * SubBiomeBlend(world, adjacentBiomes, cc, pos));
 
-                chunkBiome = BiomeBlend(world, new Vector2(pos.x, pos.z), adjacentBiomes);
+                subBiome = BiomeBlend(world, new Vector2(pos.x, pos.z), adjacentBiomes);
             }
 
             //  Cache
 
             world.chunksInWorld[cc.x, cc.z].cachedWorldHeight = worldHeight;
             world.chunksInWorld[cc.x, cc.z].cachedBiomeHeight = biomeHeight;
-            world.chunksInWorld[cc.x, cc.z].cachedBlendBiome = chunkBiome;
+            world.chunksInWorld[cc.x, cc.z].cachedSubBiomeHeight = subBiomeHeight;
+            world.chunksInWorld[cc.x, cc.z].cachedBlendBiome = subBiome;
         }
 
         else
         {
             worldHeight = cachedWorldHeight;
             biomeHeight = cachedBiomeHeight;
-            chunkBiome = cachedBlendBiome;
+            subBiomeHeight = cachedSubBiomeHeight;
+            subBiome = cachedBlendBiome;
 
             if(isRiver)
             {
@@ -99,7 +105,7 @@ public static class WorldTerrain
             } 
         }
 
-        int terrainHeight = worldHeight + biomeHeight;
+        int terrainHeight = worldHeight + biomeHeight + subBiomeHeight;
 
         int yPos = Mathf.FloorToInt(pos.y);
 
@@ -116,7 +122,7 @@ public static class WorldTerrain
 
         if(yPos == terrainHeight)
         {
-            foreach (Structure structure in chunkBiome.structures)
+            foreach (Structure structure in subBiome.structures)
             {
                 if (Noise.Get2DPerlinStructureThreshold(pos2d, structure.offset) >= structure.threshold)
                 {
@@ -138,7 +144,7 @@ public static class WorldTerrain
 
         if (yPos == terrainHeight)
         {
-            foreach (TreeStructure treeStructure in chunkBiome.treeStructures)
+            foreach (TreeStructure treeStructure in subBiome.treeStructures)
             {
                 if (Noise.Get2DPerlinStructureThreshold(pos2d, treeStructure.offset) >= treeStructure.threshold)
                 {
@@ -165,8 +171,8 @@ public static class WorldTerrain
             return 0;
         }
 
-        else if (yPos == terrainHeight) return chunkBiome.surfaceBlockId;
-        else if (yPos < terrainHeight && yPos > terrainHeight - 4) return chunkBiome.subSurfaceBlockId;
+        else if (yPos == terrainHeight) return subBiome.surfaceBlockId;
+        else if (yPos < terrainHeight && yPos > terrainHeight - 4) return subBiome.subSurfaceBlockId;
         else if (yPos < terrainHeight) return 3;
         else if (yPos < VoxelData.waterHeight) return 8;
 
@@ -187,9 +193,14 @@ public static class WorldTerrain
         return Noise.Get2DPerlinWorld(world, new Vector2(pos.x, pos.z));
     }
 
-    private static int GetBiomeHeight(World world, Vector3 pos, SubBiome chunkBiome)
+    private static int GetBiomeHeight(World world, Vector3 pos, Biome biome)
     {
-        //  The biome noise
+        return Mathf.FloorToInt(biome.height * Noise.Get2DPerlin(world, new Vector2(pos.x, pos.z), 0, biome.noiseScale, biome.octaves, biome.persistence, biome.lacunarity, biome.noiseCutoff));
+    }
+
+    private static int GetSubBiomeHeight(World world, Vector3 pos, SubBiome chunkBiome)
+    {
+        //  The subbiome noise
 
         return Mathf.FloorToInt(chunkBiome.height * Noise.Get2DPerlin(world, new Vector2(pos.x, pos.z), 0, chunkBiome.noiseScale, chunkBiome.octaves, chunkBiome.persistence, chunkBiome.lacunarity, chunkBiome.noiseCutoff));
     }
@@ -248,7 +259,7 @@ public static class WorldTerrain
         return false;
     }
 
-    private static float TerrainBlend(World world, SubBiome[] adjacentBiomes, ChunkCoordinate cc, Vector3 pos)
+    private static float SubBiomeBlend(World world, SubBiome[] adjacentBiomes, ChunkCoordinate cc, Vector3 pos)
     {
         //  North, east, south, west
 
@@ -276,8 +287,6 @@ public static class WorldTerrain
             }
         }
 
-        float noise = Noise.Get2DPerlin(world, new Vector2(pos.x, pos.z), 0, 10, 4, 0.5f, 2f, 1);
-        float noiseImpact = adjacentBiomes[4].blendNoiseImpact;
         float blendDistance = adjacentBiomes[4].blendDistance;
         float blendValue = 1;
 
@@ -336,7 +345,95 @@ public static class WorldTerrain
         {
             blendValue /= blendDistance;
 
-            blendValue = (blendValue * (1 - noiseImpact)) + (noise * noiseImpact);
+            return blendValue;
+        }
+    }
+
+    private static float BiomeBlend(World world, SubBiome[] adjacentBiomes, ChunkCoordinate cc, Vector3 pos)
+    {
+        //  North, east, south, west
+
+        //  Gets the voxels postion in chunk
+        //  Then checks which is the closes adjacent chunk, where biome is different from chunk biome
+        //  Returns the closest adjacent chunk blend, ie, the lowest value of the parameters
+
+        float chunkWidth = VoxelData.chunkWidth;
+
+        Tuple<int, int> positionInChunk = GetPositionInChunk(cc, pos);
+        float x = positionInChunk.Item1;
+        float y = positionInChunk.Item2;
+
+        List<bool> ab = new List<bool>();
+        foreach (SubBiome subBiome in adjacentBiomes)
+        {
+            if (subBiome.parentBiome != adjacentBiomes[4].parentBiome)
+            {
+                ab.Add(true);
+            }
+
+            else
+            {
+                ab.Add(false);
+            }
+        }
+
+        float blendDistance = adjacentBiomes[4].parentBiome.blendDistance;
+        float blendValue = 1;
+
+        #region math
+
+        if (ab[0])
+        {
+            blendValue = Mathf.Min(blendValue, (Vector2.Distance(new Vector2(chunkWidth, chunkWidth), new Vector2(x, y)) / chunkWidth));
+        } //    top right
+
+        if (ab[1])
+        {
+            blendValue = Mathf.Min(blendValue, ((chunkWidth - y) / chunkWidth));
+        } //    top
+
+        if (ab[2])
+        {
+            blendValue = Mathf.Min(blendValue, (Vector2.Distance(new Vector2(0, chunkWidth), new Vector2(x, y)) / chunkWidth));
+        } //    top left
+
+        if (ab[3])
+        {
+            blendValue = Mathf.Min(blendValue, ((chunkWidth - x) / chunkWidth));
+        } //    right
+
+        if (ab[5])
+        {
+            blendValue = Mathf.Min(blendValue, (x / chunkWidth));
+        } //    left        
+
+        if (ab[6])
+        {
+            blendValue = Mathf.Min(blendValue, (Vector2.Distance(new Vector2(chunkWidth, 0), new Vector2(x, y)) / chunkWidth));
+        } //    bottom right
+
+        if (ab[7])
+        {
+            blendValue = Mathf.Min(blendValue, (y / chunkWidth));
+        } //    bottom
+
+        if (ab[8])
+        {
+            blendValue = Mathf.Min(blendValue, (Vector2.Distance(new Vector2(0, 0), new Vector2(x, y)) / chunkWidth));
+        } //    bottom left 
+
+        #endregion
+
+        //  Adds noise as the remove repetetiveness
+
+        if (blendValue >= blendDistance)
+        {
+            return 1;
+        }
+
+        else
+        {
+            blendValue /= blendDistance;
 
             return blendValue;
         }

@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Ocean
   m_EditorClassIdentifier: 
   subBiomeName: Ocean
+  parentBiome: {fileID: 11400000, guid: 8ae4e8a5a1c79de47b3ac5a63b34e561, type: 2}
   threshold: 1
   height: 0
   noiseScale: 50
@@ -25,3 +26,5 @@ MonoBehaviour:
   surfaceBlockId: 6
   subSurfaceBlockId: 6
   lodes: []
+  structures: []
+  treeStructures: []

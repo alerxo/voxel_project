@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Mountains
   m_EditorClassIdentifier: 
   subBiomeName: Mountains
+  parentBiome: {fileID: 11400000, guid: 95dc55525dde2f84a899984835a2fecd, type: 2}
   threshold: 1
   height: 32
   noiseScale: 50
@@ -25,3 +26,5 @@ MonoBehaviour:
   surfaceBlockId: 3
   subSurfaceBlockId: 3
   lodes: []
+  structures: []
+  treeStructures: []

@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Tundra
   m_EditorClassIdentifier: 
   subBiomeName: Tundra
+  parentBiome: {fileID: 11400000, guid: 5b855d7927ee02045bd694a1e2045c79, type: 2}
   threshold: 1
   height: 0
   noiseScale: 50
@@ -25,3 +26,5 @@ MonoBehaviour:
   surfaceBlockId: 7
   subSurfaceBlockId: 2
   lodes: []
+  structures: []
+  treeStructures: []

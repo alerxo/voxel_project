@@ -7,6 +7,8 @@ public class SubBiome : ScriptableObject
 {
     public string subBiomeName;
 
+    public Biome parentBiome;
+
     public float threshold;
 
     [Space]
@@ -35,8 +37,6 @@ public class SubBiome : ScriptableObject
     [Space]
     [Tooltip("How much distance affects blend value")]
     public float blendDistance;
-    [Tooltip("How much noise is added to blend value")]
-    public float blendNoiseImpact;
 
     [Space]
 

@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Plains
   m_EditorClassIdentifier: 
   subBiomeName: Plains
+  parentBiome: {fileID: 11400000, guid: 16d9efbd5a0a5ce4fab91559e1f1f51f, type: 2}
   threshold: 1
   height: 0
   noiseScale: 50
