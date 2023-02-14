@@ -336,7 +336,7 @@ public class Chunk
 
                 for (int y = 0; y < VoxelData.chunkHeight; y++)
                 {
-                    if (world.blocks[voxelMap[x, y, z]].drawBlock)
+                    if (Blocks.blocks[voxelMap[x, y, z]].drawBlock)
                     {
                         UpdateLodOneVoxelMeshData(new Vector3(x, y, z), cachedWorldHeight, cachedBiomeHeight, cachedSubBiomeHeight, cachedBlendBiome);
                     }
@@ -355,9 +355,9 @@ public class Chunk
 
         byte blockID = voxelMap[(int)pos.x, (int)pos.y, (int)pos.z];
 
-        bool isSolid = world.blocks[blockID].isSolid;
-        bool isTransparent = world.blocks[blockID].isTransparent;
-        bool isLiquid = world.blocks[blockID].isLiquid;
+        bool isSolid = Blocks.blocks[blockID].isSolid;
+        bool isTransparent = Blocks.blocks[blockID].isTransparent;
+        bool isLiquid = Blocks.blocks[blockID].isLiquid;
 
         for (int r = 0; r < 6; r++) // Each row (face)
         {
@@ -401,7 +401,7 @@ public class Chunk
                     lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 2]]);
                     lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 3]]);
 
-                    AddTexture(world.blocks[blockID].GetTextureID(r), lodOneUvs);
+                    AddTexture(Blocks.blocks[blockID].GetTextureID(r), lodOneUvs);
 
                     lodOneTransparentTriangles.Add(lodOneVertexIndex);
                     lodOneTransparentTriangles.Add(lodOneVertexIndex + 1);
@@ -420,7 +420,7 @@ public class Chunk
                     lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 2]]);
                     lodOneVerticies.Add(pos + VoxelData.voxelVerticies[VoxelData.voxelTriangles[r, 3]]);
 
-                    AddTexture(world.blocks[blockID].GetTextureID(r), lodOneUvs);
+                    AddTexture(Blocks.blocks[blockID].GetTextureID(r), lodOneUvs);
 
                     lodOneSolidTriangles.Add(lodOneVertexIndex);
                     lodOneSolidTriangles.Add(lodOneVertexIndex + 1);
@@ -444,7 +444,7 @@ public class Chunk
     {
         //  Hardcoded rectangle, with top vertices being terrai height at chunk local positon, using cached height value and bottom being 0.
 
-        Block block = world.blocks[subBiome.surfaceBlockId];
+        Block block = Blocks.blocks[subBiome.surfaceBlockId];
 
         int halfChunkWidth = VoxelData.chunkWidth / 2;
 
@@ -459,7 +459,7 @@ public class Chunk
         if (highestY < 64)
         {
             highestY = 64;
-            block = world.blocks[8];
+            block = Blocks.blocks[8];
         }
 
         int lowestY = 0;
@@ -727,7 +727,7 @@ public class Chunk
             return Voxel_Util.CheckIfVoxelTransparent(world, pos + position, cachedWorldHeight, cachedBiomeHeight, cachedSubBiomeHeight, cachedBlendBiome);
         }
 
-        return world.blocks[voxelMap[x, y, z]].isTransparent;
+        return Blocks.blocks[voxelMap[x, y, z]].isTransparent;
     }
 
     private bool CheckVoxelLiquid(Vector3 pos, int cachedWorldHeight, int cachedBiomeHeight, int cachedSubBiomeHeight, SubBiome cachedBlendBiome)
@@ -746,7 +746,7 @@ public class Chunk
             return Voxel_Util.CheckIfVoxelLiquid(world, pos + position, cachedWorldHeight, cachedBiomeHeight, cachedSubBiomeHeight, cachedBlendBiome);
         }
 
-        return world.blocks[voxelMap[x, y, z]].isLiquid;
+        return Blocks.blocks[voxelMap[x, y, z]].isLiquid;
     }
 
     private bool IsVoxelInChunk(int x, int y, int z)

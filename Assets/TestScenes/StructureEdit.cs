@@ -38,7 +38,7 @@ public class StructureEdit : MonoBehaviour
 
         if(Physics.Raycast(ray, out raycastHit, 10f))
         {
-            if(currentVoxelID >= world.blocks.Length)
+            if(currentVoxelID >= Blocks.blocks.Length)
             {
                 Debug.LogError("CurrentVoxelID out of bounds");
                 return;

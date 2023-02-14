@@ -8,6 +8,7 @@ public class Block
     //  Block stuff
 
     public string name;
+    public byte id;
     public bool drawBlock;
     public bool isSolid;
     public bool isLiquid;

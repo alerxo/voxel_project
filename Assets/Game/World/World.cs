@@ -58,8 +58,6 @@ public class World : MonoBehaviour
 
     [Space]
 
-    public Block[] blocks;
-
     public Chunk[,] chunksInWorld = new Chunk[VoxelData.worldSizeInChunks, VoxelData.worldSizeInChunks];
 
     public List<ChunkCoordinate> chunksToInitialize = new List<ChunkCoordinate>();

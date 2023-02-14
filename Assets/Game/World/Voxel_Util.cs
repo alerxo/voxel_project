@@ -47,10 +47,10 @@ public static class Voxel_Util
 
         if (world.chunksInWorld[thisChunk.x, thisChunk.z] != null && world.chunksInWorld[thisChunk.x, thisChunk.z].IsEditable)
         {
-            return world.blocks[world.chunksInWorld[thisChunk.x, thisChunk.z].GetVoxelFromGlobalVector3(pos)].isTransparent;
+            return Blocks.blocks[world.chunksInWorld[thisChunk.x, thisChunk.z].GetVoxelFromGlobalVector3(pos)].isTransparent;
         }
 
-        return world.blocks[WorldTerrain.GetVoxelBlockType(world, pos, true, cachedWorldHeight, cachedBiomeHeight, cachedSubBiomeHeight, cachedBlendBiome)].isTransparent;
+        return Blocks.blocks[WorldTerrain.GetVoxelBlockType(world, pos, true, cachedWorldHeight, cachedBiomeHeight, cachedSubBiomeHeight, cachedBlendBiome)].isTransparent;
     }
 
     public static bool CheckIfVoxelLiquid(World world, Vector3 pos, int cachedWorldHeight, int cachedBiomeHeight, int cachedSubBiomeHeight, SubBiome cachedBlendBiome)
@@ -69,9 +69,9 @@ public static class Voxel_Util
 
         if (world.chunksInWorld[thisChunk.x, thisChunk.z] != null && world.chunksInWorld[thisChunk.x, thisChunk.z].IsEditable)
         {
-            return world.blocks[world.chunksInWorld[thisChunk.x, thisChunk.z].GetVoxelFromGlobalVector3(pos)].isLiquid;
+            return Blocks.blocks[world.chunksInWorld[thisChunk.x, thisChunk.z].GetVoxelFromGlobalVector3(pos)].isLiquid;
         }
 
-        return world.blocks[WorldTerrain.GetVoxelBlockType(world, pos, true, cachedWorldHeight, cachedBiomeHeight, cachedSubBiomeHeight, cachedBlendBiome)].isLiquid;
+        return Blocks.blocks[WorldTerrain.GetVoxelBlockType(world, pos, true, cachedWorldHeight, cachedBiomeHeight, cachedSubBiomeHeight, cachedBlendBiome)].isLiquid;
     }
 }
