@@ -220,12 +220,12 @@ public static class Blocks
             isLiquid = false,
             isTransparent = false,
 
-            backFaceTexture = 14,
-            frontFaceTexture = 14,
-            topFaceTexture = 14,
-            bottomFaceTexture = 14,
-            leftFaceTexture = 14,
-            rightFaceTexture = 14,
+            backFaceTexture = 13,
+            frontFaceTexture = 13,
+            topFaceTexture = 13,
+            bottomFaceTexture = 13,
+            leftFaceTexture = 13,
+            rightFaceTexture = 13,
         },
 
         new Block()
@@ -237,12 +237,12 @@ public static class Blocks
             isLiquid = false,
             isTransparent = false,
 
-            backFaceTexture = 15,
-            frontFaceTexture = 15,
-            topFaceTexture = 15,
-            bottomFaceTexture = 15,
-            leftFaceTexture = 15,
-            rightFaceTexture = 15,
+            backFaceTexture = 14,
+            frontFaceTexture = 14,
+            topFaceTexture = 14,
+            bottomFaceTexture = 14,
+            leftFaceTexture = 14,
+            rightFaceTexture = 14,
         },
 
         new Block()

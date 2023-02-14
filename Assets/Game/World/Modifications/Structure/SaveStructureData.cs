@@ -33,7 +33,7 @@ public static class SaveStructureData
 
         else
         {
-            Debug.LogError("Save file not found for " + structure.name + " in" + path);
+            Debug.LogError("Save file not found for " + structure.structureName + " in" + path);
             CreateDataFile(structure);
             return null;
         }

@@ -16,7 +16,7 @@ public class StructureData
         pos[1] = 0f;
         pos[2] = 0f;
 
-        byte id = 1;
+        byte id = 4;
 
         Tuple<byte, float[]> voxel = Tuple.Create(id, pos);
 
