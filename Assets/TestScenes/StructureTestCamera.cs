@@ -8,11 +8,6 @@ public class StructureTestCamera : MonoBehaviour
 
     [SerializeField] private Transform player;
 
-    private void Start()
-    {
-        Cursor.lockState = CursorLockMode.Locked;
-    }
-
     private void Update()
     {
         float mouseX = Input.GetAxis("Mouse X") * 100f * Time.deltaTime;

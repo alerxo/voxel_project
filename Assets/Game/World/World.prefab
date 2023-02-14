@@ -218,3 +218,80 @@ MonoBehaviour:
     bottomFaceTexture: 0
     leftFaceTexture: 0
     rightFaceTexture: 0
+  - name: 011-StoneBrick
+    drawBlock: 1
+    isSolid: 1
+    isLiquid: 0
+    isTransparent: 0
+    backFaceTexture: 13
+    frontFaceTexture: 13
+    topFaceTexture: 13
+    bottomFaceTexture: 13
+    leftFaceTexture: 13
+    rightFaceTexture: 13
+  - name: 012-StoneMossBrick
+    drawBlock: 1
+    isSolid: 1
+    isLiquid: 0
+    isTransparent: 0
+    backFaceTexture: 14
+    frontFaceTexture: 14
+    topFaceTexture: 14
+    bottomFaceTexture: 14
+    leftFaceTexture: 14
+    rightFaceTexture: 14
+  - name: 013-OakPlank
+    drawBlock: 1
+    isSolid: 1
+    isLiquid: 0
+    isTransparent: 0
+    backFaceTexture: 15
+    frontFaceTexture: 15
+    topFaceTexture: 15
+    bottomFaceTexture: 15
+    leftFaceTexture: 15
+    rightFaceTexture: 15
+  - name: 014-OakPlankMoss
+    drawBlock: 1
+    isSolid: 1
+    isLiquid: 0
+    isTransparent: 0
+    backFaceTexture: 16
+    frontFaceTexture: 16
+    topFaceTexture: 16
+    bottomFaceTexture: 16
+    leftFaceTexture: 16
+    rightFaceTexture: 16
+  - name: 015-DorbWhite
+    drawBlock: 1
+    isSolid: 1
+    isLiquid: 0
+    isTransparent: 0
+    backFaceTexture: 17
+    frontFaceTexture: 17
+    topFaceTexture: 17
+    bottomFaceTexture: 17
+    leftFaceTexture: 17
+    rightFaceTexture: 17
+  - name: 016-Straw
+    drawBlock: 1
+    isSolid: 1
+    isLiquid: 0
+    isTransparent: 0
+    backFaceTexture: 18
+    frontFaceTexture: 18
+    topFaceTexture: 18
+    bottomFaceTexture: 18
+    leftFaceTexture: 18
+    rightFaceTexture: 18
+  - name: 017-OakPlank_NoEdge
+    drawBlock: 1
+    isSolid: 1
+    isLiquid: 0
+    isTransparent: 0
+    backFaceTexture: 19
+    frontFaceTexture: 19
+    topFaceTexture: 19
+    bottomFaceTexture: 19
+    leftFaceTexture: 19
+    rightFaceTexture: 19

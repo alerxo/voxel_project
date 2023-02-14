@@ -13,15 +13,15 @@ MonoBehaviour:
   m_Name: Void
   m_EditorClassIdentifier: 
   subBiomeName: Void
+  parentBiome: {fileID: 11400000, guid: 11abb901f1582ce4db6f5527672f1396, type: 2}
   threshold: 0
   height: 0
-  noiseScale: 0
-  octaves: 0
-  persistence: 0
-  lacunarity: 0
-  noiseCutoff: 0
-  blendDistance: 0
-  blendNoiseImpact: 0
+  noiseScale: 1
+  octaves: 1
+  persistence: 1
+  lacunarity: 1
+  noiseCutoff: 1
+  blendDistance: 1
   surfaceBlockId: 0
   subSurfaceBlockId: 0
   lodes: []

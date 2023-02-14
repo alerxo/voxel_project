@@ -53,6 +53,7 @@ public class AtlasPacker : EditorWindow
             try
             {
                 File.WriteAllBytes(Application.dataPath + "/Game/World/materials/Packed_Atlas.png", bytes);
+                Debug.Log("Atlas Packer: successfully packed");
             }
 
             catch

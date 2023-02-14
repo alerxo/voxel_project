@@ -12,6 +12,9 @@ public class StructureEdit : MonoBehaviour
 
     private void Awake()
     {
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
+
         world = GameObject.FindGameObjectWithTag("WorldObj").GetComponent<World>();
     }
 

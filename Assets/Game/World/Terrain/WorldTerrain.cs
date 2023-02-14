@@ -5,7 +5,7 @@ using UnityEngine;
 
 public static class WorldTerrain
 {
-    public static byte GetVoxelBlockType(World world, Vector3 pos, bool isBlend, int cachedWorldHeight, int cachedBiomeHeight ,int cachedSubBiomeHeight, SubBiome cachedBlendBiome)
+    public static byte GetVoxelBlockType(World world, Vector3 pos, bool isBlend, int cachedWorldHeight, int cachedBiomeHeight, int cachedSubBiomeHeight, SubBiome cachedBlendBiome)
     {
         #region Test scene
 
