@@ -130,7 +130,7 @@ public static class WorldTerrain
 
                     foreach (VoxelModification vm in structure.GetVoxels())
                     {
-                        queue.Enqueue(new VoxelModification(vm.position + pos, vm.id));
+                        queue.Enqueue(new VoxelModification(vm.position + pos, vm.blockId));
                     }
 
                     world.modifications.Enqueue(queue);
@@ -152,7 +152,7 @@ public static class WorldTerrain
 
                     foreach (VoxelModification vm in treeStructure.GetVoxels(pos2d))
                     {
-                        queue.Enqueue(new VoxelModification(vm.position + pos, vm.id));
+                        queue.Enqueue(new VoxelModification(vm.position + pos, vm.blockId));
                     }
 
                     world.modifications.Enqueue(queue);
@@ -173,12 +173,12 @@ public static class WorldTerrain
 
         else if (yPos == terrainHeight) return subBiome.surfaceBlockId;
         else if (yPos < terrainHeight && yPos > terrainHeight - 4) return subBiome.subSurfaceBlockId;
-        else if (yPos < terrainHeight) return 3;
-        else if (yPos < VoxelData.waterHeight) return 8;
+        else if (yPos < terrainHeight) return 4;
+        else if (yPos < VoxelData.waterHeight) return 11;
 
         else if(isRiver && yPos < riverHeight - world.riverReference.height)
         {
-            return 8;
+            return 11;
         }
 
         return 0;
@@ -195,6 +195,8 @@ public static class WorldTerrain
 
     private static int GetBiomeHeight(World world, Vector3 pos, Biome biome)
     {
+        //  The biome noise
+
         return Mathf.FloorToInt(biome.height * Noise.Get2DPerlin(world, new Vector2(pos.x, pos.z), 0, biome.noiseScale, biome.octaves, biome.persistence, biome.lacunarity, biome.noiseCutoff));
     }
 

@@ -325,7 +325,7 @@ public class Chunk
             VoxelModification vm = modifications.Dequeue();
 
             Vector3 pos = vm.position -= position;
-            voxelMap[(int)pos.x, (int)pos.y, (int)pos.z] = vm.id;
+            voxelMap[(int)pos.x, (int)pos.y, (int)pos.z] = vm.blockId;
         }
 
         for (int x = 0; x < VoxelData.chunkWidth; x++)

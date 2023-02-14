@@ -4,29 +4,29 @@ using UnityEngine;
 
 public static class Blocks
 {
-    public static Block[] blocks = new Block[] {
+    public static Block[] blocks = new Block[18] {
 
         new Block()
         {
             name = "Air",
-            id = 0,
+            blockId = 0,
             drawBlock = false,
-            isSolid= false,
-            isLiquid= false,
-            isTransparent= false,
+            isSolid = false,
+            isLiquid = false,
+            isTransparent = true,
 
             backFaceTexture = 0,
-            frontFaceTexture= 0,
+            frontFaceTexture = 0,
             topFaceTexture = 0,
-            bottomFaceTexture= 0,
-            leftFaceTexture= 0,
-            rightFaceTexture= 0,
+            bottomFaceTexture = 0,
+            leftFaceTexture = 0,
+            rightFaceTexture = 0,
         },
 
         new Block()
         {
             name = "Air_Solid",
-            id = 1,
+            blockId = 1,
             drawBlock = true,
             isSolid = true,
             isLiquid = false,
@@ -43,7 +43,7 @@ public static class Blocks
         new Block()
         {
             name = "Grass",
-            id = 2,
+            blockId = 2,
             drawBlock = true,
             isSolid = true,
             isLiquid = false,
@@ -61,7 +61,7 @@ public static class Blocks
         new Block()
         {
             name = "Dirt",
-            id = 3,
+            blockId = 3,
             drawBlock = true,
             isSolid = true,
             isLiquid = false,
@@ -78,7 +78,7 @@ public static class Blocks
         new Block()
         {
             name = "Stone",
-            id = 4,
+            blockId = 4,
             drawBlock = true,
             isSolid = true,
             isLiquid = false,
@@ -95,7 +95,7 @@ public static class Blocks
         new Block()
         {
             name = "OakLog",
-            id = 5,
+            blockId = 5,
             drawBlock = true,
             isSolid = true,
             isLiquid = false,
@@ -112,7 +112,7 @@ public static class Blocks
         new Block()
         {
             name = "OakPlank",
-            id = 6,
+            blockId = 6,
             drawBlock = true,
             isSolid = true,
             isLiquid = false,
@@ -129,7 +129,7 @@ public static class Blocks
         new Block()
         {
             name = "OakPlankMoss",
-            id = 7,
+            blockId = 7,
             drawBlock = true,
             isSolid = true,
             isLiquid = false,
@@ -146,7 +146,7 @@ public static class Blocks
         new Block()
         {
             name = "OakLeaf",
-            id = 8,
+            blockId = 8,
             drawBlock = true,
             isSolid = true,
             isLiquid = false,
@@ -156,14 +156,14 @@ public static class Blocks
             frontFaceTexture = 11,
             topFaceTexture = 11,
             bottomFaceTexture = 11,
-            leftFaceTexture = 1,
-            rightFaceTexture = 1,
+            leftFaceTexture = 11,
+            rightFaceTexture = 11,
         },
 
         new Block()
         {
             name = "Sand",
-            id = 9,
+            blockId = 9,
             drawBlock = true,
             isSolid = true,
             isLiquid = false,
@@ -180,7 +180,7 @@ public static class Blocks
         new Block()
         {
             name = "Snow",
-            id = 10,
+            blockId = 10,
             drawBlock = true,
             isSolid = true,
             isLiquid = false,
@@ -197,7 +197,7 @@ public static class Blocks
         new Block()
         {
             name = "Water",
-            id = 11,
+            blockId = 11,
             drawBlock = true,
             isSolid = false,
             isLiquid = true,
@@ -214,7 +214,7 @@ public static class Blocks
         new Block()
         {
             name = "StoneBrick",
-            id = 12,
+            blockId = 12,
             drawBlock = true,
             isSolid = true,
             isLiquid = false,
@@ -231,7 +231,7 @@ public static class Blocks
         new Block()
         {
             name = "StoneMossBrick",
-            id = 13,
+            blockId = 13,
             drawBlock = true,
             isSolid = true,
             isLiquid = false,
@@ -248,7 +248,7 @@ public static class Blocks
         new Block()
         {
             name = "Glass",
-            id = 14,
+            blockId = 14,
             drawBlock = true,
             isSolid = true,
             isLiquid = false,
@@ -265,7 +265,7 @@ public static class Blocks
         new Block()
         {
             name = "Dorb",
-            id = 15,
+            blockId = 15,
             drawBlock = true,
             isSolid = true,
             isLiquid = false,
@@ -282,7 +282,7 @@ public static class Blocks
         new Block()
         {
             name = "Straw",
-            id = 16,
+            blockId = 16,
             drawBlock = true,
             isSolid = true,
             isLiquid = false,
@@ -299,7 +299,7 @@ public static class Blocks
         new Block()
         {
             name = "OakPlankSingle",
-            id = 17,
+            blockId = 17,
             drawBlock = true,
             isSolid = true,
             isLiquid = false,

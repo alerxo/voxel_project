@@ -22,9 +22,8 @@ MonoBehaviour:
   lacunarity: 2
   noiseCutoff: 10
   blendDistance: 1
-  blendNoiseImpact: 0.2
-  surfaceBlockId: 6
-  subSurfaceBlockId: 6
+  surfaceBlockId: 11
+  subSurfaceBlockId: 11
   lodes: []
   structures: []
   treeStructures: []

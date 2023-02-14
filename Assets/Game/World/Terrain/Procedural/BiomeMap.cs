@@ -41,11 +41,11 @@ public static class BiomeMap
             return subBiomeMap;
         }
 
-        GameObject structureTestObj = GameObject.FindGameObjectWithTag("Structuretest");
+        GameObject structureTestObj = GameObject.FindGameObjectWithTag("StructureEditor");
 
         if (structureTestObj != null)
         {
-            SubBiome testBiome = structureTestObj.GetComponent<StructureTest>().voidBiome;
+            SubBiome testBiome = structureTestObj.GetComponent<StructureEditor>().voidBiome;
 
             Debug.Log(testBiome.name);
 

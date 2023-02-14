@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 
-public class StructureTest : MonoBehaviour
+public class StructureEditor : MonoBehaviour
 {
     public SubBiome voidBiome;
     public Structure testStructure;
@@ -36,7 +36,7 @@ public class StructureTest : MonoBehaviour
 
         foreach (VoxelModification vm in testStructure.GetVoxels())
         {
-            queue.Enqueue(new VoxelModification(vm.position + pos, vm.id));
+            queue.Enqueue(new VoxelModification(vm.position + pos, vm.blockId));
         }
 
         world.modifications.Enqueue(queue);
@@ -77,7 +77,7 @@ public class StructureTest : MonoBehaviour
 
                                 if(id != 0)
                                 {
-                                    if(id == 10)
+                                    if(id == 1)
                                     {
                                         Vector3 position = new Vector3((x * chunkWidth) + cx, cy, (z * chunkWidth) + cz);
                                         vm.Add(new VoxelModification(position - pos, 0));

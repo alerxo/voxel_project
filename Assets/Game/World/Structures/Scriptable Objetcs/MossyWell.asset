@@ -10,8 +10,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 31e6426776407704ea9ba8c8b5aaf7ce, type: 3}
-  m_Name: Well
+  m_Name: MossyWell
   m_EditorClassIdentifier: 
-  structureName: Well
-  threshold: 0.9999
-  offset: 100
+  structureName: 
+  threshold: 0
+  offset: 0

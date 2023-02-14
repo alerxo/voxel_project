@@ -16,7 +16,7 @@ public class StructureData
         pos[1] = 0f;
         pos[2] = 0f;
 
-        byte id = 3;
+        byte id = 1;
 
         Tuple<byte, float[]> voxel = Tuple.Create(id, pos);
 
@@ -37,7 +37,7 @@ public class StructureData
             pos[1] = voxel.position.y;
             pos[2] = voxel.position.z;
 
-            voxelList.Add(Tuple.Create(voxel.id, pos));
+            voxelList.Add(Tuple.Create(voxel.blockId, pos));
         }
 
         voxels = voxelList.ToArray();   

@@ -590,8 +590,8 @@ GameObject:
   - component: {fileID: 1226881350}
   - component: {fileID: 1226881352}
   m_Layer: 0
-  m_Name: StructureTest
-  m_TagString: Structuretest
+  m_Name: StructureEditor
+  m_TagString: StructureEditor
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -609,7 +609,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   voidBiome: {fileID: 11400000, guid: 4b6b981b01836224f8227b7ab5699580, type: 2}
-  testStructure: {fileID: 11400000, guid: dacfb8a35227ffa47981fb39cf7c7346, type: 2}
+  testStructure: {fileID: 11400000, guid: bdfb1d11cbae3e34fa07b38581e315c8, type: 2}
   chunkAmount: 4
 --- !u!4 &1226881351
 Transform:
