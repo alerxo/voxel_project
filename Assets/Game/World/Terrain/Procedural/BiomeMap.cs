@@ -60,6 +60,25 @@ public static class BiomeMap
             return subBiomeMap;
         }
 
+        GameObject townTestObj = GameObject.FindGameObjectWithTag("Towntest");
+
+        if (townTestObj != null)
+        {
+            SubBiome testBiome = townTestObj.GetComponent<TownTest>().voidBiome;
+
+            Debug.Log(testBiome.name);
+
+            for (int x = 0; x < VoxelData.worldSizeInChunks + 2; x++)
+            {
+                for (int z = 0; z < VoxelData.worldSizeInChunks + 2; z++)
+                {
+                    subBiomeMap[x, z] = testBiome;
+                }
+            }
+
+            return subBiomeMap;
+        }
+
         #endregion
 
         for (int x = 0; x < VoxelData.worldSizeInChunks + 2; x++)

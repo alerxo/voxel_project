@@ -3,8 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "Structure", menuName = "StructureMenu/TreeStructure")]
-public class TreeStructure : ScriptableObject
+[CreateAssetMenu(fileName = "Structure", menuName = "Modifications/Vegetation")]
+public class Vegetation : ScriptableObject
 {
     public float threshold;
     public float offset;

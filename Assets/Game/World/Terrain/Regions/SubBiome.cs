@@ -54,5 +54,5 @@ public class SubBiome : ScriptableObject
 
     [Header("TreeStructures")]
 
-    public TreeStructure[] treeStructures;
+    public Vegetation[] treeStructures;
 }

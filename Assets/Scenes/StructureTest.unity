@@ -609,7 +609,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   voidBiome: {fileID: 11400000, guid: 4b6b981b01836224f8227b7ab5699580, type: 2}
-  testStructure: {fileID: 11400000, guid: bdfb1d11cbae3e34fa07b38581e315c8, type: 2}
+  testStructure: {fileID: 11400000, guid: e2ba7df5629c3a74284a977fcc35f0db, type: 2}
   chunkAmount: 4
 --- !u!4 &1226881351
 Transform:
@@ -638,7 +638,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 394c8bab416567141a29cb843b1a0d77, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  currentVoxelID: 15
+  currentVoxelID: 3
   player: {fileID: 1308237287}
 --- !u!1 &1308237285
 GameObject:

@@ -144,7 +144,7 @@ public static class WorldTerrain
 
         if (yPos == terrainHeight)
         {
-            foreach (TreeStructure treeStructure in subBiome.treeStructures)
+            foreach (Vegetation treeStructure in subBiome.treeStructures)
             {
                 if (Noise.Get2DPerlinStructureThreshold(pos2d, treeStructure.offset) >= treeStructure.threshold)
                 {

@@ -12,6 +12,7 @@ TagManager:
   - WorldObj
   - Biometest
   - StructureEditor
+  - Towntest
   layers:
   - Default
   - TransparentFX

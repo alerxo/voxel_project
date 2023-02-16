@@ -7,7 +7,7 @@ public static class SaveStructureData
     public static void SaveData(Structure structure, VoxelModification[] voxelModifications)
     {
         BinaryFormatter binaryFormatter = new BinaryFormatter();
-        string path = VoxelData.structureFilePath + "/Game/World/Structures/BinaryFiles/" + structure.structureName + ".bin";
+        string path = VoxelData.structureFilePath + "/Game/World/Modifications/Structures/BinaryFiles/" + structure.structureName + ".bin";
 
         FileStream fileStream = new FileStream(path, FileMode.Create);
 
@@ -19,7 +19,7 @@ public static class SaveStructureData
 
     public static StructureData LoadData(Structure structure)
     {
-        string path = VoxelData.structureFilePath + "/Game/World/Structures/BinaryFiles/" + structure.structureName + ".bin";
+        string path = VoxelData.structureFilePath + "/Game/World/Modifications/Structures/BinaryFiles/" + structure.structureName + ".bin";
         if (File.Exists(path))
         {
             BinaryFormatter binaryFormatter = new BinaryFormatter();
@@ -42,7 +42,7 @@ public static class SaveStructureData
     public static void CreateDataFile(Structure structure)
     {
         BinaryFormatter binaryFormatter = new BinaryFormatter();
-        string path = VoxelData.structureFilePath + "/Game/World/Structures/BinaryFiles/" + structure.structureName + ".bin";
+        string path = VoxelData.structureFilePath + "/Game/World/Modifications/Structures/BinaryFiles/" + structure.structureName + ".bin";
 
         FileStream fileStream = new FileStream(path, FileMode.Create);
         StructureData structureData = new StructureData();

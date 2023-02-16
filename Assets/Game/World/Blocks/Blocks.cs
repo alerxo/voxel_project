@@ -57,7 +57,6 @@ public static class Blocks
             rightFaceTexture = 3,
         },
 
-
         new Block()
         {
             name = "Dirt",
@@ -250,9 +249,9 @@ public static class Blocks
             name = "Glass",
             blockId = 14,
             drawBlock = true,
-            isSolid = true,
+            isSolid = false,
             isLiquid = false,
-            isTransparent = false,
+            isTransparent = true,
 
             backFaceTexture = 12,
             frontFaceTexture = 12,

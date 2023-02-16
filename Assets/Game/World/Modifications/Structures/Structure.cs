@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "Structure", menuName = "StructureMenu/Structure")]
+[CreateAssetMenu(fileName = "Structure", menuName = "Modifications/Structure")]
 public class Structure : ScriptableObject
 {
     public string structureName;

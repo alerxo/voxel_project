@@ -2,10 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[System.Serializable]
-public class Lode
+[CreateAssetMenu(fileName = "Structure", menuName = "Modifications/Lode")]
+public class Lode : ScriptableObject
 {
-    public string nodeName;
+    public string lodeName;
     public byte blockID;
     public int minHeight;
     public int maxHeight;
