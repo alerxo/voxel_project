@@ -34,10 +34,15 @@ public class StructureEditor : MonoBehaviour
 
         Queue<VoxelModification> queue = new Queue<VoxelModification>();
 
+        int count = 0;
+
         foreach (VoxelModification vm in testStructure.GetVoxels())
         {
             queue.Enqueue(new VoxelModification(vm.position + pos, vm.blockId));
+            count++;
         }
+
+        Debug.Log(count + " voxels loaded");
 
         world.modifications.Enqueue(queue);
     }
@@ -49,6 +54,9 @@ public class StructureEditor : MonoBehaviour
             Debug.Log("Saving");
 
             List<VoxelModification> vm = new List<VoxelModification>();
+
+            Vector3 northEastUpperPoint = new Vector3(1, 1, 1);
+            Vector3 southWestLowerPoint = new Vector3(-1, -1, -1);
 
             World world = GameObject.FindGameObjectWithTag("WorldObj").GetComponent<World>();
 
@@ -77,7 +85,44 @@ public class StructureEditor : MonoBehaviour
 
                                 if(id != 0)
                                 {
-                                    if(id == 1)
+                                    Vector3 positio = new Vector3((x * chunkWidth) + cx, cy, (z * chunkWidth) + cz);
+                                    positio -= pos;
+
+                                    #region zone
+
+                                    if (positio.x > northEastUpperPoint.x)
+                                    {
+                                        northEastUpperPoint.x = positio.x;
+                                    }
+
+                                    if (positio.y > northEastUpperPoint.y)
+                                    {
+                                        northEastUpperPoint.y = positio.y;
+                                    }
+
+                                    if (positio.z > northEastUpperPoint.z)
+                                    {
+                                        northEastUpperPoint.z = positio.z;
+                                    }
+
+                                    if (positio.x < southWestLowerPoint.x)
+                                    {
+                                        southWestLowerPoint.x = positio.x;
+                                    }
+
+                                    if (positio.y < southWestLowerPoint.y)
+                                    {
+                                        southWestLowerPoint.y = positio.y;
+                                    }
+
+                                    if (positio.z < southWestLowerPoint.z)
+                                    {
+                                        southWestLowerPoint.z = positio.z;
+                                    }
+
+                                    #endregion
+
+                                    if (id == 1)
                                     {
                                         Vector3 position = new Vector3((x * chunkWidth) + cx, cy, (z * chunkWidth) + cz);
                                         vm.Add(new VoxelModification(position - pos, 0));
@@ -95,8 +140,34 @@ public class StructureEditor : MonoBehaviour
                 }
             }
 
+            float[] NEU = new float[3]
+            {
+                northEastUpperPoint.x,
+                northEastUpperPoint.y,
+                northEastUpperPoint.z
+            };
+
+            float[] SWL = new float[3]
+            {
+                southWestLowerPoint.x,
+                southWestLowerPoint.y,
+                southWestLowerPoint.z
+            };
+
             VoxelModification[] voxels = vm.ToArray();
-            SaveStructureData.SaveData(testStructure, voxels);
+
+            int count = 0;
+
+            foreach(VoxelModification vmssd in voxels)
+            {
+                count++;
+            }
+
+            Debug.Log(count + " voxels saved");
+
+            SaveStructureData.SaveData(testStructure, voxels, NEU, SWL);
+
+            Structure_Util.DrawZone(testStructure, pos);
         }
     }
 }

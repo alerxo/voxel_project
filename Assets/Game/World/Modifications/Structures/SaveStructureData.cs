@@ -4,14 +4,14 @@ using System.Runtime.Serialization.Formatters.Binary;
 
 public static class SaveStructureData 
 {
-    public static void SaveData(Structure structure, VoxelModification[] voxelModifications)
+    public static void SaveData(Structure structure, VoxelModification[] voxelModifications, float[] NEU, float[] SWL)
     {
         BinaryFormatter binaryFormatter = new BinaryFormatter();
         string path = VoxelData.structureFilePath + "/Game/World/Modifications/Structures/BinaryFiles/" + structure.structureName + ".bin";
 
         FileStream fileStream = new FileStream(path, FileMode.Create);
 
-        StructureData structureData = new StructureData(voxelModifications);
+        StructureData structureData = new StructureData(voxelModifications, NEU, SWL);
 
         binaryFormatter.Serialize(fileStream, structureData);
         fileStream.Close();

@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class StructureTestCamera : MonoBehaviour
+public class StructureEditorCamera : MonoBehaviour
 {
     private float xRotation = 0f;
 

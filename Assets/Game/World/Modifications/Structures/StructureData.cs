@@ -8,6 +8,9 @@ public class StructureData
 {
     public Tuple<byte, float[]>[] voxels;
 
+    public float[] northEastUpperPoint;
+    public float[] southWestLowerPoint;
+
     public StructureData()
     {
         float[] pos = new float[3];
@@ -23,9 +26,23 @@ public class StructureData
         voxels = new Tuple<byte, float[]>[1];
 
         voxels[0] = voxel;
+
+        northEastUpperPoint = new float[3]
+        {
+            1,
+            1,
+            1
+        };
+
+        southWestLowerPoint = new float[3] 
+        {
+            -1,
+            -1,
+            -1
+        };
     }
 
-    public StructureData(VoxelModification[] voxelModifications)
+    public StructureData(VoxelModification[] voxelModifications, float[] NEU, float[] SWL)
     {
         List<Tuple<byte, float[]>> voxelList = new List<Tuple<byte, float[]>>();
 
@@ -40,6 +57,9 @@ public class StructureData
             voxelList.Add(Tuple.Create(voxel.blockId, pos));
         }
 
-        voxels = voxelList.ToArray();   
+        voxels = voxelList.ToArray();
+
+        northEastUpperPoint = NEU;
+        southWestLowerPoint = SWL;
     }
 }

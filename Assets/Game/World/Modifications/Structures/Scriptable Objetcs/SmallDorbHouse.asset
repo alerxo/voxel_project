@@ -15,3 +15,4 @@ MonoBehaviour:
   structureName: SmallDorbHouse
   threshold: 0
   offset: 0
+  zoneMargin: 1

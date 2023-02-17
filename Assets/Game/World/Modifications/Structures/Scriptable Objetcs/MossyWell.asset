@@ -15,3 +15,4 @@ MonoBehaviour:
   structureName: MossyWell
   threshold: 0.9999
   offset: 100
+  zoneMargin: 1

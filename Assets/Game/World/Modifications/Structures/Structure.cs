@@ -11,6 +11,8 @@ public class Structure : ScriptableObject
     public float threshold;
     public float offset;
 
+    public int zoneMargin;
+
     public VoxelModification[] GetVoxels()
     {
         StructureData structureData = SaveStructureData.LoadData(this);
@@ -30,5 +32,18 @@ public class Structure : ScriptableObject
         }
 
         return voxelList.ToArray();
+    }
+
+    public Vector3[] GetZone()
+    {
+        StructureData structureData = SaveStructureData.LoadData(this);
+
+        Vector3[] zonePoints = new Vector3[2]
+        {
+            new Vector3(structureData.northEastUpperPoint[0], structureData.northEastUpperPoint[1], structureData.northEastUpperPoint[2]),
+            new Vector3(structureData.southWestLowerPoint[0], structureData.southWestLowerPoint[1], structureData.southWestLowerPoint[2])
+        };
+
+        return zonePoints;
     }
 }
