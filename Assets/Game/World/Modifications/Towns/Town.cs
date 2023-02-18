@@ -7,6 +7,12 @@ public class Town : ScriptableObject
 {
     public string townName;
 
+    public int townSize;
+    public int townSizeVariation;
+
+    public float townDensity;
+    public float townDensityVariation;
+
     public Structure[] townCenter;
     public Structure[] roads;
     public Structure[] houses;

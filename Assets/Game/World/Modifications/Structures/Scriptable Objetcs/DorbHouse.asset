@@ -16,3 +16,4 @@ MonoBehaviour:
   threshold: 0
   offset: 0
   zoneMargin: 1
+  buildRadius: 7

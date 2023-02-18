@@ -32,18 +32,18 @@ public class TownTest : MonoBehaviour
         Vector3 pos = world.chunksInWorld[VoxelData.worldSizeInChunks / 2, VoxelData.worldSizeInChunks / 2].position;
         pos = new Vector3(pos.x, yPos, pos.z);
 
-        Tuple<Structure, Vector2>[] structures = GenerateTown.GetTown(testTown);
+        Tuple<Structure, Vector2>[] structures = GenerateTown.GetTown(testTown, pos);
 
         foreach(Tuple<Structure, Vector2> s in structures)
         {
             Queue<VoxelModification> queue = new Queue<VoxelModification>();
 
             Structure structure = s.Item1;
-            Vector3 structurePosition = new Vector3(s.Item2.x, 0, s.Item2.y);
+            Vector3 structurePosition = new Vector3(s.Item2.x, yPos, s.Item2.y);
 
             foreach (VoxelModification vm in structure.GetVoxels())
             {
-                queue.Enqueue(new VoxelModification(vm.position + structurePosition + pos, vm.blockId));
+                queue.Enqueue(new VoxelModification(vm.position + structurePosition, vm.blockId));
             }
 
             world.modifications.Enqueue(queue);

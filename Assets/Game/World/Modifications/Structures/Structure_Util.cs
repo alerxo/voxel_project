@@ -1,13 +1,15 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public static  class Structure_Util
+public static class Structure_Util
 {
+    public static List<Tuple<Structure, Vector3>> structureList = new List<Tuple<Structure, Vector3>>();
+
     public static void DrawZone(Structure structure, Vector3 positon)
     {
         Vector3[] zonePoints = structure.GetZone();
-
         Vector3 blockOffset = new Vector3(0.5f, 0.5f, 0.5f) + positon;
 
         Vector3 xp = new Vector3(zonePoints[0].x + structure.zoneMargin, 0, 0);
@@ -34,4 +36,31 @@ public static  class Structure_Util
         Debug.DrawLine(xp + yp + zn + blockOffset, xn + yp + zn + blockOffset, Color.white, 10f);
         Debug.DrawLine(xp + yn + zn + blockOffset, xn + yn + zn + blockOffset, Color.white, 10f);
     }   
+
+    public static bool CheckOverlap(Structure structure, Vector3 position, bool add)
+    {
+        if(structureList.Count == 0)
+        {
+            if (add)
+            {
+                structureList.Add(Tuple.Create(structure, position));
+                return false;
+            }
+        }
+
+        foreach (Tuple<Structure, Vector3> s in structureList)
+        {
+            if(Vector3.Distance(position, s.Item2) < (structure.buildRadius + s.Item1.buildRadius))
+            {
+                return true;
+            }
+        }
+
+        if (add)
+        {
+            structureList.Add(Tuple.Create(structure, position));
+        }
+
+        return false;
+    }
 }

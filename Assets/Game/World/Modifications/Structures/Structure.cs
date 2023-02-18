@@ -13,6 +13,8 @@ public class Structure : ScriptableObject
 
     public int zoneMargin;
 
+    public float buildRadius;
+
     public VoxelModification[] GetVoxels()
     {
         StructureData structureData = SaveStructureData.LoadData(this);
