@@ -21,7 +21,7 @@ public static class GenerateTown
             roadPoints.Add(structure.Item2);
         }
 
-        foreach (Tuple<Structure, Vector2> structure in GetRoads(town, roadPoints))
+        foreach (Tuple<Structure, Vector2> structure in GetRoads(town, roadPoints, new Vector2(pos.x, pos.z)))
         {
             structures.Add(structure);
         }
@@ -29,7 +29,7 @@ public static class GenerateTown
         return structures.ToArray();
     }
 
-    public static Tuple<Structure, Vector2>[] GetTownCenter(Town town, Vector3 pos)
+    private static Tuple<Structure, Vector2>[] GetTownCenter(Town town, Vector3 pos)
     {
         List<Tuple<Structure, Vector2>> structures = new List<Tuple<Structure, Vector2>>();
 
@@ -38,7 +38,7 @@ public static class GenerateTown
         return structures.ToArray();
     }
 
-    public static Tuple<Structure, Vector2>[] GetHouses(Town town, Vector3 pos)
+    private static Tuple<Structure, Vector2>[] GetHouses(Town town, Vector3 pos)
     {
         List<Tuple<Structure, Vector2>> structures = new List<Tuple<Structure, Vector2>>();
 
@@ -61,17 +61,205 @@ public static class GenerateTown
         return structures.ToArray();
     }
 
-    public static Tuple<Structure, Vector2>[] GetRoads(Town town, List<Vector2> roadPoints)
+    private static Tuple<Structure, Vector2>[] GetRoads(Town town, List<Vector2> roadPoints, Vector2 pos)
     {
         List<Tuple<Structure, Vector2>> structures = new List<Tuple<Structure, Vector2>>();
 
-        foreach(Vector2 point in roadPoints)
+        List<Town_Triangle> triangles = BowyerWatson(town, roadPoints, pos);
+
+        foreach(Town_Triangle triangle in triangles)
         {
-            structures.Add(Tuple.Create(town.roads[0], point));
+            foreach(Town_Edge edge in triangle.GetEdges())
+            {
+                Debug.DrawLine(new Vector3(edge.pointA.x, 100f, edge.pointA.y), new Vector3(edge.pointB.x, 100f, edge.pointB.y), Color.white, 100f);
+            }
         }
 
         return structures.ToArray();
     }
+
+
+
+    private static List<Town_Triangle> BowyerWatson(Town town, List<Vector2> points, Vector2 pos)
+    {
+        List<Town_Triangle> triangles = new List<Town_Triangle>();
+
+        Vector2 orgPointA = pos + new Vector2(0, town.townSize * 3.2f);
+        Vector2 orgPointB = pos + new Vector2(-town.townSize * 2.2f, -town.townSize * 1.2f);
+        Vector2 orgPointC = pos + new Vector2(town.townSize * 2.2f, -town.townSize * 1.2f);
+
+        triangles.Add(new Town_Triangle(orgPointA, orgPointB, orgPointC));
+
+        foreach(Vector2 point in points)
+        {
+            List<Town_Triangle> badTriangles = new List<Town_Triangle>();
+
+            foreach(Town_Triangle triangle in triangles)
+            {
+                if (IsPointInsideCircumcirlce(point, triangle))
+                {
+                    badTriangles.Add(triangle);
+                }
+            }
+
+            List<Town_Edge> edges = new List<Town_Edge>();
+
+            foreach (Town_Triangle triangle in badTriangles)
+            {
+                foreach(Town_Edge edge in triangle.GetEdges())
+                {
+                    if (EdgeIsNotShared(badTriangles, triangle, edge))
+                    {
+                        edges.Add(edge);
+                    }
+                }
+            }
+        
+
+            foreach (Town_Triangle triangle in badTriangles)
+            {
+                triangles.Remove(triangle);
+            }
+
+            foreach (Town_Edge edge in edges)
+            {
+                triangles.Add(new Town_Triangle(edge.pointA, edge.pointB, point));
+            }
+        }
+
+        for (int i = 0; i < triangles.Count; i++)
+        {
+            Town_Triangle triangle = triangles[i];
+
+            if(triangle.ContainsPoint(orgPointA) || triangle.ContainsPoint(orgPointB) || triangle.ContainsPoint(orgPointC))
+            {
+                triangles.Remove(triangle);
+                i--;
+            }
+        }
+
+        return triangles;
+    }
+
+    private static bool IsPointInsideCircumcirlce(Vector2 point, Town_Triangle triangle)
+    {
+        Vector2 a = triangle.pointA;
+        Vector2 b = triangle.pointB;
+        Vector2 c = triangle.pointC;
+
+        float d = ((a.x * (b.y - c.y)) + (b.x * (c.y - a.y)) + (c.x * (a.y - b.y))) * 2f;
+
+        float x = (1f / d) * (((Mathf.Pow(a.x, 2) + Mathf.Pow(a.y, 2)) * (b.y - c.y)) + ((Mathf.Pow(b.x, 2) + Mathf.Pow(b.y, 2)) * (c.y - a.y)) + ((Mathf.Pow(c.x, 2) + Mathf.Pow(c.y, 2)) * (a.y - b.y)));
+        float y = (1f / d) * (((Mathf.Pow(a.x, 2) + Mathf.Pow(a.y, 2)) * (c.x - b.x)) + ((Mathf.Pow(b.x, 2) + Mathf.Pow(b.y, 2)) * (a.x - c.x)) + ((Mathf.Pow(c.x, 2) + Mathf.Pow(c.y, 2)) * (b.x - a.x)));
+
+        Vector2 circumcentre = new Vector2(x, y);
+
+        float radius = Vector2.Distance(b, circumcentre);
+       
+        if(Vector2.Distance(point, circumcentre) <= radius)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsPointInsideCircumcirlcew(Vector2 point, Town_Triangle triangle)
+    {
+        Vector2 a = triangle.pointA;
+        Vector2 b = triangle.pointB;
+        Vector2 c = triangle.pointC;
+
+        float ab = Vector2.Distance(a, b);
+        float bc = Vector2.Distance(b, c);
+        float ca = Vector2.Distance(c, a);
+
+        float radius = (ab * bc * ca) / Mathf.Sqrt((ab + bc + ca) * (bc + ca - ab) * (ca + ab - bc) * (ab + bc - ca));
+
+
+        Town_LinearEquation lineAB = new Town_LinearEquation(a, b);
+        Town_LinearEquation lineBC = new Town_LinearEquation(b, c);
+
+        Vector2 midPointAB = Vector2.Lerp(a, b, 0.5f);
+        Vector2 midPointBC = Vector2.Lerp(b, c, 0.5f);
+
+        
+
+        //  
+
+        Town_LinearEquation perpendicularAB = lineAB.PerpendicularLineAt(midPointAB);
+        Town_LinearEquation perpendicularBC = lineBC.PerpendicularLineAt(midPointBC);
+
+        Vector2 circumcenter = GetCrossingPoint(perpendicularAB, perpendicularBC);
+
+        if(Vector2.Distance(point, circumcenter) <= radius)
+        {
+            Debug.Log("true");
+            Debug.Log(point);
+            Debug.Log(circumcenter);
+            Debug.Log(radius);
+
+            Debug.Log(" ");
+
+            Debug.Log(a);
+            Debug.Log(b);
+            Debug.Log(c);
+            return true;
+        }
+
+        Debug.Log("false");
+        Debug.Log(point);
+        Debug.Log(circumcenter);
+        Debug.Log(radius);
+
+        Debug.Log(" ");
+
+        Debug.Log(a);
+        Debug.Log(b);
+        Debug.Log(c);
+
+        return false;
+    }
+
+    private static Vector2 GetCrossingPoint(Town_LinearEquation lineA, Town_LinearEquation lineB)
+    {
+        float a1 = lineA.a;
+        float a2 = lineB.a;
+        float b1 = lineA.b;
+        float b2 = lineB.b;
+        float c1 = lineA.c;
+        float c2 = lineB.c;
+
+        float determinant = a1 * b2 - a2 * b1;
+        float determinantX = c1 * b2 - c2 * b1;
+        float determinantY = a1 * c2 - a2 * c1;
+
+        float x = determinantX / determinant;
+        float y = determinantY / determinant;
+
+        return new Vector2(x, y);
+    }
+
+    private static bool EdgeIsNotShared(List<Town_Triangle> badTriangles, Town_Triangle currentTrianlge, Town_Edge edge)
+    {
+        foreach (Town_Triangle triangle in badTriangles)
+        {
+            if(triangle != currentTrianlge)
+            {
+                foreach (Town_Edge badEdge in triangle.GetEdges())
+                {
+                    if (Vector2.Distance(edge.pointA, badEdge.pointA) < 0.1f  && Vector2.Distance(edge.pointB, badEdge.pointB) < 0.1f)
+                    {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+
 
     private static Vector2 GetRandomPos(Vector2 pos, int townSize, int index)
     {

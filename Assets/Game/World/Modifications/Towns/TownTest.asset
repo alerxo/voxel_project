@@ -15,7 +15,7 @@ MonoBehaviour:
   townName: TownTest
   townSize: 100
   townSizeVariation: 10
-  townDensity: 0.6
+  townDensity: 0.06
   townDensityVariation: 0.01
   townCenter:
   - {fileID: 11400000, guid: bdfb1d11cbae3e34fa07b38581e315c8, type: 2}
