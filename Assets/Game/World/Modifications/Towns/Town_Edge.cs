@@ -12,4 +12,17 @@ public class Town_Edge
         pointA = a;
         pointB = b;
     }
+
+    public bool EdgeIsSharedWithAnyIn(List<Town_Edge> edges)
+    {
+        foreach (Town_Edge edge in edges)
+        {
+            if (edge != this && Vector2.Distance(edge.pointA, pointA) < 0.1f && Vector2.Distance(edge.pointB, pointB) < 0.1f)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
