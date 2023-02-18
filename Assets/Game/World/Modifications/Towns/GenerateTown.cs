@@ -49,7 +49,7 @@ public static class GenerateTown
 
         for(int i = 0; i < houseAmount; i++)
         {
-            Vector2 housePos = GetRandomPos(new Vector2(pos.x, pos.z), townSize, i);
+            Vector2 housePos = GetRandomPosition(new Vector2(pos.x, pos.z), townSize, i);
             Structure house = town.houses[GetRandomValue(housePos, i, town.houses.Length)];
 
             if(!Structure_Util.CheckOverlap(house, new Vector3(housePos.x, pos.y, housePos.y), true))
@@ -61,67 +61,89 @@ public static class GenerateTown
         return structures.ToArray();
     }
 
-    private static Tuple<Structure, Vector2>[] GetRoads(Town town, List<Vector2> roadPoints, Vector2 pos)
+    private static Tuple<Structure, Vector2>[] GetRoads(Town town, List<Vector2> roadNodes, Vector2 pos)
     {
         List<Tuple<Structure, Vector2>> structures = new List<Tuple<Structure, Vector2>>();
 
-        List<Town_Triangle> triangles = BowyerWatson(town, roadPoints, pos);
+        List<Town_Connection> roads = BowyerWatson(town, roadNodes, pos);
 
-        foreach(Town_Triangle triangle in triangles)
+        foreach (Town_Connection road in roads)
         {
-            foreach(Town_Edge edge in triangle.GetEdges())
-            {
-                Debug.DrawLine(new Vector3(edge.pointA.x, 100f, edge.pointA.y), new Vector3(edge.pointB.x, 100f, edge.pointB.y), Color.white, 100f);
-            }
+            Debug.DrawLine(new Vector3(road.nodeA.x, 100f, road.nodeA.y), new Vector3(road.nodeB.x, 100f, road.nodeB.y), Color.white, 100f);
         }
+
+        //  Minimun Spanning Tree Needed
 
         return structures.ToArray();
     }
 
 
 
-    private static List<Town_Triangle> BowyerWatson(Town town, List<Vector2> points, Vector2 pos)
+    private static List<Town_Connection> BowyerWatson(Town town, List<Vector2> nodes, Vector2 pos)
     {
         List<Town_Triangle> triangles = new List<Town_Triangle>();
 
-        Vector2 orgPointA = pos + new Vector2(0, town.townSize * 3.2f);
-        Vector2 orgPointB = pos + new Vector2(-town.townSize * 2.2f, -town.townSize * 1.2f);
-        Vector2 orgPointC = pos + new Vector2(town.townSize * 2.2f, -town.townSize * 1.2f);
+        Vector2 superPointA = pos + new Vector2(0, town.townSize * 3.2f);
+        Vector2 superPointB = pos + new Vector2(-town.townSize * 2.2f, -town.townSize * 1.2f);
+        Vector2 superPointC = pos + new Vector2(town.townSize * 2.2f, -town.townSize * 1.2f);
 
-        triangles.Add(new Town_Triangle(orgPointA, orgPointB, orgPointC));
+        triangles.Add(new Town_Triangle(superPointA, superPointB, superPointC));
 
-        foreach(Vector2 point in points)
+        foreach (Vector2 node in nodes)
         {
-            List<Town_Edge> edges = new List<Town_Edge>();
+            List<Town_Connection> connections = new List<Town_Connection>();
 
             foreach (Town_Triangle triangle in triangles)
             {
-                if (triangle.IsPointInsideCircumcirlce(point))
+                if (triangle.IsNodeInsideCircumcirlce(node))
                 {
                     triangle.isBad = true;
 
-                    foreach (Town_Edge edge in triangle.GetEdges())
+                    foreach (Town_Connection connection in triangle.GetConnections())
                     {
-                        edges.Add(edge);
+                        connections.Add(connection);
                     }
                 }
             }
 
             triangles.RemoveAll((Town_Triangle t) => t.isBad);
-            edges.RemoveAll((Town_Edge e) => e.EdgeIsSharedWithAnyIn(edges));
-       
-            foreach (Town_Edge edge in edges)
+
+            for(int i = 0; i < connections.Count; i++)
             {
-                triangles.Add(new Town_Triangle(edge.pointA, edge.pointB, point));
+                for (int j = i + 1; j < connections.Count; j++)
+                {
+                    if (Town_Connection.ConnectionIsSharedBetween(connections[i], connections[j]))
+                    {
+                        connections[i].isBad = true;
+                        connections[j].isBad = true;
+                    }
+                }
+            }
+
+            connections.RemoveAll((Town_Connection e) => e.isBad);
+
+            foreach (Town_Connection connection in connections)
+            {
+                triangles.Add(new Town_Triangle(connection.nodeA, connection.nodeB, node));
             }
         }
 
-        triangles.RemoveAll((Town_Triangle t) => t.ContainsPoint(orgPointA) || t.ContainsPoint(orgPointB) || t.ContainsPoint(orgPointC));
+        triangles.RemoveAll((Town_Triangle t) => t.ContainsNode(superPointA) || t.ContainsNode(superPointB) || t.ContainsNode(superPointC));
 
-        return triangles;
+        List<Town_Connection> finalConnections = new List<Town_Connection>();
+
+        foreach(Town_Triangle triangle in triangles)
+        {
+            foreach(Town_Connection connection in triangle.GetConnections())
+            {
+                finalConnections.Add(connection);
+            }
+        }
+
+        return finalConnections;
     }
 
-    private static Vector2 GetRandomPos(Vector2 pos, int townSize, int index)
+    private static Vector2 GetRandomPosition(Vector2 pos, int townSize, int index)
     {
         return new Vector2(pos.x + (townSize - GetRandomValue(pos, index, townSize * 2)), pos.y + (townSize - GetRandomValue(pos, index * 2, townSize * 2)));
     }

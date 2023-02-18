@@ -4,32 +4,32 @@ using UnityEngine;
 
 public class Town_Triangle
 {
-    public Vector2 pointA;
-    public Vector2 pointB;
-    public Vector2 pointC;
+    public Vector2 nodeA;
+    public Vector2 nodeB;
+    public Vector2 nodeC;
 
     public bool isBad = false;
 
     public Town_Triangle(Vector2 a, Vector2 b, Vector2 c)
     {
-        pointA = a;
-        pointB = b;
-        pointC = c;
+        nodeA = a;
+        nodeB = b;
+        nodeC = c;
     }
 
-    public Town_Edge[] GetEdges()
+    public Town_Connection[] GetConnections()
     {
-        return new Town_Edge[3] 
+        return new Town_Connection[3] 
         {
-            new Town_Edge(pointA, pointB),
-            new Town_Edge(pointB, pointC),
-            new Town_Edge(pointC, pointA)
+            new Town_Connection(nodeA, nodeB),
+            new Town_Connection(nodeB, nodeC),
+            new Town_Connection(nodeC, nodeA)
         };
     }
 
-    public bool ContainsPoint(Vector2 point)
+    public bool ContainsNode(Vector2 nodePosition)
     {
-        if(Vector2.Distance(pointA, point) < 0.1f || Vector2.Distance(pointB, point) < 0.1f || Vector2.Distance(pointC, point) < 0.1f)
+        if(Vector2.Distance(nodeA, nodePosition) < 0.1f || Vector2.Distance(nodeB, nodePosition) < 0.1f || Vector2.Distance(nodeC, nodePosition) < 0.1f)
         {
             return true;
         }
@@ -37,11 +37,11 @@ public class Town_Triangle
         return false;
     }
 
-    public bool IsPointInsideCircumcirlce(Vector2 point)
+    public bool IsNodeInsideCircumcirlce(Vector2 nodePosition)
     {
-        Vector2 a = pointA;
-        Vector2 b = pointB;
-        Vector2 c = pointC;
+        Vector2 a = nodeA;
+        Vector2 b = nodeB;
+        Vector2 c = nodeC;
 
         float d = ((a.x * (b.y - c.y)) + (b.x * (c.y - a.y)) + (c.x * (a.y - b.y))) * 2f;
 
@@ -52,7 +52,7 @@ public class Town_Triangle
 
         float radius = Vector2.Distance(b, circumcentre);
 
-        if (Vector2.Distance(point, circumcentre) <= radius)
+        if (Vector2.Distance(nodePosition, circumcentre) <= radius)
         {
             return true;
         }
