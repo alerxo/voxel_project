@@ -176,7 +176,7 @@ public static class GenerateTown
 
             foreach (Town_Connection potentialConnection in potentialConnections)
             {
-                if (!(potentialConnection.startNode.isBad && potentialConnection.endNode.isBad))
+                if (!potentialConnection.endNode.isBad)
                 {
                     float tempDistance = Vector2.Distance(potentialConnection.startNode.position, potentialConnection.endNode.position);
 

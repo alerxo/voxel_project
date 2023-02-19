@@ -9,8 +9,6 @@ public class Town_Node
 
     public Vector2 position;
 
-
-
     public bool isBad { get; private set; }
 
     public Town_Node(Vector2 pos)
@@ -52,29 +50,5 @@ public class Town_Node
 
         nodeC.AddConnection(nodeA);
         nodeC.AddConnection(nodeB);
-    }
-
-    public Town_Node GetShortestConnection()
-    {
-        //if(shortestConnection != null && !shortestConnection.isBad)
-        //{
-        //    return shortestConnection;
-        //}
-
-        Town_Node closestNode = null;
-        float distanceToClosestNode = float.MaxValue;
-
-        foreach(Town_Node connection in connectedNodes)
-        {
-            float tempDistance = Vector2.Distance(position, connection.position);
-
-            if (tempDistance < distanceToClosestNode)
-            {
-                closestNode = connection;
-                distanceToClosestNode = tempDistance;
-            }
-        }
-
-        return closestNode;
     }
 }

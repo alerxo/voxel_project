@@ -13,7 +13,7 @@ public class TownTest : MonoBehaviour
 
     private void Start()
     {
-        Debug.Log("Loading");
+        Debug.Log("Generating world");
 
         World world = GameObject.FindGameObjectWithTag("WorldObj").GetComponent<World>();
 
@@ -28,6 +28,8 @@ public class TownTest : MonoBehaviour
                 world.chunksInWorld[x, z].IsActive = true;
             }
         }
+
+        Debug.Log("Generating town");
 
         Vector3 pos = world.chunksInWorld[VoxelData.worldSizeInChunks / 2, VoxelData.worldSizeInChunks / 2].position;
         pos = new Vector3(pos.x, yPos, pos.z);
