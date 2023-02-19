@@ -14,6 +14,6 @@ public class Town : ScriptableObject
     public float townDensityVariation;
 
     public Structure[] townCenter;
-    public Structure[] roads;
     public Structure[] houses;
+    public byte[] roadIds;
 }

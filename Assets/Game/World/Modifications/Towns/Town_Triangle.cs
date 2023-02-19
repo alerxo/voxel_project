@@ -1,16 +1,17 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class Town_Triangle
 {
-    public Vector2 nodeA;
-    public Vector2 nodeB;
-    public Vector2 nodeC;
+    public Town_Node nodeA;
+    public Town_Node nodeB;
+    public Town_Node nodeC;
 
     public bool isBad = false;
 
-    public Town_Triangle(Vector2 a, Vector2 b, Vector2 c)
+    public Town_Triangle(Town_Node a, Town_Node b, Town_Node c)
     {
         nodeA = a;
         nodeB = b;
@@ -27,9 +28,9 @@ public class Town_Triangle
         };
     }
 
-    public bool ContainsNode(Vector2 nodePosition)
+    public bool ContainsNode(Town_Node node)
     {
-        if(Vector2.Distance(nodeA, nodePosition) < 0.1f || Vector2.Distance(nodeB, nodePosition) < 0.1f || Vector2.Distance(nodeC, nodePosition) < 0.1f)
+        if(nodeA == node || nodeB == node || nodeC == node)
         {
             return true;
         }
@@ -37,11 +38,16 @@ public class Town_Triangle
         return false;
     }
 
+    public void SetBad()
+    {
+        isBad = true;
+    }
+
     public bool IsNodeInsideCircumcirlce(Vector2 nodePosition)
     {
-        Vector2 a = nodeA;
-        Vector2 b = nodeB;
-        Vector2 c = nodeC;
+        Vector2 a = nodeA.position;
+        Vector2 b = nodeB.position;
+        Vector2 c = nodeC.position;
 
         float d = ((a.x * (b.y - c.y)) + (b.x * (c.y - a.y)) + (c.x * (a.y - b.y))) * 2f;
 

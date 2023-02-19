@@ -13,14 +13,13 @@ MonoBehaviour:
   m_Name: TownTest
   m_EditorClassIdentifier: 
   townName: TownTest
-  townSize: 100
+  townSize: 200
   townSizeVariation: 10
-  townDensity: 0.4
+  townDensity: 0.2
   townDensityVariation: 0.01
   townCenter:
   - {fileID: 11400000, guid: bdfb1d11cbae3e34fa07b38581e315c8, type: 2}
-  roads:
-  - {fileID: 11400000, guid: e2ba7df5629c3a74284a977fcc35f0db, type: 2}
   houses:
   - {fileID: 11400000, guid: 0d2dd74e8b6c2e2468294f9d92b181c3, type: 2}
   - {fileID: 11400000, guid: 520f0f62884ae8a4487d0cd9f67ce8c8, type: 2}
+  roadIds: 03

@@ -4,25 +4,37 @@ using UnityEngine;
 
 public class Town_Connection
 {
-    public Vector2 nodeA;
-    public Vector2 nodeB;
+    public Town_Node startNode;
+    public Town_Node endNode;
 
     public bool isBad = false;
 
-    public Town_Connection(Vector2 a, Vector2 b)
+    public Town_Connection(Town_Node a, Town_Node b)
     {
-        nodeA = a;
-        nodeB = b;
+        startNode = a;
+        endNode = b;
     }
 
-    public static bool ConnectionIsSharedBetween(Town_Connection connectionA, Town_Connection connectionB)
+    public bool IsEqualTo(Town_Connection connection)
     {
-        if ((Vector2.Distance(connectionA.nodeA, connectionB.nodeA) < 1f && Vector2.Distance(connectionA.nodeB, connectionB.nodeB) < 1f) || 
-            (Vector2.Distance(connectionA.nodeB, connectionB.nodeA) < 1f && Vector2.Distance(connectionA.nodeA, connectionB.nodeB) < 1f))
+        if ((startNode == connection.startNode && endNode == connection.endNode) || (startNode == connection.endNode && endNode == connection.startNode))
         {
             return true;
         }
 
         return false;
+    }
+
+    public void SetBad()
+    {
+        isBad = true;
+
+        RemoveConnection();
+    }
+
+    public void RemoveConnection()
+    {
+        startNode.RemoveConnection(endNode);
+        endNode.RemoveConnection(startNode);
     }
 }

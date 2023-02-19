@@ -32,9 +32,12 @@ public class TownTest : MonoBehaviour
         Vector3 pos = world.chunksInWorld[VoxelData.worldSizeInChunks / 2, VoxelData.worldSizeInChunks / 2].position;
         pos = new Vector3(pos.x, yPos, pos.z);
 
-        Tuple<Structure, Vector2>[] structures = GenerateTown.GetTown(testTown, pos);
+        Tuple<Tuple<Structure, Vector2>[], Queue<VoxelModification>> townData = GenerateTown.GetTown(testTown, pos);
 
-        foreach(Tuple<Structure, Vector2> s in structures)
+        Tuple<Structure, Vector2>[] structureData = townData.Item1;
+        Queue<VoxelModification> roadData = townData.Item2;
+
+        foreach(Tuple<Structure, Vector2> s in structureData)
         {
             Queue<VoxelModification> queue = new Queue<VoxelModification>();
 
@@ -48,6 +51,8 @@ public class TownTest : MonoBehaviour
 
             world.modifications.Enqueue(queue);
         }
+
+        world.modifications.Enqueue(roadData);
 
         Debug.Log("Done");
     }
