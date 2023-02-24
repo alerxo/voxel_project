@@ -34,10 +34,12 @@ public class TownTest : MonoBehaviour
         Vector3 pos = world.chunksInWorld[VoxelData.worldSizeInChunks / 2, VoxelData.worldSizeInChunks / 2].position;
         pos = new Vector3(pos.x, yPos, pos.z);
 
-        Tuple<Tuple<Structure, Vector2>[], Queue<VoxelModification>> townData = GenerateTown.GetTown(testTown, pos);
+        TownData townData = new TownData(testTown, pos);
 
-        Tuple<Structure, Vector2>[] structureData = townData.Item1;
-        Queue<VoxelModification> roadData = townData.Item2;
+        townData = GenerateTown.GetTownData(townData);
+
+        List<Tuple<Structure, Vector2>> structureData = townData.structures;
+        Queue<VoxelModification> roadData = townData.roadData;
 
         foreach(Tuple<Structure, Vector2> s in structureData)
         {

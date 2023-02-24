@@ -5,52 +5,51 @@ using UnityEngine;
 
 public static class GenerateTown
 {
-    public static Tuple<Tuple<Structure, Vector2>[], Queue<VoxelModification>> GetTown(Town town, Vector3 pos)
+    public static TownData GetTownData(TownData townData)
     {
-        List<Tuple<Structure, Vector2>> structures = new List<Tuple<Structure, Vector2>>();
         List<Vector2> roadPoints = new List<Vector2>();
 
-        foreach(Tuple<Structure, Vector2> structure in GetTownCenter(town, pos))
+        foreach(Tuple<Structure, Vector2> structure in GetTownCenter(townData))
         {
-            structures.Add(structure);
+            townData.structures.Add(structure);
             roadPoints.Add(structure.Item2);
         }
 
-        foreach (Tuple<Structure, Vector2> structure in GetHouses(town, pos))
+        foreach (Tuple<Structure, Vector2> structure in GetHouses(townData))
         {
-            structures.Add(structure);
+            townData.structures.Add(structure);
             roadPoints.Add(structure.Item2);
         }
 
-        Queue<VoxelModification> roadBlocks = GetRoads(town, roadPoints, pos);
+        townData.roadData = GetRoads(townData, roadPoints);
 
-        return Tuple.Create(structures.ToArray(), roadBlocks);
+        return townData;
     }
 
-    private static Tuple<Structure, Vector2>[] GetTownCenter(Town town, Vector3 pos)
+    private static Tuple<Structure, Vector2>[] GetTownCenter(TownData townData)
     {
         List<Tuple<Structure, Vector2>> structures = new List<Tuple<Structure, Vector2>>();
 
-        structures.Add(Tuple.Create(town.townCenter[GetRandomValue(pos, 0, town.houses.Length)], new Vector2(pos.x, pos.z)));
+        structures.Add(Tuple.Create(townData.town.townCenter[GetRandomValue(townData.position, 0, townData.town.houses.Length)], new Vector2(townData.position.x, townData.position.z)));
 
         return structures.ToArray();
     }
 
-    private static Tuple<Structure, Vector2>[] GetHouses(Town town, Vector3 pos)
+    private static Tuple<Structure, Vector2>[] GetHouses(TownData townData)
     {
         List<Tuple<Structure, Vector2>> structures = new List<Tuple<Structure, Vector2>>();
 
-        int townSize = town.townSize + (town.townSizeVariation - GetRandomValue(pos, 1, town.townSizeVariation * 2));
-        float townDensity = town.townDensity + (town.townDensityVariation - ((float)GetRandomValue(pos, 2, Mathf.FloorToInt(town.townDensityVariation * town.townSize)) / (float)town.townSize));
+        int townSize = townData.town.townSize + (townData.town.townSizeVariation - GetRandomValue(townData.position, 1, townData.town.townSizeVariation * 2));
+        float townDensity = townData.town.townDensity + (townData.town.townDensityVariation - ((float)GetRandomValue(townData.position, 2, Mathf.FloorToInt(townData.town.townDensityVariation * townData.town.townSize)) / (float)townData.town.townSize));
 
         int houseAmount = Mathf.FloorToInt(townSize * townDensity);
 
         for(int i = 0; i < houseAmount; i++)
         {
-            Vector2 housePos = GetRandomPosition(new Vector2(pos.x, pos.z), townSize, i);
-            Structure house = town.houses[GetRandomValue(housePos, i, town.houses.Length)];
+            Vector2 housePos = GetRandomPosition(new Vector2(townData.position.x, townData.position.z), townSize, i);
+            Structure house = townData.town.houses[GetRandomValue(housePos, i, townData.town.houses.Length)];
 
-            if(!Structure_Util.CheckOverlap(house, new Vector3(housePos.x, pos.y, housePos.y), true))
+            if(!Structure_Util.CheckOverlap(house, new Vector3(housePos.x, townData.position.y, housePos.y), true))
             {
                 structures.Add(Tuple.Create(house, housePos));
             }
@@ -59,9 +58,9 @@ public static class GenerateTown
         return structures.ToArray();
     }
 
-    private static Queue<VoxelModification> GetRoads(Town town, List<Vector2> roadNodes, Vector3 pos)
+    private static Queue<VoxelModification> GetRoads(TownData townData, List<Vector2> roadNodes)
     {
-        List<Town_Node> roadConnections = BowyerWatson(town, roadNodes, new Vector2(pos.x, pos.z));
+        List<Town_Node> roadConnections = BowyerWatson(townData, roadNodes);
 
         List<Town_Connection> roadConnection = PrimsAlgorithm(roadConnections);
 
@@ -70,16 +69,16 @@ public static class GenerateTown
             Debug.DrawLine(new Vector3(connection.startNode.position.x, 100f, connection.startNode.position.y), new Vector3(connection.endNode.position.x, 100f, connection.endNode.position.y), Color.green, 100f);
         }
 
-        return GetRoadData(town, pos, roadConnection);
+        return GetRoadData(townData, roadConnection);
     }
 
-    private static List<Town_Node> BowyerWatson(Town town, List<Vector2> nodePoints, Vector2 pos)
+    private static List<Town_Node> BowyerWatson(TownData townData, List<Vector2> nodePoints)
     {
         List<Town_Triangle> triangles = new List<Town_Triangle>();
 
-        Town_Node superPointA = new Town_Node(pos + new Vector2(0, town.townSize * 3.2f));
-        Town_Node superPointB = new Town_Node(pos + new Vector2(-town.townSize * 2.2f, -town.townSize * 1.2f));
-        Town_Node superPointC = new Town_Node(pos + new Vector2(town.townSize * 2.2f, -town.townSize * 1.2f));
+        Town_Node superPointA = new Town_Node(townData.position2 + new Vector2(0, townData.town.townSize * 3.2f));
+        Town_Node superPointB = new Town_Node(townData.position2 + new Vector2(-townData.town.townSize * 2.2f, -townData.town.townSize * 1.2f));
+        Town_Node superPointC = new Town_Node(townData.position2 + new Vector2(townData.town.townSize * 2.2f, -townData.town.townSize * 1.2f));
 
         superPointA.SetBad();
         superPointB.SetBad();
@@ -211,30 +210,31 @@ public static class GenerateTown
         return finalConnections;
     }
 
-    private static Queue<VoxelModification> GetRoadData(Town town, Vector3 startPos,  List<Town_Connection> connections)
+    private static Queue<VoxelModification> GetRoadData(TownData townData,  List<Town_Connection> connections)
     {
-        Queue<VoxelModification> roadModifications = new Queue<VoxelModification>();
+        Town_Grid grid = new Town_Grid(townData.position2, townData.town.townSize * 2, townData.town.townSize * 2);
 
         foreach (Town_Connection connection in connections)
         {
-            Vector2 pos = connection.startNode.position + connection.endNode.position;
+            grid = UpdateGridWithAStar(connection.startNode.position, connection.endNode.position, grid);
+        }
 
-            byte id = town.roadIds[GetRandomValue(pos, 0, town.roadIds.Length)];
+        Queue<VoxelModification> roadModifications = new Queue<VoxelModification>();
 
-            roadModifications.Enqueue(new VoxelModification(new Vector3(pos.x - startPos.x, startPos.y, pos.y - startPos.z), id));
+        foreach (Vector2 roadblockPosition in grid.GetRoadPositions())
+        {
+            byte id = townData.town.roadIds[GetRandomValue(roadblockPosition, 0, townData.town.roadIds.Length)];
+            roadModifications.Enqueue(new VoxelModification(new Vector3(roadblockPosition.x - townData.position.x, townData.position.y, roadblockPosition.y - townData.position.z), id));
         }
 
         return roadModifications;
     }
 
-    private static List<Vector2> AStar(Vector2 startPos, Vector2 endPos, List<Vector2> existing)
+    private static Town_Grid UpdateGridWithAStar(Vector2 startPos, Vector2 endPos, Town_Grid grid)
     {
-        List<Vector2> positions = new List<Vector2>();
+        //grid.SetSquareToRoad(startPos);
 
-        positions.Add(startPos);
-        positions.Add(endPos);
-
-        return positions;
+        return grid;
     }
 
     private static Vector2 GetRandomPosition(Vector2 pos, int townSize, int index)

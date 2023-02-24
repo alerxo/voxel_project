@@ -63,4 +63,30 @@ public static class Structure_Util
 
         return false;
     }
+
+    public static bool CheckOverlap(Vector3 position)
+    {
+        foreach (Tuple<Structure, Vector3> s in structureList)
+        {
+            if (Vector3.Distance(position, s.Item2) < s.Item1.buildRadius)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static bool CheckOverlap(Vector2 position)
+    {
+        foreach (Tuple<Structure, Vector3> s in structureList)
+        {
+            if (Vector2.Distance(position, s.Item2) < s.Item1.buildRadius)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
