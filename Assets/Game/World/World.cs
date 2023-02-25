@@ -23,6 +23,8 @@ public class World : MonoBehaviour
     public int riverSourceHeightLimit;
     public float riverSourceHumidityLimit;
 
+    public Town townReference;
+
     [Space]
 
     [Tooltip("Height used in world height")]
@@ -96,6 +98,9 @@ public class World : MonoBehaviour
         subBiomeMap = BiomeMap.GetBiomeMap(this);
 
         GenerateWorld();
+
+        WorldTowns.GenerateTowns(this, townReference);
+
         GetSpawnPosition();
 
         UpdateChunk_Thread = new Thread(new ThreadStart(ThreadedUpdate));

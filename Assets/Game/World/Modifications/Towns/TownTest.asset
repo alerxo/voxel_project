@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: TownTest
   m_EditorClassIdentifier: 
   townName: TownTest
-  townSize: 200
+  townSize: 100
   townSizeVariation: 10
   townDensity: 0.3
   townDensityVariation: 0.01

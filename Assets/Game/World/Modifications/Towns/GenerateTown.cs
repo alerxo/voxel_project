@@ -7,6 +7,8 @@ public static class GenerateTown
 {
     public static TownData GetTownData(TownData townData)
     {
+        //  Gets the data about the town and returns
+
         townData.sizeRadius = townData.town.townSize + (townData.town.townSizeVariation - GetRandomValue(townData.position, 1, townData.town.townSizeVariation * 2));
 
         townData.density = townData.town.townDensity + (townData.town.townDensityVariation - ((float)GetRandomValue(townData.position, 2, Mathf.FloorToInt(townData.town.townDensityVariation * townData.town.townSize)) / (float)townData.town.townSize));
@@ -32,6 +34,8 @@ public static class GenerateTown
 
     private static Tuple<Structure, Vector2>[] GetTownCenter(TownData townData)
     {
+        //  Picks one of the town center structures
+
         List<Tuple<Structure, Vector2>> structures = new List<Tuple<Structure, Vector2>>();
 
         structures.Add(Tuple.Create(townData.town.townCenter[GetRandomValue(townData.position, 0, townData.town.houses.Length)], new Vector2(townData.position.x, townData.position.z)));
@@ -41,6 +45,8 @@ public static class GenerateTown
 
     private static Tuple<Structure, Vector2>[] GetHouses(TownData townData)
     {
+        //  Picks random positions for the house structures, if position doesnt overlap, place it
+
         List<Tuple<Structure, Vector2>> structures = new List<Tuple<Structure, Vector2>>();
 
         int houseAmount = Mathf.FloorToInt(townData.sizeRadius * townData.density);
@@ -62,14 +68,14 @@ public static class GenerateTown
 
     private static Queue<VoxelModification> GetRoads(TownData townData, List<Vector2> roadNodes)
     {
+        //  Gets a network of roads connecting the houses
+        //  Uses delaunay, boywer watson algorithm to get all connections between houses
+        //  Then uses prims algorithm to get a minimum spanning tree
+        //  Then uses a* to place the road blocks
+
         List<Town_Node> roadConnections = RoadTriangulation(townData, roadNodes);
 
         List<Town_Connection> roadConnection = RoadMinimunSpanningTree(roadConnections);
-
-        foreach(Town_Connection connection in roadConnection)
-        {
-            Debug.DrawLine(new Vector3(connection.startNode.position.x, 100f, connection.startNode.position.y), new Vector3(connection.endNode.position.x, 100f, connection.endNode.position.y), Color.green, 100f);
-        }
 
         return GetRoadData(townData, roadConnection);
     }
@@ -77,6 +83,9 @@ public static class GenerateTown
     private static List<Town_Node> RoadTriangulation(TownData townData, List<Vector2> nodePoints)
     {
         //  BowyerWatson
+
+        //  Starts by placing the super triangle and sets it bad as we dont want it later
+        //  Then starts looping through each node, replacing the triangles when needed
 
         List<Town_Triangle> triangles = new List<Town_Triangle>();
 
@@ -163,6 +172,9 @@ public static class GenerateTown
     {
         //  PrimsAlgorithm
 
+        //  Starts at a random node, creates connections trough that node, taking the cheapes path,
+        //  that paths end node gets added to list of nodes, and its connections, and loop continues untill all nodes are visited
+
         List<Town_Connection> potentialConnections = new List<Town_Connection>();
         List<Town_Connection> finalConnections = new List<Town_Connection>();
 
@@ -206,6 +218,9 @@ public static class GenerateTown
             }
         }
 
+        //  We add random connections
+        //  We dont want duplicates so we say bye to those
+
         List<Vector2> occupied = new List<Vector2>();
 
         foreach (Town_Connection potentialConnection in potentialConnections)
@@ -224,18 +239,15 @@ public static class GenerateTown
 
     private static Queue<VoxelModification> GetRoadData(TownData townData,  List<Town_Connection> connections)
     {
-        Town_Grid roadGrid = new Town_Grid(townData.position2, townData.sizeRadius);
+        //  Has a grid of squares, for each road connection, use a* to get block data
+        //  Then chose random road id and create vm
 
-        int count = 0;
+        Town_Grid roadGrid = new Town_Grid(townData.position2, townData.sizeRadius);
 
         foreach (Town_Connection connection in connections)
         {
             roadGrid = UpdateRoadGridWithNewRoad(connection.startNode.position, connection.endNode.position, roadGrid);
-
-            count++;
         }
-
-        Debug.Log(count);
 
         Queue<VoxelModification> roadModifications = new Queue<VoxelModification>();
 

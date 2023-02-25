@@ -186,14 +186,14 @@ public static class WorldTerrain
         #endregion
     }
 
-    private static int GetWorldHeight(World world, Vector3 pos)
+    public static int GetWorldHeight(World world, Vector3 pos)
     {
         //  The global noise
 
         return Noise.Get2DPerlinWorld(world, new Vector2(pos.x, pos.z));
     }
 
-    private static int GetBiomeHeight(World world, Vector3 pos, Biome biome)
+    public static int GetBiomeHeight(World world, Vector3 pos, Biome biome)
     {
         //  The biome noise
 

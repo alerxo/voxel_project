@@ -481,6 +481,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: World
       objectReference: {fileID: 0}
+    - target: {fileID: 8945734804422624707, guid: ea8d7bff1037d394ba37e2b3858b5dbf, type: 3}
+      propertyPath: townReference
+      value: 
+      objectReference: {fileID: 11400000, guid: 6c39b4f6414c4cd4b8f9c5974caaf278, type: 2}
     - target: {fileID: 8945734804422624732, guid: ea8d7bff1037d394ba37e2b3858b5dbf, type: 3}
       propertyPath: m_RootOrder
       value: 2
