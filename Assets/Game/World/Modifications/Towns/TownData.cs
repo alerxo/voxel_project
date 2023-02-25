@@ -10,6 +10,9 @@ public class TownData
     public Vector3 position;
     public Vector2 position2;
 
+    public int sizeRadius;
+    public float density;
+
     public List<Tuple<Structure, Vector2>> structures = new List<Tuple<Structure, Vector2>>();
     public Queue<VoxelModification> roadData = new Queue<VoxelModification>();
 

@@ -81,7 +81,7 @@ public static class Structure_Util
     {
         foreach (Tuple<Structure, Vector3> s in structureList)
         {
-            if (Vector2.Distance(position, s.Item2) < s.Item1.buildRadius)
+            if (Vector2.Distance(position, new Vector2(s.Item2.x, s.Item2.z)) < s.Item1.buildRadius)
             {
                 return true;
             }

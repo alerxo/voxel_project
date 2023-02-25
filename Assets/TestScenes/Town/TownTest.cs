@@ -56,7 +56,14 @@ public class TownTest : MonoBehaviour
             world.modifications.Enqueue(queue);
         }
 
-        world.modifications.Enqueue(roadData);
+        Queue<VoxelModification> updatedRoadData = new Queue<VoxelModification>();
+
+        foreach (VoxelModification vm in roadData)
+        {
+            updatedRoadData.Enqueue(new VoxelModification(vm.position + pos, vm.blockId));
+        }
+
+        world.modifications.Enqueue(updatedRoadData);
 
         Debug.Log("Done");
     }

@@ -7,6 +7,10 @@ public static class GenerateTown
 {
     public static TownData GetTownData(TownData townData)
     {
+        townData.sizeRadius = townData.town.townSize + (townData.town.townSizeVariation - GetRandomValue(townData.position, 1, townData.town.townSizeVariation * 2));
+
+        townData.density = townData.town.townDensity + (townData.town.townDensityVariation - ((float)GetRandomValue(townData.position, 2, Mathf.FloorToInt(townData.town.townDensityVariation * townData.town.townSize)) / (float)townData.town.townSize));
+
         List<Vector2> roadPoints = new List<Vector2>();
 
         foreach(Tuple<Structure, Vector2> structure in GetTownCenter(townData))
@@ -39,14 +43,12 @@ public static class GenerateTown
     {
         List<Tuple<Structure, Vector2>> structures = new List<Tuple<Structure, Vector2>>();
 
-        int townSize = townData.town.townSize + (townData.town.townSizeVariation - GetRandomValue(townData.position, 1, townData.town.townSizeVariation * 2));
-        float townDensity = townData.town.townDensity + (townData.town.townDensityVariation - ((float)GetRandomValue(townData.position, 2, Mathf.FloorToInt(townData.town.townDensityVariation * townData.town.townSize)) / (float)townData.town.townSize));
-
-        int houseAmount = Mathf.FloorToInt(townSize * townDensity);
+        int houseAmount = Mathf.FloorToInt(townData.sizeRadius * townData.density);
 
         for(int i = 0; i < houseAmount; i++)
         {
-            Vector2 housePos = GetRandomPosition(new Vector2(townData.position.x, townData.position.z), townSize, i);
+            Vector2 housePos = GetRandomPosition(townData.position2, townData.sizeRadius, i);
+
             Structure house = townData.town.houses[GetRandomValue(housePos, i, townData.town.houses.Length)];
 
             if(!Structure_Util.CheckOverlap(house, new Vector3(housePos.x, townData.position.y, housePos.y), true))
@@ -60,9 +62,9 @@ public static class GenerateTown
 
     private static Queue<VoxelModification> GetRoads(TownData townData, List<Vector2> roadNodes)
     {
-        List<Town_Node> roadConnections = BowyerWatson(townData, roadNodes);
+        List<Town_Node> roadConnections = RoadTriangulation(townData, roadNodes);
 
-        List<Town_Connection> roadConnection = PrimsAlgorithm(roadConnections);
+        List<Town_Connection> roadConnection = RoadMinimunSpanningTree(roadConnections);
 
         foreach(Town_Connection connection in roadConnection)
         {
@@ -72,8 +74,10 @@ public static class GenerateTown
         return GetRoadData(townData, roadConnection);
     }
 
-    private static List<Town_Node> BowyerWatson(TownData townData, List<Vector2> nodePoints)
+    private static List<Town_Node> RoadTriangulation(TownData townData, List<Vector2> nodePoints)
     {
+        //  BowyerWatson
+
         List<Town_Triangle> triangles = new List<Town_Triangle>();
 
         Town_Node superPointA = new Town_Node(townData.position2 + new Vector2(0, townData.town.townSize * 3.2f));
@@ -155,8 +159,10 @@ public static class GenerateTown
         return finalNodes;
     }
 
-    private static List<Town_Connection> PrimsAlgorithm(List<Town_Node> nodes)
+    private static List<Town_Connection> RoadMinimunSpanningTree(List<Town_Node> nodes)
     {
+        //  PrimsAlgorithm
+
         List<Town_Connection> potentialConnections = new List<Town_Connection>();
         List<Town_Connection> finalConnections = new List<Town_Connection>();
 
@@ -193,17 +199,23 @@ public static class GenerateTown
 
             foreach (Town_Node node in shortest.endNode.connectedNodes)
             {
-                potentialConnections.Add(new Town_Connection(shortest.endNode, node));
+                if (!node.Equals(shortest.startNode))
+                {
+                    potentialConnections.Add(new Town_Connection(shortest.endNode, node));
+                }                
             }
         }
+
+        List<Vector2> occupied = new List<Vector2>();
 
         foreach (Town_Connection potentialConnection in potentialConnections)
         {
             Vector2 pos = potentialConnection.startNode.position + potentialConnection.endNode.position;
 
-            if(GetRandomValue(pos, 0, 10) == 0)
+            if(GetRandomValue(pos, 0, 10) == 0 && !occupied.Contains(pos))
             {
                 finalConnections.Add(potentialConnection);
+                occupied.Add(pos);
             }
         }
 
@@ -212,29 +224,103 @@ public static class GenerateTown
 
     private static Queue<VoxelModification> GetRoadData(TownData townData,  List<Town_Connection> connections)
     {
-        Town_Grid grid = new Town_Grid(townData.position2, townData.town.townSize * 2, townData.town.townSize * 2);
+        Town_Grid roadGrid = new Town_Grid(townData.position2, townData.sizeRadius);
+
+        int count = 0;
 
         foreach (Town_Connection connection in connections)
         {
-            grid = UpdateGridWithAStar(connection.startNode.position, connection.endNode.position, grid);
+            roadGrid = UpdateRoadGridWithNewRoad(connection.startNode.position, connection.endNode.position, roadGrid);
+
+            count++;
         }
+
+        Debug.Log(count);
 
         Queue<VoxelModification> roadModifications = new Queue<VoxelModification>();
 
-        foreach (Vector2 roadblockPosition in grid.GetRoadPositions())
+        foreach (Vector2 roadblockPosition in roadGrid.GetRoadPositions())
         {
             byte id = townData.town.roadIds[GetRandomValue(roadblockPosition, 0, townData.town.roadIds.Length)];
-            roadModifications.Enqueue(new VoxelModification(new Vector3(roadblockPosition.x - townData.position.x, townData.position.y, roadblockPosition.y - townData.position.z), id));
+            Vector3 roadPosition = new Vector3(roadblockPosition.x, 10f, roadblockPosition.y);
+
+            roadModifications.Enqueue(new VoxelModification(roadPosition, id));
         }
 
         return roadModifications;
     }
 
-    private static Town_Grid UpdateGridWithAStar(Vector2 startPos, Vector2 endPos, Town_Grid grid)
+    private static Town_Grid UpdateRoadGridWithNewRoad(Vector2 startPos, Vector2 endPos, Town_Grid grid)
     {
-        //grid.SetSquareToRoad(startPos);
+        //  A*
+
+        Town_Square startSquare = grid.GetSquareFromWorldPosition(startPos); 
+        Town_Square endSquare = grid.GetSquareFromWorldPosition(endPos);
+
+        List<Town_Square> openSet = new List<Town_Square>();
+        HashSet<Town_Square> closedSet = new HashSet<Town_Square>();
+
+        openSet.Add(startSquare);
+        startSquare.hCost = 0;
+        startSquare.gCost = 0;
+
+        while(openSet.Count > 0)
+        {
+            Town_Square currentSquare = openSet[0];
+
+            for (int i = 1; i < openSet.Count; i++)
+            {
+                if (openSet[i].fCost < currentSquare.fCost || (openSet[i].fCost == currentSquare.fCost && openSet[i].hCost < currentSquare.hCost))
+                {
+                    currentSquare = openSet[i];
+                }
+            }
+
+            openSet.Remove(currentSquare);
+            closedSet.Add(currentSquare);
+
+            if(currentSquare == endSquare)
+            {
+                RetracePath(startSquare, endSquare, grid);
+
+                return grid;
+            }
+
+            foreach(Town_Square neighbour in grid.GetNeighbours(currentSquare))
+            {
+                if (neighbour.isBad || closedSet.Contains(neighbour)) continue;
+
+                int movementDistanceToNeighbour = currentSquare.gCost + currentSquare.GetDistanceToOtherSquare(neighbour);
+
+                if(movementDistanceToNeighbour < neighbour.gCost || !openSet.Contains(neighbour))
+                {
+                    neighbour.gCost = movementDistanceToNeighbour;
+                    neighbour.hCost = neighbour.GetDistanceToOtherSquare(endSquare);
+
+                    neighbour.parent = currentSquare;
+
+                    if (!openSet.Contains(neighbour))
+                    {
+                        openSet.Add(neighbour);
+                    }
+                }
+            }
+        }
+
+        Debug.LogError("End not found");
 
         return grid;
+    }
+
+    private static void RetracePath(Town_Square start, Town_Square end, Town_Grid grid)
+    {
+        Town_Square currentSquare = end;
+
+        while(currentSquare != start)
+        {
+            grid.SetSquareToRoad(currentSquare.position);
+            currentSquare = currentSquare.parent;
+        }
     }
 
     private static Vector2 GetRandomPosition(Vector2 pos, int townSize, int index)
