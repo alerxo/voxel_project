@@ -14,7 +14,7 @@ public static class BiomeMap
         //  Creates a biome map with size of worldsize and also creates a layer around this, so edges of map always have surrounding biomes
         //  Also creates a map for rivers, as these are generated seperatly
 
-        SubBiome[,] subBiomeMap = new SubBiome[VoxelData.worldSizeInChunks + 2, VoxelData.worldSizeInChunks + 2];
+        SubBiome[,] subBiomeMap = new SubBiome[World_Settings.worldSizeInChunks + 2, World_Settings.worldSizeInChunks + 2];
         bool[,] riverMap = GetRiverMap(world);
 
         //  Each chunk will be assigen a biome, depedning on temperature, humidity and height
@@ -30,9 +30,9 @@ public static class BiomeMap
 
             Debug.Log(testBiome.name);
 
-            for (int x = 0; x < VoxelData.worldSizeInChunks + 2; x++)
+            for (int x = 0; x < World_Settings.worldSizeInChunks + 2; x++)
             {
-                for (int z = 0; z < VoxelData.worldSizeInChunks + 2; z++)
+                for (int z = 0; z < World_Settings.worldSizeInChunks + 2; z++)
                 {
                     subBiomeMap[x, z] = testBiome;
                 }
@@ -49,9 +49,9 @@ public static class BiomeMap
 
             Debug.Log(testBiome.name);
 
-            for (int x = 0; x < VoxelData.worldSizeInChunks + 2; x++)
+            for (int x = 0; x < World_Settings.worldSizeInChunks + 2; x++)
             {
-                for (int z = 0; z < VoxelData.worldSizeInChunks + 2; z++)
+                for (int z = 0; z < World_Settings.worldSizeInChunks + 2; z++)
                 {
                     subBiomeMap[x, z] = testBiome;
                 }
@@ -68,9 +68,9 @@ public static class BiomeMap
 
             Debug.Log(testBiome.name);
 
-            for (int x = 0; x < VoxelData.worldSizeInChunks + 2; x++)
+            for (int x = 0; x < World_Settings.worldSizeInChunks + 2; x++)
             {
-                for (int z = 0; z < VoxelData.worldSizeInChunks + 2; z++)
+                for (int z = 0; z < World_Settings.worldSizeInChunks + 2; z++)
                 {
                     subBiomeMap[x, z] = testBiome;
                 }
@@ -81,9 +81,9 @@ public static class BiomeMap
 
         #endregion
 
-        for (int x = 0; x < VoxelData.worldSizeInChunks + 2; x++)
+        for (int x = 0; x < World_Settings.worldSizeInChunks + 2; x++)
         {
-            for (int z = 0; z < VoxelData.worldSizeInChunks + 2; z++)
+            for (int z = 0; z < World_Settings.worldSizeInChunks + 2; z++)
             {
                 if (riverMap[x, z])
                 {
@@ -197,7 +197,7 @@ public static class BiomeMap
     {
         //  Humidity is random noise, multiplied by falloff, so closer to edge of world, which should be ocean is more humid
 
-        return Noise.Get2DPerlinHumidity(world, pos, 1000, VoxelData.worldSizeInChunks, 1, 1, 1, 1);
+        return Noise.Get2DPerlinHumidity(world, pos, 1000, World_Settings.worldSizeInChunks, 1, 1, 1, 1);
     }
 
     private static int GetHeight(World world, Vector2 pos)
@@ -211,20 +211,20 @@ public static class BiomeMap
     {
         //  Creates a map of rivers using source chunks and creating worm from that chunk
 
-        bool[,] riverMap = new bool[VoxelData.worldSizeInChunks + 2, VoxelData.worldSizeInChunks + 2];
+        bool[,] riverMap = new bool[World_Settings.worldSizeInChunks + 2, World_Settings.worldSizeInChunks + 2];
 
         //  Creating the source chunks
         //  Go trough each chunk, if the height and humidity are high enough, add it to the list
 
         List<Tuple<int, int>> sourceChunks = new List<Tuple<int, int>>();
 
-        for (int x = 0; x < VoxelData.worldSizeInChunks + 2; x++)
+        for (int x = 0; x < World_Settings.worldSizeInChunks + 2; x++)
         {
-            for (int z = 0; z < VoxelData.worldSizeInChunks + 2; z++)
+            for (int z = 0; z < World_Settings.worldSizeInChunks + 2; z++)
             {
                 Vector2 pos = new((x * VoxelData.chunkWidth) + VoxelData.chunkWidth / 2, (z * VoxelData.chunkWidth) + VoxelData.chunkWidth / 2);
 
-                if (GetHeight(world, pos) > world.riverSourceHeightLimit && GetHumidity(world, pos) > 0.8f)
+                if (GetHeight(world, pos) > World_Settings.riverSourceHeightLimit && GetHumidity(world, pos) > 0.8f)
                 {
                     sourceChunks.Add(Tuple.Create(x, z));
                 }

@@ -5,47 +5,16 @@ using System.Threading;
 
 public class World : MonoBehaviour
 {
-    #region oof
-
-    [Space]
-
     //  Terrain and climate
 
-    [SerializeField] private int seed;
-
-    public int randomSeed { get; private set; }
-
     public Biome[] biomes;
+    public Town[] towns;
+    public SubBiome[,] subBiomeMap = new SubBiome[World_Settings.worldSizeInChunks + 2, World_Settings.worldSizeInChunks + 2];
 
-    public SubBiome[,] subBiomeMap = new SubBiome[VoxelData.worldSizeInChunks + 2, VoxelData.worldSizeInChunks + 2];
+    [Space]
 
     public SubBiome riverReference;
-    public int riverSourceHeightLimit;
-    public float riverSourceHumidityLimit;
-
-    public Town townReference;
-
-    [Space]
-
-    [Tooltip("Height used in world height")]
-    public int worldHeight;
-
-    [Tooltip("Distance between samplepoints, bigger lumps")]
-    public float noiseScale;
-
-    [Tooltip("Distance between samplepoints, bigger lumps")]
-    public float multiplierNoiseScale;
-
-    [Tooltip("Each octave adds another layer of noise")]
-    public int octaves;
-    [Tooltip("Controls decrease in amplitude of octaves, how much the small features made from lacunarity influence the curve")]
-    [Range(0f, 1f)]
-    public float persistence;
-    [Tooltip("Controls increase in frequence of octaves, small features on the curve")]
-    public float lacunarity;
-
-    [Space]
-
+   
     //  Spawn
 
     [SerializeField] private GameObject spawn;
@@ -58,13 +27,11 @@ public class World : MonoBehaviour
     public Material transparentMaterial;
     public Material liquidMaterial;
 
-    [Space]
-
-    public Chunk[,] chunksInWorld = new Chunk[VoxelData.worldSizeInChunks, VoxelData.worldSizeInChunks];
+    public Chunk[,] chunksInWorld = new Chunk[World_Settings.worldSizeInChunks, World_Settings.worldSizeInChunks];
 
     public List<ChunkCoordinate> chunksToInitialize = new List<ChunkCoordinate>();
 
-    //  Threading related
+    //  List and stuff
 
     public Queue<Queue<VoxelModification>> modifications = new Queue<Queue<VoxelModification>>();
 
@@ -75,33 +42,20 @@ public class World : MonoBehaviour
     public Queue<Chunk> chunksToDrawWater = new Queue<Chunk>();
     public Queue<Chunk> chunksToDrawLodTwo = new Queue<Chunk>();
 
+    //  Threading related
+
     private bool applyingModifications = false;
 
     private Thread UpdateChunk_Thread;
     public object ThreadedUpdate_Lock = new object();
 
-    #endregion
-
     private void Start()
     {
-        //  Structure file path
-        VoxelData.structureFilePath = Application.dataPath;
-
-        //  Starts a new threads for chunk updating, renderdistance checks and voxelmap populating
-
-        RenderSettings.fogStartDistance = (VoxelData.RenderDistanceInChunks * VoxelData.chunkWidth) - VoxelData.chunkWidth * 6;
-        RenderSettings.fogEndDistance = (VoxelData.RenderDistanceInChunks * VoxelData.chunkWidth) - VoxelData.chunkWidth * 2;
-
-        Random.InitState(seed);
-        randomSeed = Random.Range(0, 1000000);
-
-        subBiomeMap = BiomeMap.GetBiomeMap(this);
-
-        GenerateWorld();
-
-        WorldTowns.GenerateTowns(this, townReference);
+        World_Generation.GenerateWorld(this);
 
         GetSpawnPosition();
+
+        //  Starts a new threads for chunk updating, renderdistance checks and voxelmap populating
 
         UpdateChunk_Thread = new Thread(new ThreadStart(ThreadedUpdate));
         UpdateChunk_Thread.Start();
@@ -140,7 +94,7 @@ public class World : MonoBehaviour
         //  Loops through every y block on spawn x,z looking for the grass block, (which is on terrainheight)
         //  Sets spawn at terrainheight
 
-        spawn.transform.position = new Vector3((VoxelData.worldSizeInChunks * VoxelData.chunkWidth) / 2f, VoxelData.chunkHeight, (VoxelData.worldSizeInChunks * VoxelData.chunkWidth) / 2f);
+        spawn.transform.position = new Vector3((World_Settings.worldSizeInChunks * VoxelData.chunkWidth) / 2f, VoxelData.chunkHeight, (World_Settings.worldSizeInChunks * VoxelData.chunkWidth) / 2f);
 
         for (int i = VoxelData.chunkHeight; i < 0; i--)
         {
@@ -148,23 +102,6 @@ public class World : MonoBehaviour
             {
                 spawn.transform.position = new Vector3(spawn.transform.position.x, i + 2, spawn.transform.position.z);
                 return;
-            }
-        }
-    }
-
-    private void GenerateWorld()
-    {
-        //  starting from middle of world, ie half of the width in x and z
-        //  Remove render distance value form starting loop and add it to ending loop,
-        //  so we get square with width 2 renderdistances, ie renderdistance ín all directions
-
-        int worldSize = VoxelData.worldSizeInChunks;
-
-        for (int x = 0; x < worldSize; x++)
-        {
-            for (int z = 0; z < worldSize; z++)
-            {
-                InitializeChunk(x, z);
             }
         }
     }

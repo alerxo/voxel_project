@@ -14,11 +14,11 @@ public static class Noise
         //  Then adds water height to this value, as its the base height
         //  Then multiples this by a fall off value, which approaches 0 from the start of the world edge, resulting in large bodies of water surrounding the continent
 
-        float noise = GetWorldBaseHeight(world, pos, world.noiseScale, world.octaves, world.persistence, world.lacunarity);
+        float noise = GetWorldBaseHeight(world, pos, World_Settings.noiseScale, World_Settings.octaves, World_Settings.persistence, World_Settings.lacunarity);
 
-        noise *= GetWorldHeightMultiplier(world, pos, world.multiplierNoiseScale);
+        noise *= GetWorldHeightMultiplier(world, pos, World_Settings.multiplierNoiseScale);
 
-        float noiseHeight = (VoxelData.waterHeight + (world.worldHeight * noise)) * GetFallOffMap(pos);
+        float noiseHeight = (World_Settings.waterHeight + (World_Settings.worldHeight * noise)) * GetFallOffMap(pos);
 
         noiseHeight = Mathf.Clamp(noiseHeight, 0, VoxelData.chunkHeight);
 
@@ -34,7 +34,7 @@ public static class Noise
         float frequency = 1f;
         float noiseHeight = 0f;
 
-        float offset = world.randomSeed + 0.1f;
+        float offset = World_Settings.randomSeed + 0.1f;
 
         for (int i = 0; i < octaves; i++)
         {
@@ -59,7 +59,7 @@ public static class Noise
         //  Then takes that value to the power of itself, resulting in a sharp acending value, ie, steep mountains
         //  Then multiples this by another perlin noise, for more randomness
 
-        float offset = world.randomSeed + 0.1f;
+        float offset = World_Settings.randomSeed + 0.1f;
 
         float sampleX = ((pos.x + 1) / scale);
         float sampleY = ((pos.y + 1) / scale);
@@ -271,9 +271,9 @@ public static class Noise
 
         float longitude = pos.y;
 
-        float distance = Mathf.Abs((VoxelData.WorldSizeInVoxel / 2) - longitude);
+        float distance = Mathf.Abs((World_Settings.WorldSizeInVoxel / 2) - longitude);
 
-        float temperature = distance / (VoxelData.WorldSizeInVoxel / 2);
+        float temperature = distance / (World_Settings.WorldSizeInVoxel / 2);
 
         temperature = Mathf.Clamp01(temperature);   
 
@@ -312,8 +312,8 @@ public static class Noise
     {
         //  Value approaching 0 from when we cross the map edge value
 
-        float halfWorldSizeInVoxel = (float)VoxelData.WorldSizeInVoxel / 2;
-        float mapEdge = halfWorldSizeInVoxel - (VoxelData.mapEdgeSizeInChunks * VoxelData.chunkWidth);
+        float halfWorldSizeInVoxel = (float)World_Settings.WorldSizeInVoxel / 2;
+        float mapEdge = halfWorldSizeInVoxel - (World_Settings.mapEdgeSizeInChunks * VoxelData.chunkWidth);
 
         float x = Mathf.Abs(Mathf.FloorToInt(pos.x) - halfWorldSizeInVoxel);
         float y = Mathf.Abs(Mathf.FloorToInt(pos.y) - halfWorldSizeInVoxel);
@@ -341,7 +341,7 @@ public static class Noise
         float frequency = 1f;
         float noiseHeight = 0f;
 
-        float offset = _offset + world.randomSeed + 0.1f;
+        float offset = _offset + World_Settings.randomSeed + 0.1f;
 
         for (int i = 0; i < octaves; i++)
         {
@@ -368,7 +368,7 @@ public static class Noise
         float frequency = 1f;
         float noise = 0f;
 
-        float offset = _offset + world.randomSeed + 0.1f;
+        float offset = _offset + World_Settings.randomSeed + 0.1f;
 
         for (int i = 0; i < octaves; i++)
         {

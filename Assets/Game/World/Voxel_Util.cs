@@ -17,7 +17,7 @@ public static class Voxel_Util
     {
         //  Checks if chunk is inside world
 
-        if (coord.x >= 0 && coord.x < VoxelData.worldSizeInChunks && coord.z >= 0 && coord.z < VoxelData.worldSizeInChunks)
+        if (coord.x >= 0 && coord.x < World_Settings.worldSizeInChunks && coord.z >= 0 && coord.z < World_Settings.worldSizeInChunks)
             return true;
         else
             return false;

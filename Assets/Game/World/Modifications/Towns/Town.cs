@@ -16,4 +16,6 @@ public class Town : ScriptableObject
     public Structure[] townCenter;
     public Structure[] houses;
     public byte[] roadIds;
+
+    public int amountOfTowns;
 }

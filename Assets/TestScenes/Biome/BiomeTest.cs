@@ -11,8 +11,8 @@ public class BiomeTest : MonoBehaviour
     {
         World world = GameObject.FindGameObjectWithTag("WorldObj").GetComponent<World>();
 
-        int start = (VoxelData.worldSizeInChunks / 2) - chunkAmount;
-        int end = (VoxelData.worldSizeInChunks / 2) + chunkAmount;
+        int start = (World_Settings.worldSizeInChunks / 2) - chunkAmount;
+        int end = (World_Settings.worldSizeInChunks / 2) + chunkAmount;
 
         for (int x = start; x < end; x++)
         {

@@ -17,8 +17,8 @@ public class StructureEditor : MonoBehaviour
 
         World world = GameObject.FindGameObjectWithTag("WorldObj").GetComponent<World>();
 
-        int start = (VoxelData.worldSizeInChunks / 2) - chunkAmount;
-        int end = (VoxelData.worldSizeInChunks / 2) + chunkAmount;
+        int start = (World_Settings.worldSizeInChunks / 2) - chunkAmount;
+        int end = (World_Settings.worldSizeInChunks / 2) + chunkAmount;
 
         for (int x = start; x < end; x++)
         {
@@ -29,7 +29,7 @@ public class StructureEditor : MonoBehaviour
             }
         }
 
-        Vector3 pos = world.chunksInWorld[VoxelData.worldSizeInChunks / 2, VoxelData.worldSizeInChunks / 2].position;
+        Vector3 pos = world.chunksInWorld[World_Settings.worldSizeInChunks / 2, World_Settings.worldSizeInChunks / 2].position;
         pos = new Vector3(pos.x, yPos, pos.z);
 
         Queue<VoxelModification> queue = new Queue<VoxelModification>();
@@ -60,13 +60,13 @@ public class StructureEditor : MonoBehaviour
 
             World world = GameObject.FindGameObjectWithTag("WorldObj").GetComponent<World>();
 
-            int start = (VoxelData.worldSizeInChunks / 2) - chunkAmount;
-            int end = (VoxelData.worldSizeInChunks / 2) + chunkAmount;
+            int start = (World_Settings.worldSizeInChunks / 2) - chunkAmount;
+            int end = (World_Settings.worldSizeInChunks / 2) + chunkAmount;
 
             int chunkWidth = VoxelData.chunkWidth;
             int chunkHeight = VoxelData.chunkHeight;
 
-            Vector3 pos = world.chunksInWorld[VoxelData.worldSizeInChunks / 2, VoxelData.worldSizeInChunks / 2].position;
+            Vector3 pos = world.chunksInWorld[World_Settings.worldSizeInChunks / 2, World_Settings.worldSizeInChunks / 2].position;
             pos = new Vector3(pos.x, yPos, pos.z);
 
             for (int x = start; x < end; x++)

@@ -5,79 +5,58 @@ using UnityEngine;
 
 public static class GenerateTown
 {
-    public static TownData GetTownData(TownData townData)
+    public static void GenerateTownData(TownData townData)
     {
         //  Gets the data about the town and returns
 
-        townData.sizeRadius = townData.town.townSize + (townData.town.townSizeVariation - GetRandomValue(townData.position, 1, townData.town.townSizeVariation * 2));
+        townData.sizeRadius = townData.town.townSize + (townData.town.townSizeVariation - GetRandomValue(townData.townPosition, 1, townData.town.townSizeVariation * 2));
+        townData.density = townData.town.townDensity + (townData.town.townDensityVariation - ((float)GetRandomValue(townData.townPosition, 2, Mathf.FloorToInt(townData.town.townDensityVariation * townData.town.townSize)) / (float)townData.town.townSize));
 
-        townData.density = townData.town.townDensity + (townData.town.townDensityVariation - ((float)GetRandomValue(townData.position, 2, Mathf.FloorToInt(townData.town.townDensityVariation * townData.town.townSize)) / (float)townData.town.townSize));
-
-        List<Vector2> roadPoints = new List<Vector2>();
-
-        foreach(Tuple<Structure, Vector2> structure in GetTownCenter(townData))
-        {
-            townData.structures.Add(structure);
-            roadPoints.Add(structure.Item2);
-        }
-
-        foreach (Tuple<Structure, Vector2> structure in GetHouses(townData))
-        {
-            townData.structures.Add(structure);
-            roadPoints.Add(structure.Item2);
-        }
-
-        townData.roadData = GetRoads(townData, roadPoints);
-
-        return townData;
+        GetTownCenter(townData);
+        GetHouses(townData);
+        GetRoads(townData);
     }
 
-    private static Tuple<Structure, Vector2>[] GetTownCenter(TownData townData)
+    private static void GetTownCenter(TownData townData)
     {
         //  Picks one of the town center structures
 
-        List<Tuple<Structure, Vector2>> structures = new List<Tuple<Structure, Vector2>>();
+        Vector2 position = new Vector2(townData.townPosition.x, townData.townPosition.z);
+        Structure structure = townData.town.townCenter[GetRandomValue(position, 0, townData.town.townCenter.Length)];
 
-        structures.Add(Tuple.Create(townData.town.townCenter[GetRandomValue(townData.position, 0, townData.town.houses.Length)], new Vector2(townData.position.x, townData.position.z)));
-
-        return structures.ToArray();
+        townData.AddStructure(structure, position);
     }
 
-    private static Tuple<Structure, Vector2>[] GetHouses(TownData townData)
+    private static void GetHouses(TownData townData)
     {
         //  Picks random positions for the house structures, if position doesnt overlap, place it
-
-        List<Tuple<Structure, Vector2>> structures = new List<Tuple<Structure, Vector2>>();
 
         int houseAmount = Mathf.FloorToInt(townData.sizeRadius * townData.density);
 
         for(int i = 0; i < houseAmount; i++)
         {
-            Vector2 housePos = GetRandomPosition(townData.position2, townData.sizeRadius, i);
+            Vector2 position = GetRandomPosition(townData.townPosition2, townData.sizeRadius, i);
 
-            Structure house = townData.town.houses[GetRandomValue(housePos, i, townData.town.houses.Length)];
+            Structure structure = townData.town.houses[GetRandomValue(position, i, townData.town.houses.Length)];
 
-            if(!Structure_Util.CheckOverlap(house, new Vector3(housePos.x, townData.position.y, housePos.y), true))
+            if(!Structure_Util.CheckOverlap(structure, new Vector3(position.x, townData.townPosition.y, position.y), true))
             {
-                structures.Add(Tuple.Create(house, housePos));
+                townData.AddStructure(structure, position);
             }
         }
-
-        return structures.ToArray();
     }
 
-    private static Queue<VoxelModification> GetRoads(TownData townData, List<Vector2> roadNodes)
+    private static void GetRoads(TownData townData)
     {
         //  Gets a network of roads connecting the houses
         //  Uses delaunay, boywer watson algorithm to get all connections between houses
         //  Then uses prims algorithm to get a minimum spanning tree
         //  Then uses a* to place the road blocks
 
-        List<Town_Node> roadConnections = RoadTriangulation(townData, roadNodes);
-
+        List<Town_Node> roadConnections = RoadTriangulation(townData, townData.structureNodes);
         List<Town_Connection> roadConnection = RoadMinimunSpanningTree(roadConnections);
 
-        return GetRoadData(townData, roadConnection);
+        GetRoadData(townData, roadConnection);
     }
 
     private static List<Town_Node> RoadTriangulation(TownData townData, List<Vector2> nodePoints)
@@ -89,9 +68,9 @@ public static class GenerateTown
 
         List<Town_Triangle> triangles = new List<Town_Triangle>();
 
-        Town_Node superPointA = new Town_Node(townData.position2 + new Vector2(0, townData.town.townSize * 3.2f));
-        Town_Node superPointB = new Town_Node(townData.position2 + new Vector2(-townData.town.townSize * 2.2f, -townData.town.townSize * 1.2f));
-        Town_Node superPointC = new Town_Node(townData.position2 + new Vector2(townData.town.townSize * 2.2f, -townData.town.townSize * 1.2f));
+        Town_Node superPointA = new Town_Node(townData.townPosition2 + new Vector2(0, townData.town.townSize * 3.2f));
+        Town_Node superPointB = new Town_Node(townData.townPosition2 + new Vector2(-townData.town.townSize * 2.2f, -townData.town.townSize * 1.2f));
+        Town_Node superPointC = new Town_Node(townData.townPosition2 + new Vector2(townData.town.townSize * 2.2f, -townData.town.townSize * 1.2f));
 
         superPointA.SetBad();
         superPointB.SetBad();
@@ -237,29 +216,23 @@ public static class GenerateTown
         return finalConnections;
     }
 
-    private static Queue<VoxelModification> GetRoadData(TownData townData,  List<Town_Connection> connections)
+    private static void GetRoadData(TownData townData,  List<Town_Connection> connections)
     {
         //  Has a grid of squares, for each road connection, use a* to get block data
         //  Then chose random road id and create vm
 
-        Town_Grid roadGrid = new Town_Grid(townData.position2, townData.sizeRadius);
+        Town_Grid roadGrid = new Town_Grid(townData.townPosition2, townData.sizeRadius);
 
         foreach (Town_Connection connection in connections)
         {
             roadGrid = UpdateRoadGridWithNewRoad(connection.startNode.position, connection.endNode.position, roadGrid);
         }
 
-        Queue<VoxelModification> roadModifications = new Queue<VoxelModification>();
-
         foreach (Vector2 roadblockPosition in roadGrid.GetRoadPositions())
         {
             byte id = townData.town.roadIds[GetRandomValue(roadblockPosition, 0, townData.town.roadIds.Length)];
-            Vector3 roadPosition = new Vector3(roadblockPosition.x, 10f, roadblockPosition.y);
-
-            roadModifications.Enqueue(new VoxelModification(roadPosition, id));
+            townData.AddRoad(id, roadblockPosition);        
         }
-
-        return roadModifications;
     }
 
     private static Town_Grid UpdateRoadGridWithNewRoad(Vector2 startPos, Vector2 endPos, Town_Grid grid)
@@ -345,7 +318,7 @@ public static class GenerateTown
         //  First grabs some perlin to act as the noise
         //  Then does some mathematical maths on with that perlin,
         //  So that small changes in position, equal large changes in numbers
-        //  Then gets the modulo of the value, divided by the modulo as to always return a value between 0 and 1
+        //  Then gets the modulo of the value, to always return a value within range
 
         float perlin = Mathf.PerlinNoise((pos.x * 1111f) + offset * 1111f + 0.1f, (pos.y * 1111f) + offset * 1111f + 0.1f);
 

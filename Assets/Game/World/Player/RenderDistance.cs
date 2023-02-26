@@ -110,7 +110,7 @@ public class RenderDistance : MonoBehaviour
         ChunkCoordinate coord = Voxel_Util.GetChunkCoordinateFromVector3(playerPosition);
         playerLastChunk = playerChunk;
 
-        int renderDistance = VoxelData.RenderDistanceInChunks;
+        int renderDistance = World_Settings.RenderDistanceInChunks;
 
         ChunkSweep(coord, renderDistance);
     }

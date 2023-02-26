@@ -174,7 +174,7 @@ public static class WorldTerrain
         else if (yPos == terrainHeight) return subBiome.surfaceBlockId;
         else if (yPos < terrainHeight && yPos > terrainHeight - 4) return subBiome.subSurfaceBlockId;
         else if (yPos < terrainHeight) return 4;
-        else if (yPos < VoxelData.waterHeight) return 11;
+        else if (yPos < World_Settings.waterHeight) return 11;
 
         else if(isRiver && yPos < riverHeight - world.riverReference.height)
         {
@@ -214,7 +214,7 @@ public static class WorldTerrain
         int xPos = cc.x;
         int zPos = cc.z;
 
-        Chunk chunk = world.chunksInWorld[xPos, zPos];
+        Chunk chunk = world.chunksInWorld[xPos, zPos];  
 
         if (chunk != null && chunk.riverWaterHeight != 0)
         {
@@ -623,7 +623,7 @@ public static class WorldTerrain
     {
         //  Checks if voxel is inside world
 
-        if (pos.x >= 0 && pos.x < VoxelData.WorldSizeInVoxel && pos.y >= 0 && pos.y < VoxelData.chunkHeight && pos.z >= 0 && pos.z < VoxelData.WorldSizeInVoxel)
+        if (pos.x >= 0 && pos.x < World_Settings.WorldSizeInVoxel && pos.y >= 0 && pos.y < VoxelData.chunkHeight && pos.z >= 0 && pos.z < World_Settings.WorldSizeInVoxel)
             return true;
         else
             return false;

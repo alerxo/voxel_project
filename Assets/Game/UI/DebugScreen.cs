@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class DebugScreen : MonoBehaviour
 {
@@ -20,8 +19,8 @@ public class DebugScreen : MonoBehaviour
         RenderDistance = GetComponent<RenderDistance>();
         text = GetComponent<TextMeshProUGUI >();
 
-        halfWorldSizeInVoxel = VoxelData.WorldSizeInVoxel / 2;
-        halfWorldSizeInChunk = VoxelData.worldSizeInChunks / 2;
+        halfWorldSizeInVoxel = World_Settings.WorldSizeInVoxel / 2;
+        halfWorldSizeInChunk = World_Settings.worldSizeInChunks / 2;
     }
 
     private void Update()

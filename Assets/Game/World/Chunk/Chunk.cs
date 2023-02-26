@@ -681,7 +681,7 @@ public class Chunk
     {
         //  Gets world cords of texture, where voxel is supposed to be, so all shaders match with adjacent voxels
 
-        float step = 1f / (float)VoxelData.WorldSizeInVoxel;
+        float step = 1f / (float)World_Settings.WorldSizeInVoxel;
 
         float x = ((VoxelData.chunkWidth * coord.x) + pos.x) * step;
         float z = ((VoxelData.chunkWidth * coord.z) + pos.z) * step;

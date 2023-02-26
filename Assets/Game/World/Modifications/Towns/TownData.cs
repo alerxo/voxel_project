@@ -7,20 +7,65 @@ public class TownData
 {
     public Town town;
 
-    public Vector3 position;
-    public Vector2 position2;
+    public Vector3 townPosition;
+    public Vector2 townPosition2;
 
     public int sizeRadius;
     public float density;
 
-    public List<Tuple<Structure, Vector2>> structures = new List<Tuple<Structure, Vector2>>();
-    public Queue<VoxelModification> roadData = new Queue<VoxelModification>();
+    public List<Vector2> structureNodes = new List<Vector2>();
 
-    public TownData(Town _town, Vector3 _position)
+    private World world;
+
+    public TownData(World _world, Town _town, Vector3 _position)
     {
+        world = _world;
         town = _town;
 
-        position = _position;
-        position2 = new Vector2(position.x, position.z);
+        townPosition = _position;
+        townPosition2 = new Vector2(townPosition.x, townPosition.z);
+    }
+    
+    public void AddStructure(Structure structure, Vector2 position)
+    {
+        //  Updates postion with terrainHeight
+        //  Adds the structure to the world modifications
+
+        structureNodes.Add(position);
+
+        Queue<VoxelModification> queue = new Queue<VoxelModification>();
+
+        Vector3 structurePosition = new Vector3(position.x, 1, position.y);
+        SubBiome structureChunkBiome = Voxel_Util.GetChunkFromVector3(world, structurePosition).subBiome;
+
+        if (structureChunkBiome.parentBiome == null) return;
+
+        structurePosition.y = WorldTerrain.GetWorldHeight(world, structurePosition) + WorldTerrain.GetBiomeHeight(world, structurePosition, structureChunkBiome.parentBiome);
+
+        foreach (VoxelModification vm in structure.GetVoxels())
+        {
+            queue.Enqueue(new VoxelModification(vm.position + structurePosition, vm.blockId));
+        }
+
+        world.modifications.Enqueue(queue);
+    }
+
+    public void AddRoad(byte blockID, Vector2 position)
+    {
+        //  Updates postion with terrainHeight
+        //  Adds the structure to the world modifications
+
+        Vector3 roadPosition = new Vector3(position.x, 1, position.y) + townPosition;
+
+        SubBiome structureChunkBiome = Voxel_Util.GetChunkFromVector3(world, roadPosition).subBiome;
+
+        if (structureChunkBiome.parentBiome == null) return;
+
+        roadPosition.y = WorldTerrain.GetWorldHeight(world, roadPosition) + WorldTerrain.GetBiomeHeight(world, roadPosition, structureChunkBiome.parentBiome);
+
+        Queue<VoxelModification> tempQueue = new Queue<VoxelModification>();
+        tempQueue.Enqueue(new VoxelModification(roadPosition, blockID));
+
+        world.modifications.Enqueue(tempQueue);
     }
 }

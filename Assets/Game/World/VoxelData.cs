@@ -7,29 +7,10 @@ public static class VoxelData
     //  Structure path
     public static string structureFilePath;
 
-    //  World settings
+    //  Chunk settings
 
     public static readonly int chunkWidth = 16;
     public static readonly int chunkHeight = 512;
-
-    public static readonly int mapEdgeSizeInChunks = 32; //  Edge of world, which is forced ocean
-    public static readonly int landSizeInChunks = 64; //    Land, where continents are found
-    public static readonly int waterHeight = 256;
-
-
-    public static int worldSizeInChunks
-    {
-        get { return (mapEdgeSizeInChunks * 2) + landSizeInChunks; }
-    }
-
-    public static int WorldSizeInVoxel
-    {
-        get { return worldSizeInChunks * chunkWidth; }
-    }
-
-    // Player settings
-
-    public static readonly int RenderDistanceInChunks = 8;
 
     //  Texture atlas
 
