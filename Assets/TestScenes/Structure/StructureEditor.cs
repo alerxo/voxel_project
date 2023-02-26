@@ -11,6 +11,8 @@ public class StructureEditor : MonoBehaviour
 
     private int yPos = 100;
 
+    [SerializeField] private bool raw;
+
     private void Start()
     {
         Debug.Log("Loading");
@@ -36,10 +38,22 @@ public class StructureEditor : MonoBehaviour
 
         int count = 0;
 
-        foreach (VoxelModification vm in testStructure.GetVoxels())
+        if (raw)
         {
-            queue.Enqueue(new VoxelModification(vm.position + pos, vm.blockId));
-            count++;
+            foreach (VoxelModification vm in testStructure.GetVoxelsRaw())
+            {
+                queue.Enqueue(new VoxelModification(vm.position + pos, vm.blockId));
+                count++;
+            }
+        }
+
+        else
+        {
+            foreach (VoxelModification vm in testStructure.GetVoxels())
+            {
+                queue.Enqueue(new VoxelModification(vm.position + pos, vm.blockId));
+                count++;
+            }
         }
 
         Debug.Log(count + " voxels loaded");
@@ -49,7 +63,7 @@ public class StructureEditor : MonoBehaviour
 
     private void Update()
     {
-        if(Input.GetKeyDown(KeyCode.Q))
+        if(Input.GetKeyDown(KeyCode.Q) && raw)
         {
             Debug.Log("Saving");
 
@@ -122,17 +136,8 @@ public class StructureEditor : MonoBehaviour
 
                                     #endregion
 
-                                    if (id == 1)
-                                    {
-                                        Vector3 position = new Vector3((x * chunkWidth) + cx, cy, (z * chunkWidth) + cz);
-                                        vm.Add(new VoxelModification(position - pos, 0));
-                                    }
-
-                                    else
-                                    {
-                                        Vector3 position = new Vector3((x * chunkWidth) + cx, cy, (z * chunkWidth) + cz);
-                                        vm.Add(new VoxelModification(position - pos, id));
-                                    }
+                                    Vector3 position = new Vector3((x * chunkWidth) + cx, cy, (z * chunkWidth) + cz);
+                                    vm.Add(new VoxelModification(position - pos, id));
                                 }
                             }
                         }
@@ -168,6 +173,11 @@ public class StructureEditor : MonoBehaviour
             SaveStructureData.SaveData(testStructure, voxels, NEU, SWL);
 
             Structure_Util.DrawZone(testStructure, pos);
+        }
+
+        else if(Input.GetKeyDown(KeyCode.Q) && !raw)
+        {
+            Debug.Log("Cannot save as structure not loaded raw");
         }
     }
 }
