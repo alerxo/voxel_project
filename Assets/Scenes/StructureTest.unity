@@ -609,8 +609,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   voidBiome: {fileID: 11400000, guid: 4b6b981b01836224f8227b7ab5699580, type: 2}
-  testStructure: {fileID: 11400000, guid: 0d2dd74e8b6c2e2468294f9d92b181c3, type: 2}
+  testStructure: {fileID: 11400000, guid: 6fd6cee7c2c734b499f97162b161254c, type: 2}
   chunkAmount: 4
+  raw: 1
 --- !u!4 &1226881351
 Transform:
   m_ObjectHideFlags: 0
@@ -784,6 +785,10 @@ PrefabInstance:
     - target: {fileID: 8945734804422624706, guid: ea8d7bff1037d394ba37e2b3858b5dbf, type: 3}
       propertyPath: m_Name
       value: World
+      objectReference: {fileID: 0}
+    - target: {fileID: 8945734804422624707, guid: ea8d7bff1037d394ba37e2b3858b5dbf, type: 3}
+      propertyPath: towns.Array.size
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8945734804422624732, guid: ea8d7bff1037d394ba37e2b3858b5dbf, type: 3}
       propertyPath: m_RootOrder

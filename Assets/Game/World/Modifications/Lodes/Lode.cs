@@ -1,8 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "Structure", menuName = "Modifications/Lode")]
+[CreateAssetMenu(fileName = "Lode", menuName = "Modifications/Lode")]
 public class Lode : ScriptableObject
 {
     public string lodeName;

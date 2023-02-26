@@ -1,8 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "Structure", menuName = "Modifications/Town")]
+[CreateAssetMenu(fileName = "Town", menuName = "Modifications/Town")]
 public class Town : ScriptableObject
 {
     public string townName;

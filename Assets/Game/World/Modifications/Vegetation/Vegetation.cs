@@ -1,9 +1,8 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "Structure", menuName = "Modifications/Vegetation")]
+[CreateAssetMenu(fileName = "Vegetation", menuName = "Modifications/Vegetation")]
 public class Vegetation : ScriptableObject
 {
     public float threshold;
