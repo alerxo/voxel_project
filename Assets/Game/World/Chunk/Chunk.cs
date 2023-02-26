@@ -4,8 +4,6 @@ using UnityEngine;
 
 public class Chunk
 {
-    #region oof
-
     public GameObject chunkObject { get; private set; }
 
     public bool hasBeenEnqueued = false;
@@ -84,20 +82,7 @@ public class Chunk
 
     //  terrain cache
 
-    public int cachedWorldHeight;
-    public int cachedBiomeHeight;
-    public int cachedSubBiomeHeight;
-    public SubBiome cachedBlendBiome;
     public int riverWaterHeight = 0;
-
-    public float[] bottomRightCornerNoise;
-    public float[] topRightCornerNoise;
-    public float[] bottomLeftCornerNoise;
-    public float[] topLeftCornerNoise;
-
-    public float[] centerNoise;
-
-    #endregion
 
     public SubBiome subBiome { get; private set; }
 
@@ -262,23 +247,21 @@ public class Chunk
         {
             for (int z = 0; z < VoxelData.chunkWidth; z++)
             {
-                ResetCache();
+                Vector2 voxelPosition = new Vector2(position.x + x, position.z + z);
+                int terrainHeight = TerrainHeight.GetTerrainHeight(world, voxelPosition);
 
-                #region Test scene
+                SubBiome blendBiome = null;
+                SubBiome[] adjacentBiomes = TerrainHeight.GetAdjacentBiomes(world, coord);
 
-                if (subBiome.subBiomeName == "Void")
+                if (TerrainHeight.IsBlend(adjacentBiomes))
                 {
-                    cachedBlendBiome = subBiome;
+                    blendBiome = VoxelBlockType.BiomeBlend(world, voxelPosition, adjacentBiomes);
                 }
-
-                #endregion
 
                 for (int y = 0; y < VoxelData.chunkHeight; y++)
                 {
-                    voxelMap[x, y, z] = WorldTerrain.GetVoxelBlockType(world, new Vector3(x, y, z) + position, true, cachedWorldHeight, cachedBiomeHeight, cachedSubBiomeHeight, cachedBlendBiome);
+                    voxelMap[x, y, z] = VoxelBlockType.GetVoxelBlockType(world, new Vector3(x, y, z) + position, terrainHeight, blendBiome);
                 }
-
-                ResetCache();
             }
         }
 
@@ -332,22 +315,18 @@ public class Chunk
         {
             for (int z = 0; z < VoxelData.chunkWidth; z++)
             {
-                ResetCache();
-
                 for (int y = 0; y < VoxelData.chunkHeight; y++)
                 {
                     if (Blocks.blocks[voxelMap[x, y, z]].drawBlock)
                     {
-                        UpdateLodOneVoxelMeshData(new Vector3(x, y, z), cachedWorldHeight, cachedBiomeHeight, cachedSubBiomeHeight, cachedBlendBiome);
+                        UpdateLodOneVoxelMeshData(new Vector3(x, y, z));
                     }
                 }
-
-                ResetCache();
             }
         }
     }
 
-    private void UpdateLodOneVoxelMeshData(Vector3 pos, int cachedWorldHeight, int cachedBiomeHeight, int cachedSubBiomeHeight, SubBiome cachedBlendBiome)
+    private void UpdateLodOneVoxelMeshData(Vector3 pos)
     {
         //  Goes through each face of voxel
         //  Checking for parameters
@@ -365,13 +344,13 @@ public class Chunk
 
             if (isLiquid) // If we are liquid, check if adjacent also is
             {
-                if (CheckVoxelLiquid(pos + VoxelData.faceChecks[r], cachedWorldHeight, cachedBiomeHeight, cachedSubBiomeHeight, cachedBlendBiome))
+                if (CheckVoxelLiquid(pos + VoxelData.faceChecks[r]))
                 {
                     skip = true;
                 }
             }
 
-            if (!skip && CheckVoxelTransparancy(pos + VoxelData.faceChecks[r], cachedWorldHeight, cachedBiomeHeight, cachedSubBiomeHeight, cachedBlendBiome))   //  If we survived the parameters, draw face
+            if (!skip && CheckVoxelTransparancy(pos + VoxelData.faceChecks[r]))   //  If we survived the parameters, draw face
             {
                 //  Adding the uvs, the triangles and verticies, depending on mesh type, then incrementing the vertex index
 
@@ -446,15 +425,7 @@ public class Chunk
 
         Block block = Blocks.blocks[subBiome.surfaceBlockId];
 
-        int halfChunkWidth = VoxelData.chunkWidth / 2;
-
-        ResetCache();
-
-        WorldTerrain.GetVoxelBlockType(world, new Vector3(position.x + halfChunkWidth, position.y, position.z + halfChunkWidth), false, 0, 0, 0, null);
-
-        int highestY = cachedWorldHeight + cachedSubBiomeHeight;
-
-        ResetCache();
+        int highestY = TerrainHeight.GetTerrainHeight(world, new Vector2(position.x, position.z));
 
         if (highestY < 64)
         {
@@ -711,7 +682,7 @@ public class Chunk
         return voxelMap[xCheck, yCheck, zCheck];
     }
 
-    private bool CheckVoxelTransparancy(Vector3 pos, int cachedWorldHeight, int cachedBiomeHeight, int cachedSubBiomeHeight, SubBiome cachedBlendBiome)
+    private bool CheckVoxelTransparancy(Vector3 pos)
     {
         //  Converts into intergers
         //  Checks if voxel pos is inside of chunk
@@ -724,13 +695,13 @@ public class Chunk
 
         if (!IsVoxelInChunk(x, y, z))
         {
-            return Voxel_Util.CheckIfVoxelTransparent(world, pos + position, cachedWorldHeight, cachedBiomeHeight, cachedSubBiomeHeight, cachedBlendBiome);
+            return Voxel_Util.CheckIfVoxelTransparent(world, pos + position);
         }
 
         return Blocks.blocks[voxelMap[x, y, z]].isTransparent;
     }
 
-    private bool CheckVoxelLiquid(Vector3 pos, int cachedWorldHeight, int cachedBiomeHeight, int cachedSubBiomeHeight, SubBiome cachedBlendBiome)
+    private bool CheckVoxelLiquid(Vector3 pos)
     {
         //  Converts into intergers
         //  Checks if voxel pos is inside of chunk
@@ -743,7 +714,7 @@ public class Chunk
 
         if (!IsVoxelInChunk(x, y, z))
         {
-            return Voxel_Util.CheckIfVoxelLiquid(world, pos + position, cachedWorldHeight, cachedBiomeHeight, cachedSubBiomeHeight, cachedBlendBiome);
+            return Voxel_Util.CheckIfVoxelLiquid(world, pos + position);
         }
 
         return Blocks.blocks[voxelMap[x, y, z]].isLiquid;
@@ -757,14 +728,6 @@ public class Chunk
             return false;
         else
             return true;
-    }
-
-    private void ResetCache()
-    {
-        cachedWorldHeight = 0;
-        cachedSubBiomeHeight = 0;
-        cachedBiomeHeight = 0;
-        cachedBlendBiome = null;
     }
 
     #endregion

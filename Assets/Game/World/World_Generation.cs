@@ -6,15 +6,27 @@ public static class World_Generation
 {
     public static void GenerateWorld(World world)
     {
-        World_Settings.ScrambleSeed();
+        Debug.Log("Generating");
 
+        World_Settings.ScrambleSeed();
         CreateApplicationFilePathReference();
+        CreateFog();
+
+        Debug.Log("Prerequisites done");
 
         world.subBiomeMap = BiomeMap.GetBiomeMap(world);
 
+        Debug.Log("Biome map done");
+
         CreateChunkObjects(world);
-        CreateFog();
+
+        Debug.Log("Chunk objects created");
+
         CreateTowns(world);
+
+        Debug.Log("Towns created");
+
+        Debug.Log("Done");
     }
 
     private static void CreateApplicationFilePathReference()
@@ -22,6 +34,14 @@ public static class World_Generation
         //  So that seperate threads can accses the path
 
         VoxelData.structureFilePath = Application.dataPath;
+    }
+
+    private static void CreateFog()
+    {
+        //  Sets the fog depending on the renderdistance
+
+        RenderSettings.fogStartDistance = (World_Settings.RenderDistanceInChunks * VoxelData.chunkWidth) - VoxelData.chunkWidth * 6;
+        RenderSettings.fogEndDistance = (World_Settings.RenderDistanceInChunks * VoxelData.chunkWidth) - VoxelData.chunkWidth * 2;
     }
 
     private static void CreateChunkObjects(World world)
@@ -39,14 +59,6 @@ public static class World_Generation
                 world.InitializeChunk(x, z);
             }
         }
-    }
-
-    private static void CreateFog()
-    {
-        //  Sets the fog depending on the renderdistance
-
-        RenderSettings.fogStartDistance = (World_Settings.RenderDistanceInChunks * VoxelData.chunkWidth) - VoxelData.chunkWidth * 6;
-        RenderSettings.fogEndDistance = (World_Settings.RenderDistanceInChunks * VoxelData.chunkWidth) - VoxelData.chunkWidth * 2;
     }
 
     private static void CreateTowns(World world)
@@ -70,10 +82,8 @@ public static class World_Generation
         int edge = World_Settings.mapEdgeSizeInChunks * VoxelData.chunkWidth;
         int land = World_Settings.landSizeInChunks * VoxelData.chunkWidth;
 
-        townPosition.x = UnityEngine.Random.Range(edge, edge + land);
-        townPosition.z = UnityEngine.Random.Range(edge, edge + land);
-
-        Debug.Log(townPosition);
+        townPosition.x = Random.Range(edge, edge + land);
+        townPosition.z = Random.Range(edge, edge + land);
         
         return townPosition;
     }

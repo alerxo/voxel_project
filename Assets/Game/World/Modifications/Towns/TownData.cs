@@ -1,5 +1,3 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -40,7 +38,7 @@ public class TownData
 
         if (structureChunkBiome.parentBiome == null) return;
 
-        structurePosition.y = WorldTerrain.GetWorldHeight(world, structurePosition) + WorldTerrain.GetBiomeHeight(world, structurePosition, structureChunkBiome.parentBiome);
+        structurePosition.y = TerrainHeight.GetTerrainHeight(world, structurePosition);
 
         foreach (VoxelModification vm in structure.GetVoxels())
         {
@@ -61,7 +59,7 @@ public class TownData
 
         if (structureChunkBiome.parentBiome == null) return;
 
-        roadPosition.y = WorldTerrain.GetWorldHeight(world, roadPosition) + WorldTerrain.GetBiomeHeight(world, roadPosition, structureChunkBiome.parentBiome);
+        roadPosition.y = TerrainHeight.GetTerrainHeight(world, roadPosition);
 
         Queue<VoxelModification> tempQueue = new Queue<VoxelModification>();
         tempQueue.Enqueue(new VoxelModification(roadPosition, blockID));

@@ -91,19 +91,10 @@ public class World : MonoBehaviour
     private void GetSpawnPosition()
     {
         //  Middle of world is half of width on x,z
-        //  Loops through every y block on spawn x,z looking for the grass block, (which is on terrainheight)
-        //  Sets spawn at terrainheight
 
         spawn.transform.position = new Vector3((World_Settings.worldSizeInChunks * VoxelData.chunkWidth) / 2f, VoxelData.chunkHeight, (World_Settings.worldSizeInChunks * VoxelData.chunkWidth) / 2f);
-
-        for (int i = VoxelData.chunkHeight; i < 0; i--)
-        {
-            if (WorldTerrain.GetVoxelBlockType(this, new Vector3(spawn.transform.position.x, i, spawn.transform.position.z), true, 0, 0, 0, null) != 0)
-            {
-                spawn.transform.position = new Vector3(spawn.transform.position.x, i + 2, spawn.transform.position.z);
-                return;
-            }
-        }
+        SubBiome spawnBiome = Voxel_Util.GetChunkFromVector3(this, spawn.transform.position).subBiome;
+        spawn.transform.position = new Vector3(spawn.transform.position.x, TerrainHeight.GetTerrainHeight(this, spawn.transform.position) + 2, spawn.transform.position.z);
     }
 
     public void EnqueueNewChunk(int x, int z)

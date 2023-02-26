@@ -321,11 +321,11 @@ public static class BiomeMap
 
         List<int> adjacentsHeight = new List<int>
         {
-            WorldTerrain.GetRiverHeight(world, adjacentPos[0]),
-            WorldTerrain.GetRiverHeight(world, adjacentPos[1]),
-            WorldTerrain.GetRiverHeight(world, adjacentPos[2]),
-            WorldTerrain.GetRiverHeight(world, adjacentPos[3]),
-            WorldTerrain.GetRiverHeight(world, adjacentPos[4])
+            TerrainHeight.GetRiverHeight(world, adjacentPos[0]),
+            TerrainHeight.GetRiverHeight(world, adjacentPos[1]),
+            TerrainHeight.GetRiverHeight(world, adjacentPos[2]),
+            TerrainHeight.GetRiverHeight(world, adjacentPos[3]),
+            TerrainHeight.GetRiverHeight(world, adjacentPos[4])
         };
 
         int currentHeight = VoxelData.chunkHeight;
