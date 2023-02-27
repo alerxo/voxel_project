@@ -38,7 +38,7 @@ public class TownData
 
         if (structureChunkBiome.parentBiome == null) return;
 
-        structurePosition.y = TerrainHeight.GetTerrainHeight(world, structurePosition);
+        structurePosition.y = TerrainHeight.GetTerrainHeight(world, new Vector2(structurePosition.x, structurePosition.z));
 
         foreach (VoxelModification vm in structure.GetVoxels())
         {
@@ -57,9 +57,13 @@ public class TownData
 
         SubBiome structureChunkBiome = Voxel_Util.GetChunkFromVector3(world, roadPosition).subBiome;
 
-        if (structureChunkBiome.parentBiome == null) return;
-
-        roadPosition.y = TerrainHeight.GetTerrainHeight(world, roadPosition);
+        if (structureChunkBiome == null)
+        {
+            Debug.LogError("structureChunkBiome is null");
+            return;
+        }
+            
+        roadPosition.y = TerrainHeight.GetTerrainHeight(world, new Vector2(roadPosition.x, roadPosition.z));
 
         Queue<VoxelModification> tempQueue = new Queue<VoxelModification>();
         tempQueue.Enqueue(new VoxelModification(roadPosition, blockID));

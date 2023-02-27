@@ -1,13 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
-using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 
 public class StructureEditor : MonoBehaviour
 {
-    public SubBiome voidBiome;
     public Structure testStructure;
-    public int chunkAmount;
 
     private int yPos = 100;
 
@@ -18,18 +15,6 @@ public class StructureEditor : MonoBehaviour
         Debug.Log("Loading");
 
         World world = GameObject.FindGameObjectWithTag("WorldObj").GetComponent<World>();
-
-        int start = (World_Settings.worldSizeInChunks / 2) - chunkAmount;
-        int end = (World_Settings.worldSizeInChunks / 2) + chunkAmount;
-
-        for (int x = start; x < end; x++)
-        {
-            for (int z = start; z < end; z++)
-            {
-                world.EnqueueNewChunk(x, z);
-                world.chunksInWorld[x, z].IsActive = true;
-            }
-        }
 
         Vector3 pos = world.chunksInWorld[World_Settings.worldSizeInChunks / 2, World_Settings.worldSizeInChunks / 2].position;
         pos = new Vector3(pos.x, yPos, pos.z);
@@ -73,9 +58,10 @@ public class StructureEditor : MonoBehaviour
             Vector3 southWestLowerPoint = new Vector3(-1, -1, -1);
 
             World world = GameObject.FindGameObjectWithTag("WorldObj").GetComponent<World>();
+            TestObject testObject = GameObject.FindGameObjectWithTag("TestSceneObject").GetComponent<TestObject>();
 
-            int start = (World_Settings.worldSizeInChunks / 2) - chunkAmount;
-            int end = (World_Settings.worldSizeInChunks / 2) + chunkAmount;
+            int start = (World_Settings.worldSizeInChunks / 2) - testObject.chunkAmount;
+            int end = (World_Settings.worldSizeInChunks / 2) + testObject.chunkAmount;
 
             int chunkWidth = VoxelData.chunkWidth;
             int chunkHeight = VoxelData.chunkHeight;

@@ -9,6 +9,7 @@ public class World : MonoBehaviour
 
     public Biome[] biomes;
     public Town[] towns;
+    public Dungeon[] dungeons;
     public SubBiome[,] subBiomeMap = new SubBiome[World_Settings.worldSizeInChunks + 2, World_Settings.worldSizeInChunks + 2];
 
     [Space]
@@ -49,7 +50,7 @@ public class World : MonoBehaviour
     private Thread UpdateChunk_Thread;
     public object ThreadedUpdate_Lock = new object();
 
-    private void Start()
+    private void Awake()
     {
         World_Generation.GenerateWorld(this);
 

@@ -22,49 +22,11 @@ public static class BiomeMap
 
         #region Test scene
 
-        GameObject biomeTestObj = GameObject.FindGameObjectWithTag("Biometest");
+        GameObject testSceneObject = GameObject.FindGameObjectWithTag("TestSceneObject");
 
-        if (biomeTestObj != null){
+        if (testSceneObject != null){
 
-            SubBiome testBiome = biomeTestObj.GetComponent<BiomeTest>().testBiome;
-
-            Debug.Log(testBiome.name);
-
-            for (int x = 0; x < World_Settings.worldSizeInChunks + 2; x++)
-            {
-                for (int z = 0; z < World_Settings.worldSizeInChunks + 2; z++)
-                {
-                    subBiomeMap[x, z] = testBiome;
-                }
-            }
-
-            return subBiomeMap;
-        }
-
-        GameObject structureTestObj = GameObject.FindGameObjectWithTag("StructureEditor");
-
-        if (structureTestObj != null)
-        {
-            SubBiome testBiome = structureTestObj.GetComponent<StructureEditor>().voidBiome;
-
-            Debug.Log(testBiome.name);
-
-            for (int x = 0; x < World_Settings.worldSizeInChunks + 2; x++)
-            {
-                for (int z = 0; z < World_Settings.worldSizeInChunks + 2; z++)
-                {
-                    subBiomeMap[x, z] = testBiome;
-                }
-            }
-
-            return subBiomeMap;
-        }
-
-        GameObject townTestObj = GameObject.FindGameObjectWithTag("Towntest");
-
-        if (townTestObj != null)
-        {
-            SubBiome testBiome = townTestObj.GetComponent<TownTest>().voidBiome;
+            SubBiome testBiome = testSceneObject.GetComponent<TestObject>().testBiome;
 
             Debug.Log(testBiome.name);
 

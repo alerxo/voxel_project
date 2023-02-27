@@ -587,11 +587,12 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1226881351}
+  - component: {fileID: 1226881353}
   - component: {fileID: 1226881350}
   - component: {fileID: 1226881352}
   m_Layer: 0
   m_Name: StructureEditor
-  m_TagString: StructureEditor
+  m_TagString: TestSceneObject
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -641,6 +642,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentVoxelID: 11
   player: {fileID: 1308237287}
+--- !u!114 &1226881353
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1226881349}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c0a5af9398b71d43b6a1af47cbed32d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  testBiome: {fileID: 11400000, guid: 4b6b981b01836224f8227b7ab5699580, type: 2}
+  chunkAmount: 4
 --- !u!1 &1308237285
 GameObject:
   m_ObjectHideFlags: 0

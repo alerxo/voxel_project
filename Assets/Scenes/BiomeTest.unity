@@ -366,9 +366,10 @@ GameObject:
   m_Component:
   - component: {fileID: 1198141407}
   - component: {fileID: 1198141408}
+  - component: {fileID: 1198141409}
   m_Layer: 0
   m_Name: BiomeTest
-  m_TagString: Biometest
+  m_TagString: TestSceneObject
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -400,7 +401,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2177e7fddb2b74e4abab42ca9fb3e3bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  testBiome: {fileID: 11400000, guid: ecae73180b7945f438fc678ec14cd8c5, type: 2}
+--- !u!114 &1198141409
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1198141406}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c0a5af9398b71d43b6a1af47cbed32d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  testBiome: {fileID: 11400000, guid: 1b2ebe8127a3eb0448be94c0f2e5390b, type: 2}
   chunkAmount: 8
 --- !u!1 &1768581056
 GameObject:

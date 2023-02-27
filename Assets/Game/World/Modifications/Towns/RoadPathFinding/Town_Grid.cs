@@ -62,8 +62,6 @@ public class Town_Grid
         int x = Mathf.FloorToInt(pos.x - position.x) + townSizeRadius;
         int y = Mathf.FloorToInt(pos.y - position.y) + townSizeRadius;
 
-
-
         return grid[x, y];
     }
 

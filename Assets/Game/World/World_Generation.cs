@@ -1,20 +1,23 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 
 public static class World_Generation
 {
     public static void GenerateWorld(World world)
     {
+        bool isTestScene = GameObject.FindGameObjectWithTag("TestSceneObject") != null;
+
         Debug.Log("Generating");
 
-        World_Settings.ScrambleSeed();
+        ScrambleWorldSeed();
         CreateApplicationFilePathReference();
         CreateFog();
 
         Debug.Log("Prerequisites done");
 
-        world.subBiomeMap = BiomeMap.GetBiomeMap(world);
+        CreateBiomeMap(world);
 
         Debug.Log("Biome map done");
 
@@ -22,11 +25,22 @@ public static class World_Generation
 
         Debug.Log("Chunk objects created");
 
+        if (isTestScene) return;
+
         CreateTowns(world);
 
         Debug.Log("Towns created");
 
+        CreateDungeons(world);
+
+        Debug.Log("Dungeons created");
+
         Debug.Log("Done");
+    }
+
+    private static void ScrambleWorldSeed()
+    {
+        World_Settings.ScrambleSeed();
     }
 
     private static void CreateApplicationFilePathReference()
@@ -42,6 +56,11 @@ public static class World_Generation
 
         RenderSettings.fogStartDistance = (World_Settings.RenderDistanceInChunks * VoxelData.chunkWidth) - VoxelData.chunkWidth * 6;
         RenderSettings.fogEndDistance = (World_Settings.RenderDistanceInChunks * VoxelData.chunkWidth) - VoxelData.chunkWidth * 2;
+    }
+
+    private static void CreateBiomeMap(World world)
+    {
+        world.subBiomeMap = BiomeMap.GetBiomeMap(world);
     }
 
     private static void CreateChunkObjects(World world)
@@ -75,6 +94,20 @@ public static class World_Generation
         }
     }
 
+    private static void CreateDungeons(World world)
+    {
+        //  Loops through dungeons and creates them
+
+        foreach (Dungeon dungeon in world.dungeons)
+        {
+            for (int i = 0; i < dungeon.amountOfDungeons; i++)
+            {
+                DungeonData dungeonData = new DungeonData(world, dungeon, GetRandomDungeonPosition(dungeon));
+                GenerateDungeon.GenerateDungeonData(dungeonData);
+            }
+        }
+    }
+
     private static Vector3 GetRandomTownPosition()
     {
         Vector3 townPosition = new Vector3();
@@ -86,5 +119,19 @@ public static class World_Generation
         townPosition.z = Random.Range(edge, edge + land);
         
         return townPosition;
+    }
+
+    private static Vector3 GetRandomDungeonPosition(Dungeon dungeon)
+    {
+        Vector3 dungeonPosition = new Vector3();
+
+        int edge = World_Settings.mapEdgeSizeInChunks * VoxelData.chunkWidth;
+        int land = World_Settings.landSizeInChunks * VoxelData.chunkWidth;
+
+        dungeonPosition.x = Random.Range(edge, edge + land);
+        dungeonPosition.y = Random.Range(dungeon.lowestY, dungeon.highestY);
+        dungeonPosition.z = Random.Range(edge, edge + land);
+
+        return dungeonPosition;
     }
 }

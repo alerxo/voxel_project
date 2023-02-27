@@ -10,9 +10,7 @@ TagManager:
   - CameraLookat
   - SpawnObj
   - WorldObj
-  - Biometest
-  - StructureEditor
-  - Towntest
+  - TestSceneObject
   layers:
   - Default
   - TransparentFX

@@ -320,6 +320,8 @@ public static class GenerateTown
         //  So that small changes in position, equal large changes in numbers
         //  Then gets the modulo of the value, to always return a value within range
 
+        if (largest == 0) return 0;
+
         float perlin = Mathf.PerlinNoise((pos.x * 1111f) + offset * 1111f + 0.1f, (pos.y * 1111f) + offset * 1111f + 0.1f);
 
         float value = (pos.x * 1111f) + (pos.y * 1111f) + perlin;
