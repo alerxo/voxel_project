@@ -2,18 +2,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Town_Square
+public class Structure_Grid_Node
 {
     public bool isBad;
-    public bool isRoad;
+    public bool isPath;
     public Vector2 position;
 
     public int gCost;
     public int hCost;
 
-    public Town_Square parent;
+    public Structure_Grid_Node parent;
 
-    public Town_Square(bool _isBad, Vector2 _position)
+    public Structure_Grid_Node(bool _isBad, Vector2 _position)
     {
         isBad = _isBad;
         position = _position;
@@ -27,10 +27,10 @@ public class Town_Square
         }
     }
 
-    public int GetDistanceToOtherSquare(Town_Square otherSquare)
+    public int GetDistanceToOtherNode(Structure_Grid_Node otherNode)
     {
-        float xDistance = Mathf.Abs(position.x - otherSquare.position.x);
-        float yDistance = Mathf.Abs(position.y - otherSquare.position.y);
+        float xDistance = Mathf.Abs(position.x - otherNode.position.x);
+        float yDistance = Mathf.Abs(position.y - otherNode.position.y);
 
         if(xDistance > yDistance)
         {

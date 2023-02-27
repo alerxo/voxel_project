@@ -2,22 +2,22 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Town_Node
+public class Structure_Node
 {
-    public List<Town_Node> connectedNodes = new List<Town_Node>();
-    public List<Town_Node> finalConnectedNodes = new List<Town_Node>();
+    public List<Structure_Node> connectedNodes = new List<Structure_Node>();
+    public List<Structure_Node> finalConnectedNodes = new List<Structure_Node>();
 
     public Vector2 position;
 
     public bool isBad { get; private set; }
 
-    public Town_Node(Vector2 pos)
+    public Structure_Node(Vector2 pos)
     {
         isBad = false;
         position = pos;
     }
 
-    public void AddConnection(Town_Node connectedNode)
+    public void AddConnection(Structure_Node connectedNode)
     {
         if (!connectedNodes.Contains(connectedNode))
         {
@@ -25,7 +25,7 @@ public class Town_Node
         }
     }
 
-    public void RemoveConnection(Town_Node connectedNode)
+    public void RemoveConnection(Structure_Node connectedNode)
     {
         if (connectedNodes.Contains(connectedNode))
         {
@@ -38,7 +38,7 @@ public class Town_Node
         isBad = true;
     }
 
-    public static void ConnectNodes(Town_Node nodeA, Town_Node nodeB, Town_Node nodeC)
+    public static void ConnectNodes(Structure_Node nodeA, Structure_Node nodeB, Structure_Node nodeC)
     {
         if (nodeA.isBad || nodeB.isBad || nodeC.isBad) return;
 

@@ -43,7 +43,7 @@ public class StructureEditor : MonoBehaviour
 
         Debug.Log(count + " voxels loaded");
 
-        world.modifications.Enqueue(queue);
+        world.EnqueueModification(queue);
     }
 
     private void Update()

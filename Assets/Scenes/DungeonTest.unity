@@ -296,7 +296,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2c0a5af9398b71d43b6a1af47cbed32d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  testBiome: {fileID: 11400000, guid: ecae73180b7945f438fc678ec14cd8c5, type: 2}
+  testBiome: {fileID: 11400000, guid: 5b3b8d09ecc37f947ae57e6c7e0b9fa4, type: 2}
   chunkAmount: 16
 --- !u!1 &1768581056
 GameObject:
@@ -377,6 +377,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: World
       objectReference: {fileID: 0}
+    - target: {fileID: 8945734804422624707, guid: ea8d7bff1037d394ba37e2b3858b5dbf, type: 3}
+      propertyPath: dungeons.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8945734804422624707, guid: ea8d7bff1037d394ba37e2b3858b5dbf, type: 3}
+      propertyPath: dungeons.Array.data[0]
+      value: 
+      objectReference: {fileID: 11400000, guid: 2292754afe91dde46b3d9466859a388d, type: 2}
     - target: {fileID: 8945734804422624732, guid: ea8d7bff1037d394ba37e2b3858b5dbf, type: 3}
       propertyPath: m_RootOrder
       value: 2

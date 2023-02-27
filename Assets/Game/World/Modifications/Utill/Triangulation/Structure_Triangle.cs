@@ -3,32 +3,32 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class Town_Triangle
+public class Structure_Triangle
 {
-    public Town_Node nodeA;
-    public Town_Node nodeB;
-    public Town_Node nodeC;
+    public Structure_Node nodeA;
+    public Structure_Node nodeB;
+    public Structure_Node nodeC;
 
     public bool isBad = false;
 
-    public Town_Triangle(Town_Node a, Town_Node b, Town_Node c)
+    public Structure_Triangle(Structure_Node a, Structure_Node b, Structure_Node c)
     {
         nodeA = a;
         nodeB = b;
         nodeC = c;
     }
 
-    public Town_Connection[] GetConnections()
+    public Structure_Connection[] GetConnections()
     {
-        return new Town_Connection[3] 
+        return new Structure_Connection[3] 
         {
-            new Town_Connection(nodeA, nodeB),
-            new Town_Connection(nodeB, nodeC),
-            new Town_Connection(nodeC, nodeA)
+            new Structure_Connection(nodeA, nodeB),
+            new Structure_Connection(nodeB, nodeC),
+            new Structure_Connection(nodeC, nodeA)
         };
     }
 
-    public bool ContainsNode(Town_Node node)
+    public bool ContainsNode(Structure_Node node)
     {
         if(nodeA == node || nodeB == node || nodeC == node)
         {

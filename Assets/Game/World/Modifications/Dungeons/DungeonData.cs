@@ -1,19 +1,26 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using UnityEditor.Search;
 using UnityEngine;
-using static UnityEditor.PlayerSettings;
 
 public class DungeonData
 {
     public Dungeon dungeon;
 
     public Vector3 dungeonPosition;
+    public Vector2 dungeonPosition2;
 
     public int levels;
     public float density;
     public int sizeRadius;
 
     public int[] levelYPosition;
+
+    public List<Vector2> roomNodes = new List<Vector2>();
+
+    public List<ChunkCoordinate> hallwayChunks = new List<ChunkCoordinate>();
+    public List<Queue<VoxelModification>> hallwayQueues = new List<Queue<VoxelModification>>();
 
     private World world;
 
@@ -22,6 +29,7 @@ public class DungeonData
         world = _world;
         dungeon = _dungeon;
         dungeonPosition = _position;
+        dungeonPosition2 = new Vector2(_position.x, _position.z);
 
         dungeonPosition.y = dungeon.highestY - GetYPosition();
     }
@@ -44,8 +52,6 @@ public class DungeonData
 
         value %= largest;
 
-        Debug.Log(value);
-
         return Mathf.FloorToInt(value);
     }
 
@@ -56,11 +62,62 @@ public class DungeonData
 
         Queue<VoxelModification> queue = new Queue<VoxelModification>();
 
+        roomNodes.Add(new Vector2(position.x, position.z));
+
         foreach (VoxelModification vm in structure.GetVoxels())
         {
             queue.Enqueue(new VoxelModification(vm.position + position, vm.blockId));
         }
 
-        world.modifications.Enqueue(queue);
+        world.EnqueueModification(queue);
+    }
+
+    public void AddHallway(byte blockID, Vector2 position, int yPosition)
+    {
+        //  Updates postion with terrainHeight
+        //  Adds the structure to the world modifications
+
+        Vector3 hallwayPosition = new Vector3(position.x, 1, position.y) + dungeonPosition;
+
+        hallwayPosition.y = yPosition;
+
+        ChunkCoordinate cc = Voxel_Util.GetChunkCoordinateFromVector3(hallwayPosition);
+        VoxelModification vm = new VoxelModification(hallwayPosition, blockID);
+
+        int chunkExistsIndex = ChunkExists(cc);
+
+        if (chunkExistsIndex >= 0)
+        {
+            hallwayQueues[chunkExistsIndex].Enqueue(vm);
+        }
+
+        else
+        {
+            hallwayChunks.Add(cc);
+            hallwayQueues.Add(new Queue<VoxelModification>());
+
+            hallwayQueues.Last().Enqueue(vm);
+        }
+    }
+
+    private int ChunkExists(ChunkCoordinate path)
+    {
+        for (int i = 0; i < hallwayChunks.Count; i++)
+        {
+            if (hallwayChunks[i].Equals(path))
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    public void CompleteHallway()
+    {
+        foreach (Queue<VoxelModification> queue in hallwayQueues)
+        {
+            world.EnqueueModification(queue);
+        }
     }
 }

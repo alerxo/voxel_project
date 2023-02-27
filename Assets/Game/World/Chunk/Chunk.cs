@@ -178,14 +178,10 @@ public class Chunk
 
         voxelMap[xCheck, yCheck, zCheck] = newID;
 
-        lock (world.ThreadedUpdate_Lock)
-        {
-            world.chunksToUpdateMesh.Insert(0, this);
-            UpdateAdjacentVoxels(xCheck, yCheck, zCheck);
-        }
+        world.InsertMeshUpdateAdjacent(this, xCheck, yCheck, zCheck);
     }
 
-    private void UpdateAdjacentVoxels(int x, int y, int z)
+    public void UpdateAdjacentVoxels(int x, int y, int z)
     {
         //  Uses face list in voxeldata to loop through faces and adds to chunks to update list
 
@@ -197,7 +193,7 @@ public class Chunk
 
             if (!IsVoxelInChunk((int)currentVoxel.x, (int)currentVoxel.y, (int)currentVoxel.z))
             {
-                world.chunksToUpdateMesh.Insert(0, Voxel_Util.GetChunkFromVector3(world, currentVoxel + position));
+                world.InsertMeshUpdate(Voxel_Util.GetChunkFromVector3(world, currentVoxel + position));
             }
         }
     }
@@ -269,10 +265,7 @@ public class Chunk
 
         UpdateChunkLodTwo();
 
-        lock (world.ThreadedUpdate_Lock)
-        {
-            world.chunksToUpdateMesh.Add(this);
-        }
+        world.InsertMeshUpdate(this);
     }
 
     public void UpdateChunkLodOne()

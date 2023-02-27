@@ -2,20 +2,20 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Town_Connection
+public class Structure_Connection
 {
-    public Town_Node startNode;
-    public Town_Node endNode;
+    public Structure_Node startNode;
+    public Structure_Node endNode;
 
     public bool isBad = false;
 
-    public Town_Connection(Town_Node a, Town_Node b)
+    public Structure_Connection(Structure_Node a, Structure_Node b)
     {
         startNode = a;
         endNode = b;
     }
 
-    public bool IsEqualTo(Town_Connection connection)
+    public bool IsEqualTo(Structure_Connection connection)
     {
         if ((startNode == connection.startNode && endNode == connection.endNode) || (startNode == connection.endNode && endNode == connection.startNode))
         {

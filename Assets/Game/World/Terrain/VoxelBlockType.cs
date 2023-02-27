@@ -61,7 +61,7 @@ public static class VoxelBlockType
                     queue.Enqueue(new VoxelModification(vm.position + position, vm.blockId));
                 }
 
-                world.modifications.Enqueue(queue);
+                world.EnqueueModification(queue);
             }
         }
     }
@@ -79,7 +79,7 @@ public static class VoxelBlockType
                     queue.Enqueue(new VoxelModification(vm.position + position, vm.blockId));
                 }
 
-                world.modifications.Enqueue(queue);
+                world.EnqueueModification(queue);
             }
         }
     }

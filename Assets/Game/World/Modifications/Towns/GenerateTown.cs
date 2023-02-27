@@ -53,49 +53,49 @@ public static class GenerateTown
         //  Then uses prims algorithm to get a minimum spanning tree
         //  Then uses a* to place the road blocks
 
-        List<Town_Node> roadConnections = RoadTriangulation(townData, townData.structureNodes);
-        List<Town_Connection> roadConnection = RoadMinimunSpanningTree(roadConnections);
+        List<Structure_Node> triangulationConnections = RoadTriangulation(townData, townData.structureNodes);
+        List<Structure_Connection> minimunSpanningTreeConnections = RoadMinimunSpanningTree(triangulationConnections);
 
-        GetRoadData(townData, roadConnection);
+        GetRoadData(townData, minimunSpanningTreeConnections);
     }
 
-    private static List<Town_Node> RoadTriangulation(TownData townData, List<Vector2> nodePoints)
+    private static List<Structure_Node> RoadTriangulation(TownData townData, List<Vector2> nodePoints)
     {
         //  BowyerWatson
 
         //  Starts by placing the super triangle and sets it bad as we dont want it later
         //  Then starts looping through each node, replacing the triangles when needed
 
-        List<Town_Triangle> triangles = new List<Town_Triangle>();
+        List<Structure_Triangle> triangles = new List<Structure_Triangle>();
 
-        Town_Node superPointA = new Town_Node(townData.townPosition2 + new Vector2(0, townData.town.townSize * 3.2f));
-        Town_Node superPointB = new Town_Node(townData.townPosition2 + new Vector2(-townData.town.townSize * 2.2f, -townData.town.townSize * 1.2f));
-        Town_Node superPointC = new Town_Node(townData.townPosition2 + new Vector2(townData.town.townSize * 2.2f, -townData.town.townSize * 1.2f));
+        Structure_Node superPointA = new Structure_Node(townData.townPosition2 + new Vector2(0, townData.town.townSize * 3.2f));
+        Structure_Node superPointB = new Structure_Node(townData.townPosition2 + new Vector2(-townData.town.townSize * 2.2f, -townData.town.townSize * 1.2f));
+        Structure_Node superPointC = new Structure_Node(townData.townPosition2 + new Vector2(townData.town.townSize * 2.2f, -townData.town.townSize * 1.2f));
 
         superPointA.SetBad();
         superPointB.SetBad();
         superPointC.SetBad();
 
-        triangles.Add(new Town_Triangle(superPointA, superPointB, superPointC));
+        triangles.Add(new Structure_Triangle(superPointA, superPointB, superPointC));
 
         foreach (Vector2 nodePoint in nodePoints)
         {
-            List<Town_Connection> connections = new List<Town_Connection>();
+            List<Structure_Connection> connections = new List<Structure_Connection>();
 
-            foreach (Town_Triangle triangle in triangles)
+            foreach (Structure_Triangle triangle in triangles)
             {
                 if (triangle.IsNodeInsideCircumcirlce(nodePoint))
                 {
                     triangle.SetBad();
 
-                    foreach (Town_Connection connection in triangle.GetConnections())
+                    foreach (Structure_Connection connection in triangle.GetConnections())
                     {
                         connections.Add(connection);
                     }
                 }
             }
 
-            triangles.RemoveAll((Town_Triangle t) => t.isBad);
+            triangles.RemoveAll((Structure_Triangle t) => t.isBad);
 
             for(int i = 0; i < connections.Count; i++)
             {
@@ -109,26 +109,26 @@ public static class GenerateTown
                 }
             }
 
-            connections.RemoveAll((Town_Connection e) => e.isBad);
+            connections.RemoveAll((Structure_Connection e) => e.isBad);
 
-            Town_Node newNode = new Town_Node(nodePoint);
+            Structure_Node newNode = new Structure_Node(nodePoint);
 
-            foreach (Town_Connection connection in connections)
+            foreach (Structure_Connection connection in connections)
             {
-                triangles.Add(new Town_Triangle(newNode, connection.startNode, connection.endNode));
+                triangles.Add(new Structure_Triangle(newNode, connection.startNode, connection.endNode));
 
-                Town_Node.ConnectNodes(newNode, connection.startNode, connection.endNode);
+                Structure_Node.ConnectNodes(newNode, connection.startNode, connection.endNode);
             }
         }
 
-        triangles.RemoveAll((Town_Triangle t) => t.ContainsNode(superPointA) || t.ContainsNode(superPointB) || t.ContainsNode(superPointC));
+        triangles.RemoveAll((Structure_Triangle t) => t.ContainsNode(superPointA) || t.ContainsNode(superPointB) || t.ContainsNode(superPointC));
 
-        List<Town_Connection> finalConnections = new List<Town_Connection>();
-        List<Town_Node> finalNodes = new List<Town_Node>();
+        List<Structure_Connection> finalConnections = new List<Structure_Connection>();
+        List<Structure_Node> finalNodes = new List<Structure_Node>();
                 
-        foreach(Town_Triangle triangle in triangles)
+        foreach(Structure_Triangle triangle in triangles)
         {
-            foreach(Town_Connection connection in triangle.GetConnections())
+            foreach(Structure_Connection connection in triangle.GetConnections())
             {
                 finalConnections.Add(connection);
 
@@ -147,30 +147,30 @@ public static class GenerateTown
         return finalNodes;
     }
 
-    private static List<Town_Connection> RoadMinimunSpanningTree(List<Town_Node> nodes)
+    private static List<Structure_Connection> RoadMinimunSpanningTree(List<Structure_Node> nodes)
     {
         //  PrimsAlgorithm
 
         //  Starts at a random node, creates connections trough that node, taking the cheapes path,
         //  that paths end node gets added to list of nodes, and its connections, and loop continues untill all nodes are visited
 
-        List<Town_Connection> potentialConnections = new List<Town_Connection>();
-        List<Town_Connection> finalConnections = new List<Town_Connection>();
+        List<Structure_Connection> potentialConnections = new List<Structure_Connection>();
+        List<Structure_Connection> finalConnections = new List<Structure_Connection>();
 
-        Town_Node startNode = nodes[0];
+        Structure_Node startNode = nodes[0];
         startNode.SetBad();
 
-        foreach (Town_Node endNode in startNode.connectedNodes)
+        foreach (Structure_Node endNode in startNode.connectedNodes)
         {
-            potentialConnections.Add(new Town_Connection(startNode, endNode));
+            potentialConnections.Add(new Structure_Connection(startNode, endNode));
         }
 
         for(int i = 0; i < nodes.Count - 1; i++)
         {
-            Town_Connection shortest = null;
+            Structure_Connection shortest = null;
             float distance = float.MaxValue;
 
-            foreach (Town_Connection potentialConnection in potentialConnections)
+            foreach (Structure_Connection potentialConnection in potentialConnections)
             {
                 if (!potentialConnection.endNode.isBad)
                 {
@@ -188,11 +188,11 @@ public static class GenerateTown
             finalConnections.Add(shortest);
             potentialConnections.Remove(shortest);
 
-            foreach (Town_Node node in shortest.endNode.connectedNodes)
+            foreach (Structure_Node node in shortest.endNode.connectedNodes)
             {
                 if (!node.Equals(shortest.startNode))
                 {
-                    potentialConnections.Add(new Town_Connection(shortest.endNode, node));
+                    potentialConnections.Add(new Structure_Connection(shortest.endNode, node));
                 }                
             }
         }
@@ -202,7 +202,7 @@ public static class GenerateTown
 
         List<Vector2> occupied = new List<Vector2>();
 
-        foreach (Town_Connection potentialConnection in potentialConnections)
+        foreach (Structure_Connection potentialConnection in potentialConnections)
         {
             Vector2 pos = potentialConnection.startNode.position + potentialConnection.endNode.position;
 
@@ -216,34 +216,34 @@ public static class GenerateTown
         return finalConnections;
     }
 
-    private static void GetRoadData(TownData townData,  List<Town_Connection> connections)
+    private static void GetRoadData(TownData townData,  List<Structure_Connection> connections)
     {
         //  Has a grid of squares, for each road connection, use a* to get block data
         //  Then chose random road id and create vm
 
-        Town_Grid roadGrid = new Town_Grid(townData.townPosition2, townData.sizeRadius);
+        Structure_Grid grid = new Structure_Grid(townData.townPosition2, townData.sizeRadius);
 
-        foreach (Town_Connection connection in connections)
+        foreach (Structure_Connection connection in connections)
         {
-            roadGrid = UpdateRoadGridWithNewRoad(connection.startNode.position, connection.endNode.position, roadGrid);
+            grid = UpdateRoadGridWithNewRoad(connection.startNode.position, connection.endNode.position, grid);
         }
 
-        foreach (Vector2 roadblockPosition in roadGrid.GetRoadPositions())
+        foreach (Vector2 roadblockPosition in grid.GetPathPositions())
         {
             byte id = townData.town.roadIds[GetRandomValue(roadblockPosition, 0, townData.town.roadIds.Length)];
             townData.AddRoad(id, roadblockPosition);        
         }
     }
 
-    private static Town_Grid UpdateRoadGridWithNewRoad(Vector2 startPos, Vector2 endPos, Town_Grid grid)
+    private static Structure_Grid UpdateRoadGridWithNewRoad(Vector2 startPos, Vector2 endPos, Structure_Grid grid)
     {
         //  A*
 
-        Town_Square startSquare = grid.GetSquareFromWorldPosition(startPos); 
-        Town_Square endSquare = grid.GetSquareFromWorldPosition(endPos);
+        Structure_Grid_Node startSquare = grid.GetNodeFromWorldPosition(startPos); 
+        Structure_Grid_Node endSquare = grid.GetNodeFromWorldPosition(endPos);
 
-        List<Town_Square> openSet = new List<Town_Square>();
-        HashSet<Town_Square> closedSet = new HashSet<Town_Square>();
+        List<Structure_Grid_Node> openSet = new List<Structure_Grid_Node>();
+        HashSet<Structure_Grid_Node> closedSet = new HashSet<Structure_Grid_Node>();
 
         openSet.Add(startSquare);
         startSquare.hCost = 0;
@@ -251,7 +251,7 @@ public static class GenerateTown
 
         while(openSet.Count > 0)
         {
-            Town_Square currentSquare = openSet[0];
+            Structure_Grid_Node currentSquare = openSet[0];
 
             for (int i = 1; i < openSet.Count; i++)
             {
@@ -271,16 +271,16 @@ public static class GenerateTown
                 return grid;
             }
 
-            foreach(Town_Square neighbour in grid.GetNeighbours(currentSquare))
+            foreach(Structure_Grid_Node neighbour in grid.GetNeighbours(currentSquare))
             {
                 if (neighbour.isBad || closedSet.Contains(neighbour)) continue;
 
-                int movementDistanceToNeighbour = currentSquare.gCost + currentSquare.GetDistanceToOtherSquare(neighbour);
+                int movementDistanceToNeighbour = currentSquare.gCost + currentSquare.GetDistanceToOtherNode(neighbour);
 
                 if(movementDistanceToNeighbour < neighbour.gCost || !openSet.Contains(neighbour))
                 {
                     neighbour.gCost = movementDistanceToNeighbour;
-                    neighbour.hCost = neighbour.GetDistanceToOtherSquare(endSquare);
+                    neighbour.hCost = neighbour.GetDistanceToOtherNode(endSquare);
 
                     neighbour.parent = currentSquare;
 
@@ -297,16 +297,17 @@ public static class GenerateTown
         return grid;
     }
 
-    private static void RetracePath(Town_Square start, Town_Square end, Town_Grid grid)
+    private static void RetracePath(Structure_Grid_Node start, Structure_Grid_Node end, Structure_Grid grid)
     {
-        Town_Square currentSquare = end;
+        Structure_Grid_Node currentSquare = end;
 
         while(currentSquare != start)
         {
-            grid.SetSquareToRoad(currentSquare.position);
+            grid.SetNodeToPath(currentSquare.position);
             currentSquare = currentSquare.parent;
         }
     }
+
 
     private static Vector2 GetRandomPosition(Vector2 pos, int townSize, int index)
     {

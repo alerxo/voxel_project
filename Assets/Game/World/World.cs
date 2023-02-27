@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Threading;
+using Unity.Collections.LowLevel.Unsafe;
 
 public class World : MonoBehaviour
 {
@@ -34,10 +35,10 @@ public class World : MonoBehaviour
 
     //  List and stuff
 
-    public Queue<Queue<VoxelModification>> modifications = new Queue<Queue<VoxelModification>>();
+    private Queue<Queue<VoxelModification>> modifications = new Queue<Queue<VoxelModification>>();
 
-    public List<Chunk> chunksToPopulateVoxelMap = new List<Chunk>();
-    public List<Chunk> chunksToUpdateMesh = new List<Chunk>();
+    private List<Chunk> chunksToPopulateVoxelMap = new List<Chunk>();
+    private List<Chunk> chunksToUpdateMesh = new List<Chunk>();
 
     public Queue<Chunk> chunksToDrawLodOne = new Queue<Chunk>();
     public Queue<Chunk> chunksToDrawWater = new Queue<Chunk>();
@@ -48,7 +49,10 @@ public class World : MonoBehaviour
     private bool applyingModifications = false;
 
     private Thread UpdateChunk_Thread;
-    public object ThreadedUpdate_Lock = new object();
+
+    private object populateVoxel_lock = new object();
+    private object modficiation_lock = new object();
+    public object upadateMeshLock = new object();
 
     private void Awake()
     {
@@ -94,7 +98,6 @@ public class World : MonoBehaviour
         //  Middle of world is half of width on x,z
 
         spawn.transform.position = new Vector3((World_Settings.worldSizeInChunks * VoxelData.chunkWidth) / 2f, VoxelData.chunkHeight, (World_Settings.worldSizeInChunks * VoxelData.chunkWidth) / 2f);
-        SubBiome spawnBiome = Voxel_Util.GetChunkFromVector3(this, spawn.transform.position).subBiome;
         spawn.transform.position = new Vector3(spawn.transform.position.x, TerrainHeight.GetTerrainHeight(this, spawn.transform.position) + 2, spawn.transform.position.z);
     }
 
@@ -104,7 +107,7 @@ public class World : MonoBehaviour
 
         if (chunksInWorld[x, z] != null)
         {
-            lock (ThreadedUpdate_Lock)
+            lock (populateVoxel_lock)
             {
                 chunksToPopulateVoxelMap.Add(chunksInWorld[x, z]);
             }
@@ -160,7 +163,7 @@ public class World : MonoBehaviour
         bool updated = false;
         int index = 0;
 
-        lock (ThreadedUpdate_Lock)
+        lock (populateVoxel_lock)
         {
             while (!updated && index < chunksToPopulateVoxelMap.Count - 1)
             {
@@ -187,28 +190,31 @@ public class World : MonoBehaviour
 
         while (modifications.Count > 0)
         {
-            Queue<VoxelModification> modQueue = modifications.Dequeue();
-
-            while (modQueue.Count > 0)
+            lock (modficiation_lock)
             {
-                VoxelModification vm = modQueue.Dequeue();
+                Queue<VoxelModification> modQueue = modifications.Dequeue();
 
-                ChunkCoordinate cc = Voxel_Util.GetChunkCoordinateFromVector3(vm.position);
-
-                if (Voxel_Util.IsChunkInWorld(cc))
+                while (modQueue.Count > 0)
                 {
-                    if (chunksInWorld[cc.x, cc.z] == null)
-                    {
-                        Debug.Log("Error in World/ApplyModifications: Chunk doesn't exist");
-                    }
+                    VoxelModification vm = modQueue.Dequeue();
 
-                    else
-                    {
-                        chunksInWorld[cc.x, cc.z].modifications.Enqueue(vm);
+                    ChunkCoordinate cc = Voxel_Util.GetChunkCoordinateFromVector3(vm.position);
 
-                        if (!chunksToUpdateMesh.Contains(chunksInWorld[cc.x, cc.z]))
+                    if (Voxel_Util.IsChunkInWorld(cc))
+                    {
+                        if (chunksInWorld[cc.x, cc.z] == null)
                         {
-                            chunksToUpdateMesh.Add(chunksInWorld[cc.x, cc.z]);
+                            Debug.Log("Error in World/ApplyModifications: Chunk doesn't exist");
+                        }
+
+                        else
+                        {
+                            chunksInWorld[cc.x, cc.z].modifications.Enqueue(vm);
+
+                            if (!chunksToUpdateMesh.Contains(chunksInWorld[cc.x, cc.z]))
+                            {
+                                chunksToUpdateMesh.Add(chunksInWorld[cc.x, cc.z]);
+                            }
                         }
                     }
                 }
@@ -226,7 +232,7 @@ public class World : MonoBehaviour
         bool updated = false;
         int index = 0;
 
-        lock (ThreadedUpdate_Lock)
+        lock (upadateMeshLock)
         {
             while (!updated && index < chunksToUpdateMesh.Count - 1)
             {   
@@ -241,6 +247,31 @@ public class World : MonoBehaviour
                     index++;
                 }
             }
+        }
+    }
+
+    public void EnqueueModification(Queue<VoxelModification> queue)
+    {
+        lock (modficiation_lock)
+        {
+            modifications.Enqueue(queue);
+        }   
+    }
+
+    public void InsertMeshUpdate(Chunk chunk)
+    {
+        lock (upadateMeshLock)
+        {
+            chunksToUpdateMesh.Insert(0, chunk);
+        }
+    }
+
+    public void InsertMeshUpdateAdjacent(Chunk chunk, int x, int y, int z)
+    {
+        lock (upadateMeshLock)
+        {
+            chunksToUpdateMesh.Insert(0, chunk);
+            chunk.UpdateAdjacentVoxels(x, y, z);
         }
     }
 
