@@ -76,5 +76,7 @@ public static class GenerateTown
             byte id = townData.town.roadIds[Structure_Util.GetRandomValue(roadblockPosition, 0, townData.town.roadIds.Length)];
             townData.AddRoad(id, roadblockPosition);
         }
+
+        townData.CompleteRoads();
     }
 }

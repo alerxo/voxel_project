@@ -609,9 +609,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d903f4ee66eba145ac557bd13bb561b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  voidBiome: {fileID: 11400000, guid: 4b6b981b01836224f8227b7ab5699580, type: 2}
-  testStructure: {fileID: 11400000, guid: 6fd6cee7c2c734b499f97162b161254c, type: 2}
-  chunkAmount: 4
+  testStructure: {fileID: 11400000, guid: 3ea18e1e822665e4c97dc61345be632c, type: 2}
   raw: 1
 --- !u!4 &1226881351
 Transform:

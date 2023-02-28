@@ -6,20 +6,36 @@ public static class GenerateDungeon
 {
     public static void GenerateDungeonData(DungeonData dungeonData)
     {
-        dungeonData.levels = dungeonData.dungeon.dungeonLevelAmount + (dungeonData.dungeon.dungeonLevelAmountVariation - Structure_Util.GetRandomValue(dungeonData.dungeonPosition, 1, dungeonData.dungeon.dungeonLevelAmountVariation * 2));
-        dungeonData.sizeRadius = dungeonData.dungeon.dungeonSize + (dungeonData.dungeon.dungeonSizeVariation - Structure_Util.GetRandomValue(dungeonData.dungeonPosition, 1, dungeonData.dungeon.dungeonSizeVariation * 2));
-        dungeonData.density = dungeonData.dungeon.dungeonDensity + (dungeonData.dungeon.dungeonDensityVariation - ((float)Structure_Util.GetRandomValue(dungeonData.dungeonPosition, 2, Mathf.FloorToInt(dungeonData.dungeon.dungeonDensityVariation * dungeonData.dungeon.dungeonSize)) / (float)dungeonData.dungeon.dungeonSize));
-
-
         for (int i = 0; i < dungeonData.levels; i++)
         {
             dungeonData.roomNodes = new List<Vector2>();
 
             int yPosition = Mathf.FloorToInt(dungeonData.dungeonPosition.y) - (i * dungeonData.dungeon.dungeonLevelGap);
 
-            GetRooms(dungeonData, yPosition);
-            GetHallway(dungeonData, yPosition);
+            if (i == dungeonData.dungeonEntranceLevel)
+            {
+                GetEntrance(dungeonData, yPosition);
+            }
+
+            if(i >= dungeonData.dungeonMinLevel)
+            {
+                GetRooms(dungeonData, yPosition);
+            }
+
+            if(dungeonData.roomNodes.Count > 1)
+            {
+                GetHallway(dungeonData, yPosition);
+            }
         }
+    }
+
+    private static void GetEntrance(DungeonData dungeonData, int yPosition)
+    {
+        Vector3 position = new Vector3(dungeonData.dungeonEntrancePosition.x, yPosition, dungeonData.dungeonEntrancePosition.z);
+
+        Structure structure = dungeonData.dungeon.entrances[Structure_Util.GetRandomValue(position, 0, dungeonData.dungeon.entrances.Length)];
+
+        dungeonData.AddStructure(structure, position);
     }
 
     private static void GetRooms(DungeonData dungeonData, int yPosition)

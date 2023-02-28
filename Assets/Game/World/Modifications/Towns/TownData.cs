@@ -101,7 +101,7 @@ public class TownData
         return -1;
     }
 
-    public void CompleteHallway()
+    public void CompleteRoads()
     {
         foreach (Queue<VoxelModification> queue in roadQueues)
         {

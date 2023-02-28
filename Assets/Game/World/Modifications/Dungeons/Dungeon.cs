@@ -26,6 +26,12 @@ public class Dungeon : ScriptableObject
 
     [Space]
 
+    public int dungeonMinLevel;
+    public int dungeonMinLevelVariation;
+
+    [Space]
+
+    public Structure[] entrances;
     public Structure[] rooms;
 
     [Space]

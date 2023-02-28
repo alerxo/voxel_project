@@ -27,6 +27,7 @@ public static class World_Generation
         if (isTestScene) return;
 
         CreateTowns(world);
+        ConnectTowns();
 
         Debug.Log("Towns created");
 
@@ -57,6 +58,7 @@ public static class World_Generation
         RenderSettings.fogEndDistance = (World_Settings.RenderDistanceInChunks * VoxelData.chunkWidth) - VoxelData.chunkWidth * 2;
     }
 
+
     private static void CreateBiomeMap(World world)
     {
         world.subBiomeMap = BiomeMap.GetBiomeMap(world);
@@ -79,6 +81,7 @@ public static class World_Generation
         }
     }
 
+
     private static void CreateTowns(World world)
     {
         //  Loops through towns and creates them
@@ -87,10 +90,15 @@ public static class World_Generation
         {
             for(int i = 0; i < town.amountOfTowns; i++)
             {
-                TownData townData = new TownData(world, town, GetRandomTownPosition());
+                TownData townData = new TownData(world, town, GetRandomPosition());
                 GenerateTown.GenerateTownData(townData);
             }
         }
+    }
+
+    private static void ConnectTowns()
+    {
+
     }
 
     private static void CreateDungeons(World world)
@@ -101,36 +109,27 @@ public static class World_Generation
         {
             for (int i = 0; i < dungeon.amountOfDungeons; i++)
             {
-                DungeonData dungeonData = new DungeonData(world, dungeon, GetRandomDungeonPosition(dungeon));
+                Vector3 dungeonPosition = GetRandomPosition();
+                Vector3 dungeonEntrancePosition = dungeonPosition;
+
+                DungeonData dungeonData = new DungeonData(world, dungeon, dungeonPosition, dungeonEntrancePosition, 0);
                 GenerateDungeon.GenerateDungeonData(dungeonData);
             }
         }
     }
 
-    private static Vector3 GetRandomTownPosition()
+
+
+    private static Vector3 GetRandomPosition()
     {
-        Vector3 townPosition = new Vector3();
+        Vector3 position = new Vector3();
 
         int edge = World_Settings.mapEdgeSizeInChunks * VoxelData.chunkWidth;
         int land = World_Settings.landSizeInChunks * VoxelData.chunkWidth;
 
-        townPosition.x = Random.Range(edge, edge + land);
-        townPosition.z = Random.Range(edge, edge + land);
+        position.x = Random.Range(edge, edge + land);
+        position.z = Random.Range(edge, edge + land);
         
-        return townPosition;
-    }
-
-    private static Vector3 GetRandomDungeonPosition(Dungeon dungeon)
-    {
-        Vector3 dungeonPosition = new Vector3();
-
-        int edge = World_Settings.mapEdgeSizeInChunks * VoxelData.chunkWidth;
-        int land = World_Settings.landSizeInChunks * VoxelData.chunkWidth;
-
-        dungeonPosition.x = Random.Range(edge, edge + land);
-        dungeonPosition.y = Random.Range(dungeon.lowestY, dungeon.highestY);
-        dungeonPosition.z = Random.Range(edge, edge + land);
-
-        return dungeonPosition;
+        return position;
     }
 }

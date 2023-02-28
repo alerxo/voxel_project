@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.Search;
 using UnityEngine;
 
 public class DungeonData
@@ -10,12 +9,14 @@ public class DungeonData
 
     public Vector3 dungeonPosition;
     public Vector2 dungeonPosition2;
+    public int dungeonMinLevel;
+
+    public Vector3 dungeonEntrancePosition;
+    public int dungeonEntranceLevel;
 
     public int levels;
     public float density;
     public int sizeRadius;
-
-    public int[] levelYPosition;
 
     public List<Vector2> roomNodes = new List<Vector2>();
 
@@ -24,35 +25,25 @@ public class DungeonData
 
     private World world;
 
-    public DungeonData(World _world, Dungeon _dungeon, Vector3 _position)
+    public DungeonData(World _world, Dungeon _dungeon, Vector3 _position, Vector3 _entrancePosition, int _entranceLevel)
     {
         world = _world;
         dungeon = _dungeon;
+
         dungeonPosition = _position;
         dungeonPosition2 = new Vector2(_position.x, _position.z);
+        dungeonEntrancePosition = _entrancePosition;
+        dungeonEntranceLevel = _entranceLevel;
 
-        dungeonPosition.y = dungeon.highestY - GetYPosition();
+        GetData();
     }
 
-    private float GetYPosition()
+    private void GetData()
     {
-        //  First grabs some perlin to act as the noise
-        //  Then does some mathematical maths on with that perlin,
-        //  So that small changes in position, equal large changes in numbers
-        //  Then gets the modulo of the value, to always return a value within range
-
-        int largest = dungeon.highestY - dungeon.lowestY;
-
-        if (largest == 0) return 0;
-        float perlin = Mathf.PerlinNoise((dungeonPosition.x * 1111f) * 1111f + 0.1f, (dungeonPosition.z * 1111f) * 1111f + 0.1f);
-
-        float value = (dungeonPosition.x * 1111f) + (dungeonPosition.z * 1111f) + perlin;
-        value *= perlin;
-        value *= value;
-
-        value %= largest;
-
-        return Mathf.FloorToInt(value);
+        levels = dungeon.dungeonLevelAmount + (dungeon.dungeonLevelAmountVariation - Structure_Util.GetRandomValue(dungeonPosition, 1, dungeon.dungeonLevelAmountVariation * 2));
+        sizeRadius = dungeon.dungeonSize + (dungeon.dungeonSizeVariation - Structure_Util.GetRandomValue(dungeonPosition, 1, dungeon.dungeonSizeVariation * 2));
+        density = dungeon.dungeonDensity + (dungeon.dungeonDensityVariation - ((float)Structure_Util.GetRandomValue(dungeonPosition, 2, Mathf.FloorToInt(dungeon.dungeonDensityVariation * dungeon.dungeonSize)) / (float)dungeon.dungeonSize));
+        dungeonMinLevel = dungeon.dungeonMinLevel + (dungeon.dungeonMinLevelVariation - Structure_Util.GetRandomValue(dungeonPosition, 1, dungeon.dungeonMinLevelVariation * 2));
     }
 
     public void AddStructure(Structure structure, Vector3 position)
