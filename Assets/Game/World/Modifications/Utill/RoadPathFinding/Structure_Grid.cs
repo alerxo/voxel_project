@@ -24,7 +24,7 @@ public class Structure_Grid
             for (int y = 0; y < gridRadius * 2; y++)
             {
                 Vector2 pos = new Vector2(x, y);
-                bool isBad = Structure_Util.CheckOverlap(pos);
+                bool isBad = Structure_Util.CheckIfOverlap(pos);
 
                 grid[x, y] = new Structure_Grid_Node(isBad, pos);
             }

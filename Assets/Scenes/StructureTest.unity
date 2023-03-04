@@ -609,7 +609,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d903f4ee66eba145ac557bd13bb561b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  testStructure: {fileID: 11400000, guid: 3ea18e1e822665e4c97dc61345be632c, type: 2}
+  testStructure: {fileID: 11400000, guid: b8f61653e06144048bfc414d2fff745a, type: 2}
   raw: 1
 --- !u!4 &1226881351
 Transform:
@@ -638,7 +638,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 394c8bab416567141a29cb843b1a0d77, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  currentVoxelID: 11
+  currentVoxelID: 12
   player: {fileID: 1308237287}
 --- !u!114 &1226881353
 MonoBehaviour:

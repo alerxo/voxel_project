@@ -7,37 +7,24 @@ public class Dungeon : ScriptableObject
 
     [Space]
 
-    public int dungeonSize;
-    public int dungeonSizeVariation;
+    public int size;
+    public int sizeVariation;
 
     [Space]
 
-    public float dungeonDensity;
-    public float dungeonDensityVariation;
+    public float roomDensity;
+    public float densityVariation;
 
     [Space]
 
-    public int dungeonLevelAmount;
-    public int dungeonLevelAmountVariation;
-
-    [Space]
-
-    public int dungeonLevelGap;
-
-    [Space]
-
-    public int dungeonMinLevel;
-    public int dungeonMinLevelVariation;
+    public int amountOfLevels;
+    public int levelVariation;
 
     [Space]
 
     public Structure[] entrances;
     public Structure[] rooms;
-
-    [Space]
-
-    public int lowestY;
-    public int highestY;
+    public Structure[] stairs;
 
     [Space]
 

@@ -15,8 +15,6 @@ public class DungeonTest : MonoBehaviour
 
         Vector3 dungeonEntrancePosition = dungeonPosition;
 
-        Debug.Log(dungeonPosition.y);
-
         DungeonData dungeonData = new DungeonData(world, testDungeon, dungeonPosition, dungeonEntrancePosition, 0);
         GenerateDungeon.GenerateDungeonData(dungeonData);
 

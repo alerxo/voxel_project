@@ -39,7 +39,7 @@ public static class GenerateTown
 
             Structure structure = townData.town.houses[Structure_Util.GetRandomValue(position, i, townData.town.houses.Length)];
 
-            if(!Structure_Util.CheckOverlap(structure, new Vector3(position.x, townData.townPosition.y, position.y), true))
+            if(!Structure_Util.CheckIfOverlap(structure, new Vector3(position.x, townData.townPosition.y, position.y), true))
             {
                 townData.AddStructure(structure, position);
             }
@@ -55,6 +55,11 @@ public static class GenerateTown
 
         List<Structure_Node> triangulationConnections = Structure_Util.Triangulation(townData.townPosition2, townData.town.townSize, townData.structureNodes);
         List<Structure_Connection> minimunSpanningTreeConnections = Structure_Util.MinimunSpanningTree(triangulationConnections);
+
+        if(minimunSpanningTreeConnections == null)
+        {
+            return;
+        }
 
         GetRoadData(townData, minimunSpanningTreeConnections);
     }

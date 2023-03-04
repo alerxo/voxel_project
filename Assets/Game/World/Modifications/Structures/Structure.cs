@@ -15,6 +15,8 @@ public class Structure : ScriptableObject
 
     public float buildRadius;
 
+    public Vector3[] entrances;
+
     public VoxelModification[] GetVoxels()
     {
         //  Loads the structure data from the binary file loader and turns it into an array of voxelmodifications

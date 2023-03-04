@@ -10,10 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 31e6426776407704ea9ba8c8b5aaf7ce, type: 3}
-  m_Name: SmallDorbHouse
+  m_Name: DungeonStair
   m_EditorClassIdentifier: 
-  structureName: SmallDorbHouse
+  structureName: DungeonStair
   threshold: 0
   offset: 0
   zoneMargin: 1
-  buildRadius: 12
+  buildRadius: 15
+  entrances:
+  - {x: 0, y: 0, z: 0}
+  - {x: 0, y: -18, z: 0}

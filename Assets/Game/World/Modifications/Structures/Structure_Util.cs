@@ -36,7 +36,7 @@ public static class Structure_Util
         Debug.DrawLine(xp + yn + zn + blockOffset, xn + yn + zn + blockOffset, Color.white, 10f);
     }   
 
-    public static bool CheckOverlap(Structure structure, Vector3 position, bool add)
+    public static bool CheckIfOverlap(Structure structure, Vector3 position, bool add)
     {
         if(structureList.Count == 0)
         {
@@ -63,7 +63,7 @@ public static class Structure_Util
         return false;
     }
 
-    public static bool CheckOverlap(Vector3 position)
+    public static bool CheckIfOverlap(Vector3 position)
     {
         foreach (Tuple<Structure, Vector3> s in structureList)
         {
@@ -76,7 +76,7 @@ public static class Structure_Util
         return false;
     }
 
-    public static bool CheckOverlap(Vector2 position)
+    public static bool CheckIfOverlap(Vector2 position)
     {
         foreach (Tuple<Structure, Vector3> s in structureList)
         {
@@ -184,6 +184,12 @@ public static class Structure_Util
 
         //  Starts at a random node, creates connections trough that node, taking the cheapes path,
         //  that paths end node gets added to list of nodes, and its connections, and loop continues untill all nodes are visited
+
+        if(nodes.Count == 0)
+        {
+            Debug.LogError("Nodes length is 0");
+            return null;
+        }
 
         List<Structure_Connection> potentialConnections = new List<Structure_Connection>();
         List<Structure_Connection> finalConnections = new List<Structure_Connection>();
@@ -331,15 +337,15 @@ public static class Structure_Util
         return newPositon;
     }
 
-    public static Vector3 GetRandom3DPosition(Vector3 position, int townSize, int index)
+    public static Vector3 GetRandom3DPosition(Vector3 position, int radius, int index)
     {
         Vector3 newPositon;
 
         Vector2 noisePosition = new Vector2(position.x + position.y, position.z + position.y);
 
-        newPositon.x = position.x + (townSize - GetRandomValue(noisePosition, index + 33, townSize * 2));
-        newPositon.y = position.y + (townSize - GetRandomValue(noisePosition, index + 66, townSize * 2));
-        newPositon.z = position.z + (townSize - GetRandomValue(noisePosition, index + 99, townSize * 2));
+        newPositon.x = position.x + (radius - GetRandomValue(noisePosition, index + 33, radius * 2));
+        newPositon.y = position.y + (radius - GetRandomValue(noisePosition, index + 66, radius * 2));
+        newPositon.z = position.z + (radius - GetRandomValue(noisePosition, index + 99, radius * 2));
 
         return newPositon;
     }

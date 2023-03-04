@@ -7,18 +7,19 @@ public class DungeonData
 {
     public Dungeon dungeon;
 
-    public Vector3 dungeonPosition;
-    public Vector2 dungeonPosition2;
-    public int dungeonMinLevel;
+    public Vector3 position3D;
+    public Vector2 position2D;
 
-    public Vector3 dungeonEntrancePosition;
-    public int dungeonEntranceLevel;
+    public Vector3 entrancePosition;
 
     public int levels;
     public float density;
-    public int sizeRadius;
+    public int size;
+
+    public int nextYPosition;
 
     public List<Vector2> roomNodes = new List<Vector2>();
+    public List<Vector2> cachedRoomNodes = new List<Vector2>();
 
     public List<ChunkCoordinate> hallwayChunks = new List<ChunkCoordinate>();
     public List<Queue<VoxelModification>> hallwayQueues = new List<Queue<VoxelModification>>();
@@ -30,37 +31,58 @@ public class DungeonData
         world = _world;
         dungeon = _dungeon;
 
-        dungeonPosition = _position;
-        dungeonPosition2 = new Vector2(_position.x, _position.z);
-        dungeonEntrancePosition = _entrancePosition;
-        dungeonEntranceLevel = _entranceLevel;
+        position3D = _position;
+        position2D = new Vector2(_position.x, _position.z);
+        entrancePosition = _entrancePosition;
 
         GetData();
     }
 
     private void GetData()
     {
-        levels = dungeon.dungeonLevelAmount + (dungeon.dungeonLevelAmountVariation - Structure_Util.GetRandomValue(dungeonPosition, 1, dungeon.dungeonLevelAmountVariation * 2));
-        sizeRadius = dungeon.dungeonSize + (dungeon.dungeonSizeVariation - Structure_Util.GetRandomValue(dungeonPosition, 1, dungeon.dungeonSizeVariation * 2));
-        density = dungeon.dungeonDensity + (dungeon.dungeonDensityVariation - ((float)Structure_Util.GetRandomValue(dungeonPosition, 2, Mathf.FloorToInt(dungeon.dungeonDensityVariation * dungeon.dungeonSize)) / (float)dungeon.dungeonSize));
-        dungeonMinLevel = dungeon.dungeonMinLevel + (dungeon.dungeonMinLevelVariation - Structure_Util.GetRandomValue(dungeonPosition, 1, dungeon.dungeonMinLevelVariation * 2));
+        size = dungeon.size + (dungeon.sizeVariation - (Structure_Util.GetRandomValue(position2D, 0, dungeon.sizeVariation * 2)));
+
+        levels = dungeon.amountOfLevels + (dungeon.levelVariation - (Structure_Util.GetRandomValue(position2D, 0, dungeon.levelVariation * 2)));
+
+        density = dungeon.roomDensity + (dungeon.densityVariation - ((float)Structure_Util.GetRandomValue(position2D, 0, (Mathf.FloorToInt(dungeon.densityVariation * 100)) * 2) / 100f));
     }
 
     public void AddStructure(Structure structure, Vector3 position)
     {
-        //  Updates postion with terrainHeight
         //  Adds the structure to the world modifications
 
-        Queue<VoxelModification> queue = new Queue<VoxelModification>();
-
-        roomNodes.Add(new Vector2(position.x, position.z));
-
-        foreach (VoxelModification vm in structure.GetVoxels())
+        if (!Structure_Util.CheckIfOverlap(structure, position, true))
         {
-            queue.Enqueue(new VoxelModification(vm.position + position, vm.blockId));
-        }
+            Queue<VoxelModification> queue = new Queue<VoxelModification>();
 
-        world.EnqueueModification(queue);
+            roomNodes.Add(new Vector2(position.x, position.z));
+
+            foreach (VoxelModification vm in structure.GetVoxels())
+            {
+                queue.Enqueue(new VoxelModification(vm.position + position, vm.blockId));
+            }
+
+            world.EnqueueModification(queue);
+        }
+    }
+
+    public void AddStair(Structure structure, Vector3 position)
+    {
+        //  Adds the structure to the world modifications
+
+        if (!Structure_Util.CheckIfOverlap(structure, position, true))
+        {
+            Queue<VoxelModification> queue = new Queue<VoxelModification>();
+
+            roomNodes.Add(new Vector2(position.x, position.z));
+
+            foreach (VoxelModification vm in structure.GetVoxels())
+            {
+                queue.Enqueue(new VoxelModification(vm.position + position, vm.blockId));
+            }
+
+            world.EnqueueModification(queue);
+        }
     }
 
     public void AddHallway(byte blockID, Vector2 position, int yPosition)
@@ -68,9 +90,9 @@ public class DungeonData
         //  Updates postion with terrainHeight
         //  Adds the structure to the world modifications
 
-        Vector3 hallwayPosition = new Vector3(position.x, 1, position.y) + dungeonPosition;
+        Vector3 hallwayPosition = new Vector3(position.x, 1, position.y) + position3D;
 
-        hallwayPosition.y = yPosition;
+        hallwayPosition.y = yPosition + 1;
 
         ChunkCoordinate cc = Voxel_Util.GetChunkCoordinateFromVector3(hallwayPosition);
         VoxelModification vm = new VoxelModification(hallwayPosition, blockID);

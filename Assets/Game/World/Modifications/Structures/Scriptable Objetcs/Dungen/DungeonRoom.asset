@@ -16,4 +16,6 @@ MonoBehaviour:
   threshold: 0
   offset: 0
   zoneMargin: 1
-  buildRadius: 15
+  buildRadius: 10
+  entrances:
+  - {x: 0, y: 0, z: 0}

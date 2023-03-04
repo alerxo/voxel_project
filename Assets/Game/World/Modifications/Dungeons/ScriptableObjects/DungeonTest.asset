@@ -13,20 +13,17 @@ MonoBehaviour:
   m_Name: DungeonTest
   m_EditorClassIdentifier: 
   dungeonName: DungeonTest
-  dungeonSize: 50
-  dungeonSizeVariation: 10
-  dungeonDensity: 0.2
-  dungeonDensityVariation: 0.01
-  dungeonLevelAmount: 5
-  dungeonLevelAmountVariation: 0
-  dungeonLevelGap: 25
-  dungeonMinLevel: 2
-  dungeonMinLevelVariation: 0
+  size: 50
+  sizeVariation: 10
+  roomDensity: 0.2
+  densityVariation: 0.05
+  amountOfLevels: 5
+  levelVariation: 1
   entrances:
-  - {fileID: 11400000, guid: 3ea18e1e822665e4c97dc61345be632c, type: 2}
+  - {fileID: 11400000, guid: b8f61653e06144048bfc414d2fff745a, type: 2}
   rooms:
   - {fileID: 11400000, guid: d5d3d5bf8733fab41b3cf5a753c43f59, type: 2}
   - {fileID: 11400000, guid: 6fd6cee7c2c734b499f97162b161254c, type: 2}
-  lowestY: 150
-  highestY: 200
+  stairs:
+  - {fileID: 11400000, guid: b8f61653e06144048bfc414d2fff745a, type: 2}
   amountOfDungeons: 1
