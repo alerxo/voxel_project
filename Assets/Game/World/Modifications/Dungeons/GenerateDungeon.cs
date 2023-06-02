@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -51,18 +52,38 @@ public static class GenerateDungeon
 
     private static void GetStairs(DungeonData dungeonData, int yPosition, int index)
     {
+        Structure structure = null;
         Vector3 position = dungeonData.position3D;
-        position.y = yPosition;
-        position = Structure_Util.GetRandom3DPosition(position, dungeonData.size, -index);
-        position.y = yPosition;
 
-        Structure structure = dungeonData.dungeon.stairs[Structure_Util.GetRandomValue(position, index, dungeonData.dungeon.stairs.Length)];
+        for (int i = 0; i < 100; i++)
+        {
+            position.y = yPosition;
+            position = Structure_Util.GetRandom3DPosition(position, dungeonData.size, -index + i);
+            position.y = yPosition;
 
-        dungeonData.nextYPosition += Mathf.FloorToInt(structure.entrances[1].y);
-        dungeonData.cachedRoomNodes.Add(new Vector2(position.x + structure.entrances[1].x, position.z + structure.entrances[1].z));
+            structure = dungeonData.dungeon.stairs[Structure_Util.GetRandomValue(position, index + i, dungeonData.dungeon.stairs.Length)];
 
-        dungeonData.AddStair(structure, position);
+            if (!Structure_Util.CheckIfOverlap(structure, position, true))
+            {
+                break;
+            }
+        }
+
+        if (structure != null)
+        {
+            dungeonData.nextYPosition += Mathf.FloorToInt(structure.entrances[1].y);
+            dungeonData.cachedRoomNodes.Add(new Vector2(position.x + structure.entrances[1].x, position.z + structure.entrances[1].z));
+
+            dungeonData.AddStair(structure, position);
+        }
+
+        else
+        {
+            Debug.LogError("Error: Could not find position for stair");
+        }
     }
+
+
 
     private static void GetRooms(DungeonData dungeonData, int yPosition)
     {
@@ -70,16 +91,34 @@ public static class GenerateDungeon
 
         int roomAmount = Mathf.FloorToInt(dungeonData.size * dungeonData.density);
         
-        for (int i = 0; i < roomAmount; i++)
+        for (int r = 0; r < roomAmount; r++)
         {
+            Structure structure = null;
             Vector3 position = dungeonData.position3D;
-            position.y = yPosition;
-            position = Structure_Util.GetRandom3DPosition(position, dungeonData.size, i);
-            position.y = yPosition;
 
-            Structure structure = dungeonData.dungeon.rooms[Structure_Util.GetRandomValue(position, i, dungeonData.dungeon.rooms.Length)];
+            for (int i = 0; i < 100; i++)
+            {
+                position.y = yPosition;
+                position = Structure_Util.GetRandom3DPosition(dungeonData.position3D, dungeonData.size, r + i);
+                position.y = yPosition;
 
-            dungeonData.AddStructure(structure, position);
+                structure = dungeonData.dungeon.rooms[Structure_Util.GetRandomValue(position, r + i, dungeonData.dungeon.rooms.Length)];
+
+                if (!Structure_Util.CheckIfOverlap(structure, position, true))
+                {
+                    break;
+                }
+            }
+
+            if(structure != null)
+            {
+                dungeonData.AddStructure(structure, position);
+            }
+
+            else
+            {
+                Debug.LogError("Error: Could not find position for room");
+            }
         }
     }
 
@@ -95,6 +134,7 @@ public static class GenerateDungeon
 
         if(minimunSpanningTreeConnections == null)
         {
+            Debug.LogError("Error: Mst connections is null");
             return;
         }
 
@@ -106,7 +146,7 @@ public static class GenerateDungeon
         //  Has a grid of squares, for each road connection, use a* to get block data
         //  Then chose random road id and create vm
 
-        Structure_Grid grid = new Structure_Grid(dungeonData.position2D, dungeonData.size + 5);
+        Structure_Grid grid = new Structure_Grid(dungeonData.position2D, dungeonData.size);
 
         foreach (Structure_Connection connection in connections)
         {

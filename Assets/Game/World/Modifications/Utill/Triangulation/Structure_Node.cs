@@ -19,7 +19,7 @@ public class Structure_Node
 
     public void AddConnection(Structure_Node connectedNode)
     {
-        if (!connectedNodes.Contains(connectedNode))
+        if (!connectedNodes.Contains(connectedNode) && !connectedNode.isBad)
         {
             connectedNodes.Add(connectedNode);
         }
@@ -40,8 +40,6 @@ public class Structure_Node
 
     public static void ConnectNodes(Structure_Node nodeA, Structure_Node nodeB, Structure_Node nodeC)
     {
-        if (nodeA.isBad || nodeB.isBad || nodeC.isBad) return;
-
         nodeA.AddConnection(nodeB);
         nodeA.AddConnection(nodeC);
 

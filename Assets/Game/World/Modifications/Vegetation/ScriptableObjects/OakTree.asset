@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5ce31a99a78857a46af9b323ac890934, type: 3}
   m_Name: OakTree
   m_EditorClassIdentifier: 
-  threshold: 0.9999
+  threshold: 0.999
   offset: 0
   woodId: 6
   leafId: 8

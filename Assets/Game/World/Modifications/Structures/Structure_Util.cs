@@ -97,6 +97,12 @@ public static class Structure_Util
         //  Starts by placing the super triangle and sets it bad as we dont want it later
         //  Then starts looping through each node, replacing the triangles when needed
 
+        if (nodePoints.Count == 0)
+        {
+            Debug.LogError("Error: Nodes length is 0");
+            return null;
+        }
+
         List<Structure_Triangle> triangles = new List<Structure_Triangle>();
 
         Structure_Node superPointA = new Structure_Node(position + new Vector2(0, size * 3.2f));
@@ -152,25 +158,27 @@ public static class Structure_Util
             }
         }
 
-        triangles.RemoveAll((Structure_Triangle t) => t.ContainsNode(superPointA) || t.ContainsNode(superPointB) || t.ContainsNode(superPointC));
+        //Debug.Log(triangles.Count);
+        //triangles.RemoveAll((Structure_Triangle t) => t.ContainsNode(superPointA) || t.ContainsNode(superPointB) || t.ContainsNode(superPointC));
+        //Debug.Log(triangles.Count);
 
-        List<Structure_Connection> finalConnections = new List<Structure_Connection>();
         List<Structure_Node> finalNodes = new List<Structure_Node>();
 
         foreach (Structure_Triangle triangle in triangles)
         {
             foreach (Structure_Connection connection in triangle.GetConnections())
             {
-                finalConnections.Add(connection);
-
-                if (!finalNodes.Contains(connection.startNode))
+                if(!connection.ContainsNode(superPointA) && !connection.ContainsNode(superPointB) && !connection.ContainsNode(superPointC))
                 {
-                    finalNodes.Add(connection.startNode);
-                }
+                    if (!finalNodes.Contains(connection.startNode))
+                    {
+                        finalNodes.Add(connection.startNode);
+                    }
 
-                if (!finalNodes.Contains(connection.endNode))
-                {
-                    finalNodes.Add(connection.endNode);
+                    if (!finalNodes.Contains(connection.endNode))
+                    {
+                        finalNodes.Add(connection.endNode);
+                    }
                 }
             }
         }
@@ -187,7 +195,7 @@ public static class Structure_Util
 
         if(nodes.Count == 0)
         {
-            Debug.LogError("Nodes length is 0");
+            Debug.LogError("Error: Nodes length is 0");
             return null;
         }
 
@@ -294,6 +302,8 @@ public static class Structure_Util
                 if (neighbour.isBad || closedSet.Contains(neighbour)) continue;
 
                 int movementDistanceToNeighbour = currentSquare.gCost + currentSquare.GetDistanceToOtherNode(neighbour);
+
+                if (neighbour.isPath) movementDistanceToNeighbour -= 10;
 
                 if (movementDistanceToNeighbour < neighbour.gCost || !openSet.Contains(neighbour))
                 {

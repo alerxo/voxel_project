@@ -33,15 +33,30 @@ public static class GenerateTown
 
         int houseAmount = Mathf.FloorToInt(townData.sizeRadius * townData.density);
 
-        for(int i = 0; i < houseAmount; i++)
+        for(int h = 0; h < houseAmount; h++)
         {
-            Vector2 position = Structure_Util.GetRandom2DPosition(townData.townPosition2, townData.sizeRadius, i);
+            Vector2 position = townData.townPosition2;
+            Structure structure = null;
 
-            Structure structure = townData.town.houses[Structure_Util.GetRandomValue(position, i, townData.town.houses.Length)];
+            for(int i = 0; i < 100; i++)
+            {
+                position = Structure_Util.GetRandom2DPosition(townData.townPosition2, townData.sizeRadius, h);
+                structure = townData.town.houses[Structure_Util.GetRandomValue(position, h, townData.town.houses.Length)];
 
-            if(!Structure_Util.CheckIfOverlap(structure, new Vector3(position.x, townData.townPosition.y, position.y), true))
+                if (!Structure_Util.CheckIfOverlap(structure, new Vector3(position.x, townData.townPosition.y, position.y), true))
+                {
+                    break;
+                }
+            }
+
+            if(structure != null)
             {
                 townData.AddStructure(structure, position);
+            }
+
+            else
+            {
+                Debug.LogError("Error: Did not find position for house");
             }
         }
     }

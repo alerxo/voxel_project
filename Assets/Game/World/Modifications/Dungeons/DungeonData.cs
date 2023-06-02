@@ -51,38 +51,32 @@ public class DungeonData
     {
         //  Adds the structure to the world modifications
 
-        if (!Structure_Util.CheckIfOverlap(structure, position, true))
+        Queue<VoxelModification> queue = new Queue<VoxelModification>();
+
+        roomNodes.Add(new Vector2(position.x, position.z));
+
+        foreach (VoxelModification vm in structure.GetVoxels())
         {
-            Queue<VoxelModification> queue = new Queue<VoxelModification>();
-
-            roomNodes.Add(new Vector2(position.x, position.z));
-
-            foreach (VoxelModification vm in structure.GetVoxels())
-            {
-                queue.Enqueue(new VoxelModification(vm.position + position, vm.blockId));
-            }
-
-            world.EnqueueModification(queue);
+            queue.Enqueue(new VoxelModification(vm.position + position, vm.blockId));
         }
+
+        world.EnqueueModification(queue);
     }
 
     public void AddStair(Structure structure, Vector3 position)
     {
         //  Adds the structure to the world modifications
 
-        if (!Structure_Util.CheckIfOverlap(structure, position, true))
+        Queue<VoxelModification> queue = new Queue<VoxelModification>();
+
+        roomNodes.Add(new Vector2(position.x, position.z));
+
+        foreach (VoxelModification vm in structure.GetVoxels())
         {
-            Queue<VoxelModification> queue = new Queue<VoxelModification>();
-
-            roomNodes.Add(new Vector2(position.x, position.z));
-
-            foreach (VoxelModification vm in structure.GetVoxels())
-            {
-                queue.Enqueue(new VoxelModification(vm.position + position, vm.blockId));
-            }
-
-            world.EnqueueModification(queue);
+            queue.Enqueue(new VoxelModification(vm.position + position, vm.blockId));
         }
+
+        world.EnqueueModification(queue);
     }
 
     public void AddHallway(byte blockID, Vector2 position, int yPosition)

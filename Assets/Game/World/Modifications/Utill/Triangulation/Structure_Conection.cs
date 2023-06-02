@@ -25,6 +25,16 @@ public class Structure_Connection
         return false;
     }
 
+    public bool ContainsNode(Structure_Node node)
+    {
+        if (startNode == node || endNode == node)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     public void SetBad()
     {
         isBad = true;

@@ -15,7 +15,7 @@ public class Structure_Grid
     public Structure_Grid(Vector2 _position, int _gridRadius)
     {
         position = _position;
-        gridRadius = _gridRadius;
+        gridRadius = _gridRadius + 100;
 
         grid = new Structure_Grid_Node[gridRadius * 2, gridRadius * 2];
 

@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: DungeonTest
   m_EditorClassIdentifier: 
   dungeonName: DungeonTest
-  size: 50
-  sizeVariation: 10
-  roomDensity: 0.2
-  densityVariation: 0.05
+  size: 20
+  sizeVariation: 0
+  roomDensity: 0
+  densityVariation: 0
   amountOfLevels: 5
   levelVariation: 1
   entrances:
